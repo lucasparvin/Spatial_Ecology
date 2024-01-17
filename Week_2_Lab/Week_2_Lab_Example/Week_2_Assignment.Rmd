@@ -3,17 +3,7 @@ title: "Publishable, reproducible map of sample sites"
 output: html_notebook
 ---
 
-# Background
 
-Today we are going to use R to aggregate geospatial data of several different kinds and make a publishable and reproducible map. The demonstration map has been adapted from one that I made for a publication a few years ago (https://academic.oup.com/auk/article/138/2/ukaa086/6167858). In this project, we examined the effects of sound broadcast treatments on settlement decisions of endangered Marbled Murrelets. Note that because the species is endangered, I have scrambled the coordinates of our study sites (i.e., they're not the real sites we used). The map we are producing is going to have 3 elements:
-
-1. A zoomed-in view of our study area;
-2. A zoomed-out view of the stat of Oregon with an extent rectangle for the study area; and
-3. A map legend.
-
-# Zoomed-out map
-
-Let's start by loading the necessary packages for this exercise and bringing in a raw dataset of the sample points. Note that by loading the data file onto GitHub I am able to read the file straight from the cloud. This helps make the document fully reproducible because all I need is access to the script and it automatically brings in the data for me from the internet.
 ```{r}
 require(tidyverse)
 require(sf)
@@ -25,8 +15,43 @@ require(tidyterra)
 require(ggnewscale)
 require(cowplot)
 
-siteData = read.csv('https://raw.githubusercontent.com/ValenteJJ/SpatialEcology/main/Week2/murreletSiteData')
+
+#Input WMA boundaries
+
+
+wma_shapefile <- vect("C:/Users/lkp0038/OneDrive - Auburn University/Auburn/Classes/Spring24/SpatialEcology/Spatial_Ecology/Week_2_Lab/AL_WMA")
+
+plot(wma_shapefile)
+
 ```
+# Load Alabama
+```{r}
+alabama = states() %>% 
+  filter(NAME=='Alabama')
+
+plot(st_geometry(alabama))
+
+st_crs(alabama)$proj4string
+```
+# Plot WMAs on Alabama
+```{r}
+
+# Transform CRS of Alabama using sf
+alabama_transformed <- st_transform(alabama, st_crs(wma_shapefile))
+
+alabama_transformed_vect <- vect(alabama_transformed)
+
+# Plot transformed Alabama
+plot(alabama_transformed_vect, main = "Alabama with WMA Shapefile")
+
+# Overlay your shapefile
+plot(wma_shapefile, add = TRUE, col = "red")
+
+
+
+```
+
+
 
 Let's get a first look at the spatial locations of our data. The locations were collected on a GPS unit using the NAD83 datum of the planet and the UTM zone 10 projection. So the x and y coordinates you see are UTMs.
 ```{r}
