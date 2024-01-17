@@ -15,13 +15,31 @@ require(tidyterra)
 require(ggnewscale)
 require(cowplot)
 
+# URL of the zipped shapefile on GitHub (modified for direct download)
+url <- "https://raw.githubusercontent.com/lucasparvin/Spatial_Ecology/main/Week_2_Lab/Assignment/AL_WMA.zip"
 
-#Input WMA boundaries
+# Download the file
+download.file(url, destfile = "AL_WMA.zip", mode = "wb")
 
+# Unzip the file
+unzip("AL_WMA.zip", exdir = "AL_WMA")
 
-wma_shapefile <- vect("C:/Users/lkp0038/OneDrive - Auburn University/Auburn/Classes/Spring24/SpatialEcology/Spatial_Ecology/Week_2_Lab/AL_WMA")
+# List files in the unzipped directory to find the name of the .shp file
+list.files("AL_WMA")
 
+# Load the library
+library(terra)
+
+# Load the shapefile (replace 'your_shapefile_name.shp' with the actual name)
+wma_shapefile <- vect("AL_WMA/AL_WMA/AL_wma.shp")
+
+# Plot the shapefile
 plot(wma_shapefile)
+
+
+
+
+
 
 ```
 # Load Alabama
@@ -42,10 +60,20 @@ alabama_transformed <- st_transform(alabama, st_crs(wma_shapefile))
 alabama_transformed_vect <- vect(alabama_transformed)
 
 # Plot transformed Alabama
+plot(alabama_transformed_vect, main = "Alabama")
+
+# Plot WMA Shapefile in a new window
+plot(wma_shapefile, main = "WMA Shapefile")
+
+# Plot transformed Alabama
 plot(alabama_transformed_vect, main = "Alabama with WMA Shapefile")
 
-# Overlay your shapefile
-plot(wma_shapefile, add = TRUE, col = "red")
+# Assuming wma_shapefile is of type lines or points
+# Replace lines() with points() if it's a point dataset
+lines(wma_shapefile, col = "red")
+
+plot(alabama_transformed_vect, main = "Alabama with WMA Shapefile")
+lapply(1:length(wma_shapefile), function(i) plot(wma_shapefile[i,], add=TRUE))
 
 
 
