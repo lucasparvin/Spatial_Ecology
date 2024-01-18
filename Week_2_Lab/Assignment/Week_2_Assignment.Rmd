@@ -16,6 +16,46 @@ require(ggnewscale)
 require(cowplot)
 ```
 
+# Plot Autauga WMA Shapefile
+```{r}
+
+# URL of the zipped shapefile on GitHub
+url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/AutaugaWMA.zip"
+
+# Download the file
+download.file(url, destfile = "AutaugaWMA.zip", mode = "wb")
+
+# Unzip the file
+unzip("AutaugaWMA.zip", exdir = "AutaugaWMA")
+
+
+# Load the shapefile
+# Replace with the actual path to the unzipped shapefile
+autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
+
+
+plot(autauga_wma)
+```
+
+```{r}
+
+# URL of the zipped raster data on GitHub
+url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/autaugalc.zip"
+
+# Download the file
+download.file(url, destfile = "autaugalc.zip", mode = "wb")
+
+# Unzip the file
+unzip("autaugalc.zip", exdir = "autaugalc")
+
+# Load the raster data (adjust the path if needed)
+landcover_raster <- rast("autaugalc/autaugalc") # Replace 'your_raster_folder' with the actual folder name
+
+plot(landcover_raster)
+
+
+```
+
 
 ```{r}
 
@@ -52,27 +92,57 @@ plot(autauga_wma_transformed, add = TRUE, col = "red")
 
 ```
 
-
-# Plot Autauga WMA Shapefile
 ```{r}
-
-# URL of the zipped shapefile on GitHub
-url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/AutaugaWMA.zip"
-
-# Download the file
-download.file(url, destfile = "AutaugaWMA.zip", mode = "wb")
-
-# Unzip the file
-unzip("AutaugaWMA.zip", exdir = "AutaugaWMA")
+# Get the extent of autauga_wma_transformed
+ext <- ext(autauga_wma_transformed)
 
 
-# Load the shapefile
-# Replace with the actual path to the unzipped shapefile
-autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
+# Plot Alabama
+plot(st_geometry(alabama), main = "Alabama with Autauga WMA")
+
+# Overlay Autauga WMA
+plot(autauga_wma_transformed, add = TRUE, col = "red")
 
 
-plot(autauga_wma)
 ```
+
+```{r}
+# Get the extent of autauga_wma_transformed
+ext <- ext(autauga_wma_transformed)
+
+# Plot Alabama with zoom to autauga_wma_transformed
+plot(st_geometry(alabama), main = "Zoomed Alabama with Autauga WMA", 
+     xlim = c(ext[1], ext[2]), ylim = c(ext[3], ext[4]))
+
+# Overlay Autauga WMA
+plot(autauga_wma_transformed, add = TRUE, col = "red")
+
+```
+
+```{r}
+# Get the extent of autauga_wma_transformed
+ext <- ext(autauga_wma_transformed)
+
+# Calculate buffer (adjust the buffer size as needed)
+buffer_size <- 0.01  # Example buffer size, adjust as needed
+buffered_ext <- c(ext[1] - buffer_size, ext[2] + buffer_size, ext[3] - buffer_size, ext[4] + buffer_size)
+
+# Plot Alabama with buffered extent
+plot(st_geometry(alabama), main = "Zoomed Alabama with Autauga WMA", 
+     xlim = c(buffered_ext[1], buffered_ext[2]), ylim = c(buffered_ext[3], buffered_ext[4]))
+
+# Overlay Autauga WMA
+plot(autauga_wma_transformed, add = TRUE, col = "red")
+
+# Add a rectangle around autauga_wma_transformed
+rect(ext[1], ext[3], ext[2], ext[4], border = "blue", lwd = 2)
+
+
+```
+
+
+
+
 
 # Plot Autauga WMA Shapefile on top of Alabama
 
@@ -91,48 +161,24 @@ alabama = st_transform(alabama, st_crs(siteSf))
 ```
 
 ```{r}
+# Transform the CRS of the landcover raster to match the Alabama shapefile
+landcover_raster_transformed <- project(landcover_raster, crs(alabama))
 
-# URL of the zipped raster data on GitHub
-url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/autaugalc.zip"
+# Plot landcover raster with specified extent
+plot(landcover_raster_transformed, xlim = c(ext[1], ext[2]), ylim = c(ext[3], ext[4]), main = "Zoomed Alabama with Landcover and Autauga WMA")
 
-# Download the file
-download.file(url, destfile = "autaugalc.zip", mode = "wb")
+# Overlay Alabama shape
+plot(st_geometry(alabama), add = TRUE)
 
-# Unzip the file
-unzip("autaugalc.zip", exdir = "autaugalc")
-
-# Load the raster data (adjust the path if needed)
-landcover_raster <- rast("autaugalc/autaugalc") # Replace 'your_raster_folder' with the actual folder name
-
-plot(landcover_raster)
+# Overlay Autauga WMA with transparent fill
+plot(autauga_wma_transformed, add = TRUE, col = "#FF000000", border = "red")
 
 
 ```
 
-```{r}
-# URL of the zipped shapefile on GitHub (modified for direct download)
-url <- "https://raw.githubusercontent.com/lucasparvin/Spatial_Ecology/main/Week_2_Lab/Assignment/AL_WMA.zip"
-
-# Download the file
-download.file(url, destfile = "AL_WMA.zip", mode = "wb")
-
-# Unzip the file
-unzip("AL_WMA.zip", exdir = "AL_WMA")
-
-# List files in the unzipped directory to find the name of the .shp file
-list.files("AL_WMA")
-
-# Load the library
-library(terra)
-
-# Load the shapefile (replace 'your_shapefile_name.shp' with the actual name)
-wma_shapefile <- vect("AL_WMA/AL_WMA/AL_wma.shp")
-
-# Plot the shapefile
-plot(wma_shapefile)
 
 
-```
+
 # Load Alabama
 ```{r}
 alabama = states() %>% 
