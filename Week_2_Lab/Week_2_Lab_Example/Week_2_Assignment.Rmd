@@ -80,7 +80,6 @@ lapply(1:length(wma_shapefile), function(i) plot(wma_shapefile[i,], add=TRUE))
 ```
 
 
-
 Let's get a first look at the spatial locations of our data. The locations were collected on a GPS unit using the NAD83 datum of the planet and the UTM zone 10 projection. So the x and y coordinates you see are UTMs.
 ```{r}
 ggplot(siteData, aes(x=easting, y=northing))+

@@ -37,10 +37,6 @@ wma_shapefile <- vect("AL_WMA/AL_WMA/AL_wma.shp")
 plot(wma_shapefile)
 
 
-
-
-
-
 ```
 # Load Alabama
 ```{r}
@@ -50,7 +46,22 @@ alabama = states() %>%
 plot(st_geometry(alabama))
 
 st_crs(alabama)$proj4string
+
 ```
+
+
+# Plot WMAs on Alabama
+```{r}
+
+# Load the raster data
+landcover_raster <- terra::rast("")
+
+# Plot the landcover raster data
+plot(landcover_raster)
+
+
+```
+
 # Plot WMAs on Alabama
 ```{r}
 
