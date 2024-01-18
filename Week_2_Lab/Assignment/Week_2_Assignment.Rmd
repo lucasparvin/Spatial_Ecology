@@ -4,6 +4,13 @@ output: html_notebook
 ---
 
 
+
+
+
+
+
+
+
 ```{r}
 require(tidyverse)
 require(sf)
@@ -15,6 +22,45 @@ require(tidyterra)
 require(ggnewscale)
 require(cowplot)
 
+
+# URL of the zipped shapefile on GitHub
+url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/AutaugaWMA.zip"
+
+# Download the file
+download.file(url, destfile = "AutaugaWMA.zip", mode = "wb")
+
+# Unzip the file
+unzip("AutaugaWMA.zip", exdir = "AutaugaWMA")
+
+
+# Load the shapefile
+# Replace with the actual path to the unzipped shapefile
+autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
+
+
+plot(autauga_wma)
+```
+
+```{r}
+
+# URL of the zipped raster data on GitHub
+url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/autaugalc.zip"
+
+# Download the file
+download.file(url, destfile = "autaugalc.zip", mode = "wb")
+
+# Unzip the file
+unzip("autaugalc.zip", exdir = "autaugalc")
+
+# Load the raster data (adjust the path if needed)
+landcover_raster <- rast("autaugalc/autaugalc") # Replace 'your_raster_folder' with the actual folder name
+
+plot(landcover_raster)
+
+
+```
+
+```{r}
 # URL of the zipped shapefile on GitHub (modified for direct download)
 url <- "https://raw.githubusercontent.com/lucasparvin/Spatial_Ecology/main/Week_2_Lab/Assignment/AL_WMA.zip"
 
