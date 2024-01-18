@@ -3,14 +3,7 @@ title: "Publishable, reproducible map of sample sites"
 output: html_notebook
 ---
 
-
-
-
-
-
-
-
-
+# Load Useful Packages
 ```{r}
 require(tidyverse)
 require(sf)
@@ -21,7 +14,47 @@ require(colorspace)
 require(tidyterra)
 require(ggnewscale)
 require(cowplot)
+```
 
+
+```{r}
+
+library(tidyverse)
+library(sf)
+library(tigris)
+library(terra)  # for handling spatial data
+
+# Load the shapefile
+autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
+
+# Load Alabama shape
+alabama <- states() %>% 
+  filter(NAME == 'Alabama')
+
+# Extract the CRS from the Alabama shape in WKT format
+crs_alabama_wkt <- st_crs(alabama)$wkt
+
+# Transform the CRS of Autauga WMA
+autauga_wma_transformed <- terra::project(autauga_wma, crs_alabama_wkt)
+
+
+```
+
+
+```{r}
+# Plot Alabama
+plot(st_geometry(alabama), main = "Alabama with Autauga WMA")
+
+# Overlay Autauga WMA
+plot(autauga_wma_transformed, add = TRUE, col = "red")
+
+
+
+```
+
+
+# Plot Autauga WMA Shapefile
+```{r}
 
 # URL of the zipped shapefile on GitHub
 url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/AutaugaWMA.zip"
@@ -39,6 +72,22 @@ autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
 
 
 plot(autauga_wma)
+```
+
+# Plot Autauga WMA Shapefile on top of Alabama
+
+```{r}
+alabama = states() %>% 
+  filter(NAME=='Alabama')
+
+plot(st_geometry(alabama))
+
+st_crs(alabama)$proj4string
+
+```
+
+```{r}
+alabama = st_transform(alabama, st_crs(siteSf))
 ```
 
 ```{r}
