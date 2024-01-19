@@ -9,6 +9,7 @@ require(tidyverse)
 require(sf)
 require(tigris)
 require(geodata)
+require(ggplot2)
 require(terra)
 require(colorspace)
 require(tidyterra)
@@ -30,14 +31,10 @@ unzip("AutaugaWMA.zip", exdir = "AutaugaWMA")
 
 
 # Load the shapefile
-# Replace with the actual path to the unzipped shapefile
 autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
 
 
-plot(autauga_wma)
-```
 
-```{r}
 
 # URL of the zipped raster data on GitHub
 url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/autaugalc.zip"
@@ -51,7 +48,310 @@ unzip("autaugalc.zip", exdir = "autaugalc")
 # Load the raster data (adjust the path if needed)
 landcover_raster <- rast("autaugalc/autaugalc") # Replace 'your_raster_folder' with the actual folder name
 
-plot(landcover_raster)
+
+
+# Load Alabama shape
+alabama <- states() %>% 
+  filter(NAME == 'Alabama')
+
+# Extract the CRS from the Alabama shape in WKT format
+crs_alabama_wkt <- st_crs(alabama)$wkt
+
+# Transform the CRS of Autauga WMA
+autauga_wma_transformed <- terra::project(autauga_wma, crs_alabama_wkt)
+
+
+
+```
+# Zoomed Out Plot Without extent rectangle
+```{r}
+library(tidyverse)
+library(sf)
+library(terra)
+library(tigris)
+
+# Load and transform Autauga WMA shapefile
+autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
+crs_alabama <- crs(states() %>% filter(NAME == 'Alabama'))
+autauga_wma_transformed <- terra::project(autauga_wma, crs_alabama)
+autauga_wma_sf <- st_as_sf(autauga_wma_transformed)
+
+# Load and transform landcover raster
+landcover_raster <- rast("autaugalc/autaugalc")
+landcover_raster_transformed <- project(landcover_raster, crs_alabama)
+raster_df <- as.data.frame(landcover_raster_transformed, xy = TRUE)
+colnames(raster_df) <- c("x", "y", "value")
+
+# Load Alabama shape as sf object
+alabama_sf <- states() %>% 
+  filter(NAME == 'Alabama') %>% 
+  st_as_sf()
+
+
+
+# Define plot
+ggplot() +
+  # Plot the raster
+  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
+  scale_fill_viridis_c() +  # Color scale for raster
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5) +
+  
+  # Define plot labels and limits
+  ggtitle("Alabama with Landcover and Autauga WMA") +
+  coord_sf() +  # Adjust coordinate system
+  
+  # Adjust plot theme
+  theme_minimal()
+
+
+
+```
+
+#Adding extent rectangle
+```{r}
+# Calculate the bounding box (extent) of autauga_wma_sf
+wma_bbox <- st_bbox(autauga_wma_sf)
+
+
+ggplot() +
+  # Plot the raster
+  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
+  scale_fill_viridis_c() +  # Color scale for raster
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black", linewidth = 0.5) +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", linewidth = 0.5) +
+  
+  # Add an extent rectangle for Autauga WMA
+  geom_rect(aes(xmin = wma_bbox$xmin, xmax = wma_bbox$xmax,
+                ymin = wma_bbox$ymin, ymax = wma_bbox$ymax),
+            color = "blue", fill = NA, linetype = "dashed", linewidth = 0.5) +
+  
+  # Define plot labels and limits
+  ggtitle("Alabama with Landcover and Autauga WMA") +
+  coord_sf() +  # Adjust coordinate system
+  
+  # Adjust plot theme
+  theme_minimal()
+
+
+
+```
+
+# Zooming to extent
+
+```{r}
+# Calculate the bounding box (extent) of autauga_wma_sf
+wma_bbox <- st_bbox(autauga_wma_sf)
+
+ggplot() +
+  # Plot the raster with zoomed extent
+  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
+  scale_fill_viridis_c() +
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black", linewidth = 0.5) +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", linewidth = 0.5) +
+  
+  # Add an extent rectangle for Autauga WMA (optional, as we're zooming in)
+  geom_rect(aes(xmin = wma_bbox$xmin, xmax = wma_bbox$xmax,
+                ymin = wma_bbox$ymin, ymax = wma_bbox$ymax),
+            color = "blue", fill = NA, linetype = "dashed", linewidth = 0.5) +
+  
+  # Define plot labels
+  ggtitle("Zoomed into Autauga WMA with Landcover") +
+  
+  # Zoom into the WMA extent
+  coord_sf(xlim = c(wma_bbox$xmin, wma_bbox$xmax), 
+           ylim = c(wma_bbox$ymin, wma_bbox$ymax), expand = FALSE) +
+  
+ # Adjust plot theme
+  theme_minimal()
+
+
+```
+
+
+
+# Reclassifying raster values
+
+```{r}
+
+# Landcover values
+landcover_values <- c(11, 21, 22, 23, 31, 41, 42, 43, 52, 72, 81, 82, 90, 95)
+
+# Corresponding colors
+landcover_colors <- c("11" = "blue", "21" = "pink", "22" = "red", "23" = "red",
+                      "31" = "brown", "41" = "lightgreen", "42" = "darkgreen", 
+                      "43" = "green", "52" = "tan", "72" = "yellow", 
+                      "81" = "orange", "82" = "brown", "90" = "lightblue", 
+                      "95" = "purple")
+
+# Landcover labels
+landcover_labels <- c("11" = "Open Water", "21" = "Developed Open, Open Space", "22" = "Developed, Low Intensity", 
+                      "23" = "Developed, Medium Intensity", "31" = "Barren Land", "41" = "Deciduous Forest", 
+                      "42" = "Evergreen Forest", "43" = "Mixed Forest", "52" = "Shrub/Scrub", 
+                      "72" = "Grassland/Herbaceous", "81" = "Pasture/Hay", "82" = "Crops", 
+                      "90" = "Woody Wetlands", "95" = "Emergent Herbaceous Wetlands")
+
+# Assuming landcover_raster_transformed is your raster object
+raster_df <- as.data.frame(landcover_raster_transformed, xy = TRUE)
+colnames(raster_df) <- c("x", "y", "landcover")
+raster_df$landcover <- factor(raster_df$landcover, levels = landcover_values)
+
+ggplot(raster_df) +
+  # Plot the raster
+  geom_raster(aes(x = x, y = y, fill = landcover)) +
+  scale_fill_manual(values = landcover_colors, labels = landcover_labels, name = "Landcover Type") +
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5) +
+  
+  # Define plot labels and limits
+  ggtitle("Zoomed into Autauga WMA with Landcover") +
+  coord_sf(xlim = c(wma_bbox$xmin, wma_bbox$xmax), ylim = c(wma_bbox$ymin, wma_bbox$ymax), expand = FALSE) +
+  
+  # Adjust plot theme
+  theme_minimal() +
+  theme(legend.position = "right")
+
+
+
+```
+
+
+# Add Autauga WMA Legend
+```{r}
+
+install.packages("ggspatial")
+library(ggspatial)
+
+
+ggplot(raster_df) +
+  # Plot the raster
+  geom_raster(aes(x = x, y = y, fill = landcover)) +
+  scale_fill_manual(values = landcover_colors, labels = landcover_labels, name = "Landcover Type") +
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
+  
+  # Overlay Autauga WMA with a named color for the legend
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5, aes(linetype = "Autauga WMA")) +
+  
+  # Set the name for the linetype legend
+  scale_linetype_manual(values = "solid", labels = "Autauga WMA", name = "") +
+  
+  # Define plot labels and limits
+  ggtitle("Landcover in Autauga WMA") +
+  coord_sf(xlim = c(wma_bbox$xmin, wma_bbox$xmax), ylim = c(wma_bbox$ymin, wma_bbox$ymax), expand = FALSE) +
+  
+  # Customize the legend to combine landcover types and Autauga WMA boundary
+  guides(fill = guide_legend(order = 1), 
+         linetype = guide_legend(order = 2)) +
+  
+  # Adjust plot theme
+  theme_minimal() +
+  theme(legend.position = "right") +
+
+   # Add north arrow
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.5, "in"), pad_y = unit(0.5, "in")) +
+  
+    # Set custom labels for axes
+  labs(x = "Longitude", y = "Latitude") +
+  
+  # Add scale bar
+  annotation_scale(location = "br", width_hint = 0.5)
+
+
+```
+
+```{r}
+ggplot() +
+ # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
+  
+  # Overlay Autauga WMA without a named color for the legend
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5) +
+  
+  # Add an extent rectangle for Autauga WMA with a label for the legend
+  geom_rect(aes(xmin = wma_bbox$xmin, xmax = wma_bbox$xmax,
+                ymin = wma_bbox$ymin, ymax = wma_bbox$ymax, linetype = "WMA Extent"),
+            color = "blue", fill = NA, size = 0.5) +
+
+    scale_linetype_manual(values = c("WMA Extent" = "dashed"), 
+                        labels = c("WMA Extent"), 
+                        name = "") +
+
+    # Define plot labels
+  ggtitle("Alabama with Autauga WMA Extent") +
+  labs(x = "Longitude", y = "Latitude") +
+  
+  # Adjust plot theme
+  theme_minimal() +
+  theme(legend.position = "right",
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+# Add secondary alabama map
+
+```{r}
+library(ggplot2)
+library(cowplot)
+
+# Zoomed-in plot
+zoomed_plot <- ggplot(raster_df) +
+  geom_raster(aes(x = x, y = y, fill = landcover)) +
+  scale_fill_manual(values = landcover_colors, labels = landcover_labels, name = "Landcover Type") +
+  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5) +
+  coord_sf(xlim = c(wma_bbox$xmin, wma_bbox$xmax), ylim = c(wma_bbox$ymin, wma_bbox$ymax), expand = FALSE) +
+  ggtitle("Zoomed into Autauga WMA with Landcover") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+
+# Broader map with extent rectangle
+broader_map <- ggplot() +
+  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
+  geom_rect(aes(xmin = wma_bbox$xmin, xmax = wma_bbox$xmax,
+                ymin = wma_bbox$ymin, ymax = wma_bbox$ymax),
+            color = "blue", fill = NA, linetype = "dashed", size = 0.5) +
+  ggtitle("Alabama with Autauga WMA Extent") +
+  theme_minimal()
+
+# Arrange the two plots with different widths
+combined_plot <- plot_grid(zoomed_plot, broader_map, 
+                           ncol = 2, 
+                           rel_widths = c(3, 1), # Adjust the ratio as needed
+                           align = 'v')
+
+# Display the combined plot
+print(combined_plot)
+
 
 
 ```
@@ -59,10 +359,7 @@ plot(landcover_raster)
 
 ```{r}
 
-library(tidyverse)
-library(sf)
-library(tigris)
-library(terra)  # for handling spatial data
+ # for handling spatial data
 
 # Load the shapefile
 autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
@@ -156,9 +453,6 @@ st_crs(alabama)$proj4string
 
 ```
 
-```{r}
-alabama = st_transform(alabama, st_crs(siteSf))
-```
 
 ```{r}
 # Transform the CRS of the landcover raster to match the Alabama shapefile
@@ -221,6 +515,18 @@ legend("topright",  # Adjust position as needed
 
 
 ```{r}
+
+# Define color mapping
+color_mapping <- setNames(landcover_colors, landcover_values)
+
+# Now use this color mapping in your plot
+plot(reclassed_raster, col = color_mapping[as.character(landcover_values)], 
+     xlim = c(ext[1], ext[2]), ylim = c(ext[3], ext[4]), 
+     main = "Zoomed Alabama with Landcover and Autauga WMA")
+
+# The rest of your plotting code remains the same
+
+
 # Landcover values
 landcover_values <- c(11, 21, 22, 23, 31, 41, 42, 43, 52, 72, 81, 82, 90, 95)
 
@@ -256,13 +562,21 @@ landcover_labels <- c("Open Water", "Developed", "Developed", "Developed", "Barr
                       "Emergent Herbaceous Wetlands")
 
 # Add legend on the right side of the map
-legend("right", legend = landcover_labels, fill = landcover_colors, cex = 0.7, bg = 'white')
+legend("right", legend = landcover_labels, fill = landcover_colors, cex = 0.7, bg = 'NA')
 
 # Use par(xpd=TRUE) and specify coordinates for legend
 par(xpd = TRUE)
-legend(x = 1.1, y = 1, legend = landcover_labels, fill = landcover_colors, cex = 0.7, bg = 'white', horiz = FALSE, xjust = 0)
+legend(x = 5, y = 1, legend = landcover_labels, fill = landcover_colors, cex = 0.7, bg = 'NA', horiz = FALSE, xjust = 0)
 
 ```
+
+
+
+
+
+
+
+
 
 
 
@@ -307,15 +621,149 @@ ggplot() +
                      guide = guide_legend(override.aes = list(fill = landcover_colors)))
 
 
+```
+
+```{r}
+# Transform the CRS of the landcover raster to match the Alabama shapefile
+landcover_raster_transformed <- project(landcover_raster, crs(alabama))
+
+# Convert raster to a data frame
+raster_df <- as.data.frame(landcover_raster_transformed, xy = TRUE)
+colnames(raster_df) <- c("x", "y", "value")
+
+# Convert shapefiles to sf objects
+alabama_sf <- st_as_sf(alabama)
+autauga_wma_sf <- st_as_sf(autauga_wma_transformed)
+
+ggplot() +
+  # Plot the raster
+  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
+  scale_fill_viridis_c() +  # Adjust color scale as needed
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black") +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red") +
+  
+  # Define plot labels
+  ggtitle("Alabama with Landcover and Autauga WMA") +
+  
+  # Adjust plot theme
+  theme_minimal()
+
 
 ```
+
+```{r}
+# Calculate Autuaga extent
+wma_extent <- st_bbox(autauga_wma_sf)
+
+ggplot() +
+  # Plot the raster with new limits
+  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
+  scale_fill_viridis_c() +  # Adjust color scale as needed
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black") +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red") +
+  
+  # Define plot labels
+  ggtitle("Zoomed into Autauga WMA with Landcover") +
+  
+  # Set plot limits to the extent of the WMA
+  coord_sf(xlim = c(wma_extent$xmin, wma_extent$xmax), 
+           ylim = c(wma_extent$ymin, wma_extent$ymax), expand = FALSE) +
+  
+  # Adjust plot theme
+  theme_minimal()
+
+
+```
+
+```{r}
+
+# Landcover values and corresponding colors
+landcover_colors <- c("11" = "blue",
+                      "31" = "gray", "41" = "lightgreen", "42" = "darkgreen", 
+                      "43" = "green", "52" = "yellow", "72" = "yellow", 
+                      "81" = "red", "82" = "brown", "90" = "lightblue", "95" = "purple")
+
+# Landcover labels
+landcover_labels <- c("11" = "Open Water", "31" = "Barren Land", "41" = "Deciduous Forest", 
+                      "42" = "Evergreen Forest", "43" = "Mixed Forest", "52" = "Shrub/Scrub", 
+                      "72" = "Grassland/Herbaceous", "81" = "Pasture/Hay", "82" = "Crops", 
+                      "90" = "Woody Wetlands", "95" = "Emergent Herbaceous Wetlands")
+
+
+# Convert raster to a data frame
+raster_df <- as.data.frame(reclassed_raster, xy = TRUE)
+colnames(raster_df) <- c("x", "y", "landcover")
+
+ggplot(raster_df) +
+  # Plot the raster
+  geom_raster(aes(x = x, y = y, fill = factor(landcover))) +
+  scale_fill_manual(values = landcover_colors, labels = landcover_labels, name = "Landcover Type") +
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black") +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red") +
+  
+  # Define plot labels and limits
+  ggtitle("Zoomed Alabama with Landcover and Autauga WMA") +
+  coord_sf(xlim = c(wma_extent$xmin, wma_extent$xmax), ylim = c(wma_extent$ymin, wma_extent$ymax), expand = FALSE) +
+  
+  # Adjust plot theme
+  theme_minimal() +
+  theme(legend.position = "right")
+
+
+```
+
+
 ```{r}
 
 
 
+# Updated corresponding colors (add 71 if needed)
+landcover_colors <- c("11" = "darkblue", "21" = "red", "22" = "red", 
+                      "31" = "black", "41" = "green", "42" = "green", 
+                      "43" = "green", "52" = "red", "71" = "yellow",
+                      "81" = "orange", "82" = "brown", "90" = "lightblue", 
+                      "95" = "red") # Replace 'color_for_71' with the actual color
+
+# Updated landcover labels (add 71 if needed)
+landcover_labels <- c("11" = "Open Water", "21" = "Developed", "22" = "Developed", 
+                       "31" = "Barren Land", "41" = "Deciduous Forest", 
+                      "42" = "Evergreen Forest", "43" = "Mixed Forest", "52" = "Shrub/Scrub", "71" = "Grassland", 
+                      "81" = "Pasture/Hay", "82" = "Crops", 
+                      "90" = "Woody Wetlands", "95" = "Emergent Herbaceous Wetlands") # Add label for 71 if needed
+
+ggplot(filtered_raster_df) +
+  geom_raster(aes(x = x, y = y, fill = landcover)) +
+  scale_fill_manual(values = landcover_colors, labels = landcover_labels, name = "Landcover Type") +
+  
+  # Overlay Alabama shape
+  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
+  
+  # Overlay Autauga WMA
+  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5) +
+  
+  # Define plot labels and limits
+  ggtitle("Zoomed into Autauga WMA with Landcover") +
+  coord_sf(xlim = c(wma_extent$xmin, wma_extent$xmax), ylim = c(wma_extent$ymin, wma_extent$ymax), expand = FALSE) +
+  
+  # Adjust plot theme
+  theme_minimal() +
+  theme(legend.position = "right", 
+        legend.background = element_rect(fill = "white", colour = "black"))
+
 
 ```
-
 
 # Load Alabama
 ```{r}
