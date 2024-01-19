@@ -15,38 +15,37 @@ require(colorspace)
 require(tidyterra)
 require(ggnewscale)
 require(cowplot)
+require(ggspatial)
 ```
 
-# Plot Autauga WMA Shapefile
+# Load Spatial Data
 ```{r}
 
 # URL of the zipped shapefile on GitHub
-url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/AutaugaWMA.zip"
+url1 <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/AutaugaWMA.zip"
 
 # Download the file
-download.file(url, destfile = "AutaugaWMA.zip", mode = "wb")
+download.file(url1, destfile = "AutaugaWMA.zip", mode = "wb")
 
 # Unzip the file
 unzip("AutaugaWMA.zip", exdir = "AutaugaWMA")
-
 
 # Load the shapefile
 autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
 
 
 
-
 # URL of the zipped raster data on GitHub
-url <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/autaugalc.zip"
+url2 <- "https://github.com/lucasparvin/Spatial_Ecology/raw/main/Week_2_Lab/Assignment/autaugalc.zip"
 
 # Download the file
-download.file(url, destfile = "autaugalc.zip", mode = "wb")
+download.file(url2, destfile = "autaugalc.zip", mode = "wb")
 
 # Unzip the file
 unzip("autaugalc.zip", exdir = "autaugalc")
 
 # Load the raster data (adjust the path if needed)
-landcover_raster <- rast("autaugalc/autaugalc") # Replace 'your_raster_folder' with the actual folder name
+landcover_raster <- rast("autaugalc/autaugalc") 
 
 
 
@@ -57,27 +56,18 @@ alabama <- states() %>%
 # Extract the CRS from the Alabama shape in WKT format
 crs_alabama_wkt <- st_crs(alabama)$wkt
 
-# Transform the CRS of Autauga WMA
-autauga_wma_transformed <- terra::project(autauga_wma, crs_alabama_wkt)
-
-
-
 ```
-# Zoomed Out Plot Without extent rectangle
-```{r}
-library(tidyverse)
-library(sf)
-library(terra)
-library(tigris)
 
-# Load and transform Autauga WMA shapefile
-autauga_wma <- vect("AutaugaWMA/AutaugaWMA/AutaugaWMA.shp")
+
+# Make sure coordinate systems are aligned
+```{r}
+
+# Transform Autauga WMA shapefile
 crs_alabama <- crs(states() %>% filter(NAME == 'Alabama'))
 autauga_wma_transformed <- terra::project(autauga_wma, crs_alabama)
 autauga_wma_sf <- st_as_sf(autauga_wma_transformed)
 
-# Load and transform landcover raster
-landcover_raster <- rast("autaugalc/autaugalc")
+# Transform landcover raster
 landcover_raster_transformed <- project(landcover_raster, crs_alabama)
 raster_df <- as.data.frame(landcover_raster_transformed, xy = TRUE)
 colnames(raster_df) <- c("x", "y", "value")
@@ -88,28 +78,6 @@ alabama_sf <- states() %>%
   st_as_sf()
 
 
-
-# Define plot
-ggplot() +
-  # Plot the raster
-  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
-  scale_fill_viridis_c() +  # Color scale for raster
-  
-  # Overlay Alabama shape
-  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
-  
-  # Overlay Autauga WMA
-  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5) +
-  
-  # Define plot labels and limits
-  ggtitle("Alabama with Landcover and Autauga WMA") +
-  coord_sf() +  # Adjust coordinate system
-  
-  # Adjust plot theme
-  theme_minimal()
-
-
-
 ```
 
 #Adding extent rectangle
@@ -118,69 +86,7 @@ ggplot() +
 wma_bbox <- st_bbox(autauga_wma_sf)
 
 
-ggplot() +
-  # Plot the raster
-  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
-  scale_fill_viridis_c() +  # Color scale for raster
-  
-  # Overlay Alabama shape
-  geom_sf(data = alabama_sf, fill = NA, color = "black", linewidth = 0.5) +
-  
-  # Overlay Autauga WMA
-  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", linewidth = 0.5) +
-  
-  # Add an extent rectangle for Autauga WMA
-  geom_rect(aes(xmin = wma_bbox$xmin, xmax = wma_bbox$xmax,
-                ymin = wma_bbox$ymin, ymax = wma_bbox$ymax),
-            color = "blue", fill = NA, linetype = "dashed", linewidth = 0.5) +
-  
-  # Define plot labels and limits
-  ggtitle("Alabama with Landcover and Autauga WMA") +
-  coord_sf() +  # Adjust coordinate system
-  
-  # Adjust plot theme
-  theme_minimal()
-
-
-
 ```
-
-# Zooming to extent
-
-```{r}
-# Calculate the bounding box (extent) of autauga_wma_sf
-wma_bbox <- st_bbox(autauga_wma_sf)
-
-ggplot() +
-  # Plot the raster with zoomed extent
-  geom_raster(data = raster_df, aes(x = x, y = y, fill = value)) +
-  scale_fill_viridis_c() +
-  
-  # Overlay Alabama shape
-  geom_sf(data = alabama_sf, fill = NA, color = "black", linewidth = 0.5) +
-  
-  # Overlay Autauga WMA
-  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", linewidth = 0.5) +
-  
-  # Add an extent rectangle for Autauga WMA (optional, as we're zooming in)
-  geom_rect(aes(xmin = wma_bbox$xmin, xmax = wma_bbox$xmax,
-                ymin = wma_bbox$ymin, ymax = wma_bbox$ymax),
-            color = "blue", fill = NA, linetype = "dashed", linewidth = 0.5) +
-  
-  # Define plot labels
-  ggtitle("Zoomed into Autauga WMA with Landcover") +
-  
-  # Zoom into the WMA extent
-  coord_sf(xlim = c(wma_bbox$xmin, wma_bbox$xmax), 
-           ylim = c(wma_bbox$ymin, wma_bbox$ymax), expand = FALSE) +
-  
- # Adjust plot theme
-  theme_minimal()
-
-
-```
-
-
 
 # Reclassifying raster values
 
@@ -208,36 +114,12 @@ raster_df <- as.data.frame(landcover_raster_transformed, xy = TRUE)
 colnames(raster_df) <- c("x", "y", "landcover")
 raster_df$landcover <- factor(raster_df$landcover, levels = landcover_values)
 
-ggplot(raster_df) +
-  # Plot the raster
-  geom_raster(aes(x = x, y = y, fill = landcover)) +
-  scale_fill_manual(values = landcover_colors, labels = landcover_labels, name = "Landcover Type") +
-  
-  # Overlay Alabama shape
-  geom_sf(data = alabama_sf, fill = NA, color = "black", size = 0.5) +
-  
-  # Overlay Autauga WMA
-  geom_sf(data = autauga_wma_sf, fill = NA, color = "red", size = 0.5) +
-  
-  # Define plot labels and limits
-  ggtitle("Zoomed into Autauga WMA with Landcover") +
-  coord_sf(xlim = c(wma_bbox$xmin, wma_bbox$xmax), ylim = c(wma_bbox$ymin, wma_bbox$ymax), expand = FALSE) +
-  
-  # Adjust plot theme
-  theme_minimal() +
-  theme(legend.position = "right")
-
-
 
 ```
 
 
 # Add Autauga WMA Legend
 ```{r}
-
-install.packages("ggspatial")
-library(ggspatial)
-
 
 ggplot(raster_df) +
   # Plot the raster
