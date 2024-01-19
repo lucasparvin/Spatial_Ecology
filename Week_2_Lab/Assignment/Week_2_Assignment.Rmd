@@ -5,7 +5,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: html_document
 ---
 
-# Load Useful Packages
+# **Load Useful Packages**
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 require(tidyverse)
 require(sf)
@@ -20,7 +20,7 @@ require(cowplot)
 require(ggspatial)
 ```
 
-# Load Spatial Data
+# **Load Spatial Data**
 ```{r, message=FALSE, warning=FALSE, error=FALSE, results='hide'}
 
 # URL of the zipped shapefile on GitHub
@@ -61,7 +61,7 @@ crs_alabama_wkt <- st_crs(alabama)$wkt
 ```
 
 
-# Make sure coordinate systems are aligned
+# **Make Sure Coordinate Systems are Aligned**
 ```{r,message=FALSE, warning=FALSE, error=FALSE}
 
 # Transform Autauga WMA shapefile
@@ -82,7 +82,7 @@ alabama_sf <- states() %>%
 
 ```
 
-# Adding extent rectangle
+# **Adding Extent Rectangle**
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 # Calculate the bounding box (extent) of autauga_wma_sf
 wma_bbox <- st_bbox(autauga_wma_sf)
@@ -90,7 +90,7 @@ wma_bbox <- st_bbox(autauga_wma_sf)
 
 ```
 
-# Reclassifying raster values
+# **Reclassifying Raster Values**
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 
@@ -118,8 +118,8 @@ raster_df$landcover <- factor(raster_df$landcover, levels = landcover_values)
 
 ```
 
+# **Zoomed in Map of Autauga WMA Land Cover**
 
-# Plot Zoomed in Map of Autauga WMA Land Cover
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 
 ggplot(raster_df) +
@@ -159,7 +159,12 @@ ggplot(raster_df) +
 
 
 ```
-# Plot Zoomed Out Map of Study Area Extent Within Alabama
+
+The figure above demonstrates the land cover types within Alabama's Autauga Wildlife Management Area (WMA), as defined by 2021 NLCD Data. Using these data, my lab mates and I can stratify point placement based on land cover types for future avian and vegetation surveys on Autauga WMA, one of the nine WMAs we seek to inventory bird and plant species. 2021 NLCD Data was acquired from the Multi-Resolution Land Characteristics Consortium.***Some of the land cover raster data was slightly distorted after I reclassified the coordinate system, causing a portion of the pixels to show up as gray. I tried remedying this by pulling Alabama and Autauga's boundary into the same coordinate system as the raster, but other errors ensued.*** The Autauga WMA Boundary was acquired from the USGS National Boundary Dataset. Alabama's state boundary was brought into this environment using the following code: `alabama <- states() %>% filter(NAME == 'Alabama')`, and was include for a scale reference below. 
+
+
+# **Zoomed Out Map of Study Area Extent Within Alabama**
+
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 ggplot() +
  # Overlay Alabama shape
@@ -168,9 +173,9 @@ ggplot() +
   # Add an extent rectangle for Autauga WMA with a label for the legend
   geom_rect(aes(xmin = wma_bbox$xmin, xmax = wma_bbox$xmax,
                 ymin = wma_bbox$ymin, ymax = wma_bbox$ymax, linetype = "WMA Extent"),
-            color = "blue", fill = NA, linewidth = 0.5) +
+            color = "blue", fill = NA, linewidth = 1) +
 
-    scale_linetype_manual(values = c("WMA Extent" = "dashed"), 
+    scale_linetype_manual(values = c("WMA Extent" = "solid"), 
                         labels = c("WMA Extent"), 
                         name = "") +
 
@@ -188,6 +193,6 @@ ggplot() +
   # Add scale bar
   annotation_scale(location = "br", width_hint = 0.5)
 
-
-
 ```
+
+To understand the scale of the zoomed-in figure, this map shows the study area extent (blue line) within the state of Alabama (black border).The entirety of the Autauga WMA fits within the blue extent rectangle shown above. 
