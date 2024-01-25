@@ -68,7 +68,7 @@ plot(numeric_grain_size, means,
      xaxt = 'n', # Turn off x-axis labels
      xlab = "Grain Size", 
      ylab = "Mean Raster Value", 
-     main = "Mean Raster Value vs. Grain Size")
+     main = "Mean Raster Value vs. Grain Size (Scaled Up Using Mean)")
 
 # Add custom x-axis labels
 axis(1, at = numeric_grain_size, labels = grain_size)
@@ -78,7 +78,7 @@ plot(numeric_grain_size, variances,
      xaxt = 'n', # Turn off x-axis labels
      xlab = "Grain Size", 
      ylab = "Variance", 
-     main = "Variance vs. Grain Size")
+     main = "Variance vs. Grain Size (Scaled Up Using Mean)")
 
 # Add custom x-axis labels
 axis(1, at = numeric_grain_size, labels = grain_size)
@@ -147,7 +147,7 @@ plot(numeric_grain_size2, means2,
      xaxt = 'n', # Turn off x-axis labels
      xlab = "Grain Size", 
      ylab = "Mean Raster Value", 
-     main = "Mean Raster Value vs. Grain Size")
+     main = "Mean Raster Value vs. Grain Size (Scaled Up Using Mode)")
 
 # Add custom x-axis labels
 axis(1, at = numeric_grain_size2, labels = grain_size2)
@@ -157,7 +157,7 @@ plot(numeric_grain_size2, variances2,
      xaxt = 'n', # Turn off x-axis labels
      xlab = "Grain Size", 
      ylab = "Variance", 
-     main = "Variance vs. Grain Size")
+     main = "Variance vs. Grain Size (Scaled Up Using Mode)")
 
 # Add custom x-axis labels
 axis(1, at = numeric_grain_size2, labels = grain_size2)
