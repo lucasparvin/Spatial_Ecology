@@ -312,6 +312,9 @@ forestData %>%
   PerformanceAnalytics::chart.Correlation(histogram=F)
 
 ```
+Question: What patterns do you notice in correlation among these variables?
+
+As is to be expected, the correlation between variables decreases with relative distance. For example, the amount of tree cover in a 5 km radius is highly correlated with the amount of tree cover in a 4 km radius, but not at all with the amount of tree cover in a 100 m radius. 
 
 ## Challenge 5 (4 points)
 
@@ -319,13 +322,56 @@ forestData %>%
 
 Place your R code in the chunk below.
 ```{r}
+modelNull = glm(pres~1, family='binomial', data=forestData)
+model100m = glm(pres~for100m, family='binomial', data=forestData)
+model500m = glm(pres~for500m, family='binomial', data=forestData)
+model1km = glm(pres~for1km, family='binomial', data=forestData)
+model2km = glm(pres~for2km, family='binomial', data=forestData)
+model3km = glm(pres~for3km, family='binomial', data=forestData)
+model4km = glm(pres~for4km, family='binomial', data=forestData)
+model5km = glm(pres~for5km, family='binomial', data=forestData)
+
+
+aictab(list(modelNull, model100m, model500m, model1km, model2km, model3km, model4km, model5km), modnames=c('Null', '100 m', '500 m', '1 km', '2 km', '3 km', '4 km', '5 km'))
+
+
+effects = data.frame(model = c('0.1 km', '0.5 km', '1km', '2km', '3km', '4km', '5km'),
+           beta = c(summary(model100m)$coefficients[2,1], summary(model500m)$coefficients[2,1], 
+                    summary(model1km)$coefficients[2,1], summary(model2km)$coefficients[2,1], 
+                    summary(model3km)$coefficients[2,1], summary(model4km)$coefficients[2,1], 
+                    summary(model5km)$coefficients[2,1]),
+           se = c(summary(model100m)$coefficients[2,2], summary(model500m)$coefficients[2,2], 
+                    summary(model1km)$coefficients[2,2], summary(model2km)$coefficients[2,2], 
+                    summary(model3km)$coefficients[2,2], summary(model4km)$coefficients[2,2], 
+                    summary(model5km)$coefficients[2,2]))
+
+effects = effects %>% 
+  mutate(lcl = beta - 1.96*se,
+         ucl = beta + 1.96*se)
+
+ggplot(effects, aes(x=model))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  geom_point(aes(y=beta))+
+  geom_errorbar(aes(ymin=lcl, ymax=ucl))
+
 
 ```
 
-Place your answer to the questions here.
+**Which scale do you think represents the critical or characteristic scale at which forest cover affects skink presence? Is this scale clearly better than the others, or is there some ambiguity?**
+
+Comparison of the models suggests that skink presence is best predicted by forest cover at the 2 km scale. However, the model that operates on a 4 km scale has an extremely similar Delta_AICc value, while the 3 km and 5 km models also have Delta_AICc values of less than or equal to 1.58. Given that any models with values between 0 and 2 have "substantial support," all 4 of these models are highly predictive. Further ambiguity is introduced by the fact that the best model is 2 km, followed by 4 km, and then 3 km and 5 km. If 2 km model represented the clear characteristic scale, I would expect 1 km or 3 km to be the next best, not 4 km. Thus, the characteristic scale seems to fall between 2 and 5 km, but at those levels, the exact critical value seems vague. 
+
+**What are some mechanisms by which forest cover could affect skink presence at this scale? What is your overall conclusion regarding how forest cover affects skink presence (i.e., take a look at the betas)?**
+
+The beta values for each 2, 3, 4, and 5 km models are all very close to one another (~10). Given that skink presence is not well predicted by forest cover anywhere within 1 km and that skinks likely don't cover territories that large given their size, I would guess that the mechanism by which forest cover is positively affecting skink presence at the 2, 3, 4, and 5 km scales is related to prey availability and not habitat. Skinks likely feed on invertebrates (including winged-insects with larger foraging ranges) that require proximity to forests for resources and cover, but also probably benefit from nesting in more open sandy areas conducive to burrow-building and basking in the sun. Of course, there are a lot of assumptions in this explanation and I know next to nothing about skinks. 
 
 ## Challenge 6 (2 points)
 
 **If you encounter ambiguity in identifying the characteristic scale of an effect, can you come up with a clever way to condense the information in the multi-scale variables into just one or two? When might it be ok to include two covariates in the same model (think multiple regression) that represent the same ecological feature measured at different scales (e.g., forest cover at 1 km AND forest cover at 5 km in the same model)? I can think of both a biological and a statistical answer to this question.**
+
+To condense the information into just one or two variables, one could potentially 
+
+If two covariates representing the same ecological features at different scales are NOT statistically correlated with one another, then I would assume including them in the same multiple-linear regression should not be an issue. 
 
 Place your answer to the questions here.
