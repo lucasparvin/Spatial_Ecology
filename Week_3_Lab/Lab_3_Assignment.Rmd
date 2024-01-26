@@ -15,12 +15,14 @@ Place your code in the code chunk below so I can reproduce your analyses/figures
 
 ```{r, message=F, warning=FALSE}
 #Load Packages
+
+require(tidyverse)
 require(sf)
 require(AICcmodavg)
 require(tigris)
 require(FedData)
-require(tidyverse)
 require(terra)
+require(tidyterra)
 
 #Build a raster with 100 rows and 100 columns.
 simpRast = rast(ncol=100, nrow=100, xmin=1, xmax=100, ymin=1, ymax=100)
