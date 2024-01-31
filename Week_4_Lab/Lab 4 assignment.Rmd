@@ -119,6 +119,36 @@ patchShape
   
 ```
 
+```{r}
+
+require(PerformanceAnalytics)
+
+# Combine metric values into a single data frame
+landscape_metrics_df <- data.frame(
+  Area = patchArea$value,
+  CoreAreaIndex = patchcai$value,
+  Circle = patchcircle$value,
+  ContiguityIndex = patchcontig$value,
+  Core = patchCore$value,
+  EuclideanNNDistance = patchEnn$value,
+  FractalDimensionIndex = patchFrac$value,
+  RadiusOfGyration = patchGyrate$value,
+  NumberOfCoreAreas = patchNcore$value,
+  PerimeterAreaRatio = patchPara$value,
+  Perimeter = patchPer$value,
+  Shape = patchShape$value
+)
+
+chart.Correlation(landscape_metrics_df, histogram=TRUE, pch=19)
+
+
+
+
+  
+```
+
+
+
 
 Answer Challenge 1 with your written text here.
 
@@ -128,6 +158,41 @@ Answer Challenge 1 with your written text here.
 **In our lab, we used the 8-direction or "queen" rule to delineate patches. Using the nlcdSimple raster we created, explore the differences in patch characteristics if you were to use the 4-direction or "rook" rule for delineating patches. Calculate the following class-level metrics for forest cover for both the queen and rook patch delineation rules: number of patches, mean patch size, standard deviation in patch size, nearest-neighbor distance, and total edge length. What patterns do you notice? When might it be appropriate to use one rule vs. the other?**
 
 ```{r}
+
+
+
+
+# Combine metrics into a data frame
+landscape_metrics <- c(
+  Area = patchArea$metric,
+  CoreAreaIndex = patchcai$metric,
+  Circle = patchcircle$metric,
+  ContiguityIndex = patchcontig$metric,
+  Core = patchCore$metric,
+  EuclideanNNDistance = patchEnn$metric,
+  FractalDimensionIndex = patchFrac$metric,
+  RadiusOfGyration = patchGyrate$metric,
+  NumberOfCoreAreas = patchNcore$metric,
+  PerimeterAreaRatio = patchPara$metric,
+  Perimeter = patchPer$metric,
+  Shape = patchShape$metric
+)
+
+landscape_values <- c(
+  Area = patchArea$value,
+  CoreAreaIndex = patchcai$value,
+  Circle = patchcircle$value,
+  ContiguityIndex = patchcontig$value,
+  Core = patchCore$value,
+  EuclideanNNDistance = patchEnn$value,
+  FractalDimensionIndex = patchFrac$value,
+  RadiusOfGyration = patchGyrate$value,
+  NumberOfCoreAreas = patchNcore$value,
+  PerimeterAreaRatio = patchPara$value,
+  Perimeter = patchPer$value,
+  Shape = patchShape$value
+)
+
 # Place your R code for this challenge here.
 ```
 
