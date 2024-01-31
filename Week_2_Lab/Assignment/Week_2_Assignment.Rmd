@@ -196,3 +196,8 @@ ggplot() +
 ```
 
 To understand the scale of the zoomed-in figure, this map shows the study area extent (blue line) within the state of Alabama (black border).The entirety of the Autauga WMA fits within the blue extent rectangle shown above. 
+
+
+# Grade
+
+$\color{red}{\text{Great stuff, Lucas. You're losing one point for the fact that you have symbols on your raster that are not in your legend, but you're getting a point back for the north arrow and scale bars.}}$
