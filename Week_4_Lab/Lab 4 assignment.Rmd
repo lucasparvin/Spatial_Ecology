@@ -140,17 +140,13 @@ landscape_metrics_df <- data.frame(
 )
 
 chart.Correlation(landscape_metrics_df, histogram=TRUE, pch=19)
-
-
-
-
   
 ```
 
 
+**The landscapemetrics package has functions for calculating 12 patch-level metrics. Calculate all 12 of these for every forest patch in our nlcdSimple raster (using the 8-direction rule). This will result in 12 unique values associated with each forest patch. Use the chart.Correlation() function from the PerformanceAnalytics package to examine the correlation among all 12 of these variables. What patterns do you notice, and what do they tell you about the uniqueness or redundancy of the patch-level metrics you calculated?**
 
-
-Answer Challenge 1 with your written text here.
+Overall, the relationships are complex and varied because there are so many metrics being correlated to one another. That said, a primary takeaway is that there is a significant amount of correlation across nearly all metrics. -0.99 for contiguity and perimeter-area ratio. 1 for Area and core. 0.85 area and perimeter. 
 
 
 ## Challenge 2 (4 points)
