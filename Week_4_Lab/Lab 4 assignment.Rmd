@@ -6,9 +6,8 @@ output:
 ---
 
 
-
 ```{r, warning=F, error=F, message=F}
-# Load Packages
+# Load Packages test
 rm(list=ls())
 require(Voss)
 require(tidyverse)
@@ -25,7 +24,99 @@ require(landscapemetrics)
 **The landscapemetrics package has functions for calculating 12 patch-level metrics. Calculate all 12 of these for every forest patch in our nlcdSimple raster (using the 8-direction rule). This will result in 12 unique values associated with each forest patch. Use the chart.Correlation() function from the PerformanceAnalytics package to examine the correlation among all 12 of these variables. What patterns do you notice, and what do they tell you about the uniqueness or redundancy of the patch-level metrics you calculated?**
 
 ```{r}
-# Place your R code for this challenge here.
+studyArea = st_read('/vsicurl/https://github.com/ValenteJJ/SpatialEcology/raw/main/Week4/studyArea.shp')
+nlcd = get_nlcd(studyArea, label='AlLandscape', year=2011)
+
+# values(nlcd) = as.character(values(nlcd))
+
+plot(nlcd)
+
+nlcdSimple = nlcd
+nlcdSimple[nlcdSimple==11] = 1 #Wet areas are a 1 now
+nlcdSimple[nlcdSimple %in% c(21, 22, 23, 24)] = 2 #All developed areas are 2
+nlcdSimple[nlcdSimple %in% c(31, 52)] = 3 #Barren land and shrub/scrub are 3
+nlcdSimple[nlcdSimple %in% c(41,42,43)] = 4 #All forest types are 4
+nlcdSimple[nlcdSimple == 71] = 5 #Grassland is 5
+nlcdSimple[nlcdSimple %in% c(81,82)] = 6 #And agriculture is 6
+
+#Give these numbers category names
+tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
+                 'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
+nlcdSimple = categories(nlcdSimple, value=tmp)
+
+#And plot the new raster
+ggplot(nlcdSimple, aes(x=x, y=y, fill=category)) +
+  geom_raster()+
+  scale_fill_manual(values=c('blue', 'black', 'gray', 'darkolivegreen', 'orange', 'yellow'))
+  
+  
+  
+forest = nlcdSimple %>% 
+setValues(NA)
+  
+forest[nlcdSimple ==4] = 1
+
+plot(forest)
+  
+
+forestPatchId = patches(forest, directions=8, zeroAsNA=T, allowGaps=F)
+
+plot(forestPatchId)
+```
+
+```{r}
+
+# Calculation patch-level charactertics
+
+# Area
+patchArea = lsm_p_area(forest, directions=8)
+patchArea
+
+# Core area index
+patchcai = lsm_p_cai(forest, directions=8)
+patchcai
+
+# Circle
+patchcircle = lsm_p_circle(forest, directions=8)
+patchcircle
+
+# Contiguity index
+patchcontig = lsm_p_contig(forest, directions=8)
+patchcontig
+
+# Core
+patchCore = lsm_p_core(forest, directions=8)
+patchCore
+
+# Euclidean Nearest-Neighbor Distance
+patchEnn = lsm_p_enn(forest, directions=8)
+patchEnn
+
+# Fractal dimension index
+patchFrac = lsm_p_frac(forest, directions=8)
+patchFrac
+
+# Radius of Gyration
+patchGyrate = lsm_p_gyrate(forest, directions=8)
+patchGyrate
+
+# Number of core areas
+patchNcore = lsm_p_ncore(forest, directions=8)
+patchNcore
+
+# Perimeter-Area ratio
+patchPara = lsm_p_para(forest, directions=8)
+patchPara
+
+# Perimeter
+patchPer = lsm_p_perim(forest, directions=8)
+patchPer
+
+# Shape
+patchShape = lsm_p_shape(forest, directions=8)
+patchShape
+
+  
 ```
 
 
