@@ -356,25 +356,71 @@ names(MeanNND_Change) <- class_labels
 MeanNND_Change
 ```
 
-As demonstrated by the labeled change vectors, the following metrics have been changed in the following ways:
+As demonstrated by the labeled change vectors, the following metrics have been changed in the following ways between 2001 and 2019:
 (1) Total amount of each land cover type 
-- Wetland
-- Developed 
-- Open
-- Forest
-- Grassland
-_ Agriculture
+- Wetland: No Change
+- Developed: Gain of 1.35 hectares
+- Open: Gain of 159.39 hectares
+- Forest: Loss of 413.46 hectares
+- Grassland: Gain of 125.64 hectares
+- Agriculture: Gain of 127.08 hectares
 (2) Mean patch size for each land cover type
+- Wetland: No Change
+- Developed: Loss of 0.18 hectares
+- Open: Gain of 2.53 hectares
+- Forest: Loss of 31.16 hectares
+- Grassland: Gain of 1.77 hectares
+- Agriculture: Gain of 4.78 hectares
 (3) Mean nearest neighbor distance for each cover type
+- Wetland: No Change
+- Developed: Loss of 6.42 meters
+- Open: Loss of 197.80 meters
+- Forest: Loss of 4.26 meters
+- Grassland: Loss of 64.44 meters
+- Agriculture: Loss of 3.12 meters
 
 
 **Quantify these changes at the landscape level by calculating and reporting on changes in the (1) Shannon diversity and (2) Shannon evenness of the landscapes at the different time points. Give a short description of how you interpret the changes in these values.**
 
 ```{r}
-# Place your R code here.
+
+# Shannon Diversity
+
+# 2001
+# Calculation
+SDiversity2001 = lsm_l_shdi(nlcd2001)
+SDiversity2001
+
+# 2019
+# Calculation
+SDiversity2019 = lsm_l_shdi(nlcd2019)
+SDiversity2019
+
+# Difference
+SDiversity_Change <- SDiversity2019$value - SDiversity2001$value
+SDiversity_Change
+
+
+# Shannon Evenness
+
+# 2001
+# Calculation
+SEvenness2001 = lsm_l_shei(nlcd2001)
+SEvenness2001
+
+# 2019
+# Calculation
+SEvenness2019 = lsm_l_shei(nlcd2019)
+SEvenness2019
+
+# Difference
+SEvenness_Change <- SEvenness2019$value - SEvenness2001$value
+SEvenness_Change
+
+
 ```
 
-Place your text here.
+As demonstrated in the code above, from 2011 to 2019, the Shannon's Diversity Index for the landscape classes increased by 0.3930831 and Shannon's evenness index increased by 0.2193839. These results demonstrate that landscape has become more diversified, in that there is more of an even representation of each land cover type. Given the same 6 land cover types are observed in both years, there is no gain or loss of an entire class. From a wildlife perspective, this diversification in land cover type is not inherently beneficial because some of the cover types (i.e agriculture, developed, etc.) are generally poor habitat for many species. Moreover, fragmentation of land cover types can have mixed effects on wildlife communities, dependent on species-specific adaptations. 
 
 
 
