@@ -16,7 +16,6 @@ require(FedData)
 require(sf)
 require(tidyterra)
 require(landscapemetrics)
-require(PerformanceAnalytics)
 require(ggplot2)
 ```
 
@@ -134,7 +133,7 @@ landscape_metrics_df <- data.frame(
   Shape = patchShape$value
 )
 
-chart.Correlation(landscape_metrics_df, histogram=TRUE, pch=19)
+PerformanceAnalytics::chart.Correlation(landscape_metrics_df, histogram=TRUE, pch=19)
   
 ```
 
@@ -436,71 +435,109 @@ vossModel = rast(vossModel$z)
 
 plot(vossModel)
 
-# 10% cover
+# 10% Forest cover
 threshold10 = quantile(as.matrix(vossModel), prob=0.1)
 voss10 = ifel(vossModel > threshold10, 0, 1)
 plot(voss10)
 
-# 20% cover
+# 20% Forest cover
 threshold20 = quantile(as.matrix(vossModel), prob=0.2)
 voss20 = ifel(vossModel > threshold20, 0, 1)
 plot(voss20)
 
-# 30% cover
+# 30% Forest cover
 threshold30 = quantile(as.matrix(vossModel), prob=0.3)
 voss30 = ifel(vossModel > threshold30, 0, 1)
 plot(voss30)
 
-# 40% cover
+# 40% Forest cover
 threshold40 = quantile(as.matrix(vossModel), prob=0.4)
 voss40 = ifel(vossModel > threshold40, 0, 1)
 plot(voss40)
 
-# 50% cover
+# 50% Forest cover
 threshold50 = quantile(as.matrix(vossModel), prob=0.5)
 voss50 = ifel(vossModel > threshold50, 0, 1)
 plot(voss50)
 
-# 60% cover
+# 60% Forest cover
 threshold60 = quantile(as.matrix(vossModel), prob=0.6)
 voss60 = ifel(vossModel > threshold60, 0, 1)
 plot(voss60)
 
-# 70% cover
+# 70% Forest cover
 threshold70 = quantile(as.matrix(vossModel), prob=0.7)
 voss70 = ifel(vossModel > threshold70, 0, 1)
 plot(voss70)
 
-# 80% cover
+# 80% Forest cover
 threshold80 = quantile(as.matrix(vossModel), prob=0.8)
 voss80 = ifel(vossModel > threshold80, 0, 1)
 plot(voss80)
 
-# 90% cover
+# 90% Forest cover
 threshold90 = quantile(as.matrix(vossModel), prob=0.9)
 voss90 = ifel(vossModel > threshold90, 0, 1)
 plot(voss90)
 
-
-
-
-
-
-
-
-
-
-
-
-
 ```
-
-Place your text here.
+As forest cover increases, it mostly expands from the previously established forest cover, rather than popping up randomly in the middle of non-forest patches. Thus, as the forest cover expands, it seems to decrease the total number of forest patches as they become connected, while increasing average patch size. Furthermore, as forest cover increases, intuitively, distances to the nearest neighbor patches seem to decrease, given there is more cover overall to be close to.
 
 **Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is threshold value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
 ```{r}
-# Place your R code here.
+
+# Number of Patches
+NumPatchVoss10 = lsm_c_np(voss10, directions=8)
+NumPatchVoss10 <- NumPatchVoss10$value[2]
+NumPatchVoss20 = lsm_c_np(voss20, directions=8)
+NumPatchVoss20 <- NumPatchVoss20$value[2]
+NumPatchVoss30 = lsm_c_np(voss30, directions=8)
+NumPatchVoss30 <- NumPatchVoss30$value[2]
+NumPatchVoss40 = lsm_c_np(voss40, directions=8)
+NumPatchVoss40 <- NumPatchVoss40$value[2]
+NumPatchVoss50 = lsm_c_np(voss50, directions=8)
+NumPatchVoss50 <- NumPatchVoss50$value[2]
+NumPatchVoss60 = lsm_c_np(voss60, directions=8)
+NumPatchVoss60 <- NumPatchVoss60$value[2]
+NumPatchVoss70 = lsm_c_np(voss70, directions=8)
+NumPatchVoss70 <- NumPatchVoss70$value[2]
+NumPatchVoss80 = lsm_c_np(voss80, directions=8)
+NumPatchVoss80 <- NumPatchVoss80$value[2]
+NumPatchVoss90 = lsm_c_np(voss90, directions=8)
+NumPatchVoss90 <- NumPatchVoss90$value[2]
+
+
+# Assuming NumPatchVossXX$value extracts the number of patches from the results
+data <- data.frame(
+  Threshold = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+  NumPatches = c(NumPatchVoss10, NumPatchVoss20, NumPatchVoss30,
+                 NumPatchVoss40, NumPatchVoss50, NumPatchVoss60,
+                 NumPatchVoss70, NumPatchVoss80, NumPatchVoss90)
+)
+
+library(ggplot2)
+
+ggplot(data, aes(x = Threshold, y = NumPatches)) +
+  geom_point() +  # Add points
+  geom_line() +   # Connect points with lines
+  theme_minimal() +
+  labs(title = "Number of Patches vs Threshold",
+       x = "Threshold",
+       y = "Number of Patches")
+
+
+
+
+# Mean Patch Size
+MeanPatch4 = lsm_c_area_mn(forest, directions=8)
+MeanPatch4
+
+# Mean Nearest-neigbor Distance
+NNDistance4 = lsm_c_enn_mn(forest, directions=8)
+NNDistance4
+
+
 ```
 
 Place your text here.
