@@ -17,6 +17,7 @@ require(sf)
 require(tidyterra)
 require(landscapemetrics)
 require(PerformanceAnalytics)
+require(ggplot2)
 ```
 ```
 
@@ -151,44 +152,67 @@ Given that there are 12 patch-level metrics that can be correlated to one anothe
 
 ```{r}
 
+#Queen (8)
+
+# Number of Patches
+NumPatch8 = lsm_c_np(forest, directions=8)
+NumPatch8
+
+# Mean Patch Size
+MeanPatch8 = lsm_c_area_mn(forest, directions=8)
+MeanPatch8
+
+# Standard Deviation in Patch Size
+SDPatch8 = lsm_c_area_sd(forest, directions=8)
+SDPatch8
+
+# Mean Nearest-neigbor Distance
+NNDistance8 = lsm_c_enn_mn(forest, directions=8)
+NNDistance8
+
+
+# --> Create New Forest Layer for Computing Total Edge <--
+
+forest0 = forest
+forest0[is.na(forest)]=0
+
+# Total Edge Length
+TEdge8 = lsm_c_te(forest0, directions=8)
+TEdge8
 
 
 
-# Combine metrics into a data frame
-landscape_metrics <- c(
-  Area = patchArea$metric,
-  CoreAreaIndex = patchcai$metric,
-  Circle = patchcircle$metric,
-  ContiguityIndex = patchcontig$metric,
-  Core = patchCore$metric,
-  EuclideanNNDistance = patchEnn$metric,
-  FractalDimensionIndex = patchFrac$metric,
-  RadiusOfGyration = patchGyrate$metric,
-  NumberOfCoreAreas = patchNcore$metric,
-  PerimeterAreaRatio = patchPara$metric,
-  Perimeter = patchPer$metric,
-  Shape = patchShape$metric
-)
+#Rook (4)
 
-landscape_values <- c(
-  Area = patchArea$value,
-  CoreAreaIndex = patchcai$value,
-  Circle = patchcircle$value,
-  ContiguityIndex = patchcontig$value,
-  Core = patchCore$value,
-  EuclideanNNDistance = patchEnn$value,
-  FractalDimensionIndex = patchFrac$value,
-  RadiusOfGyration = patchGyrate$value,
-  NumberOfCoreAreas = patchNcore$value,
-  PerimeterAreaRatio = patchPara$value,
-  Perimeter = patchPer$value,
-  Shape = patchShape$value
-)
+# Number of Patches
+NumPatch4 = lsm_c_np(forest, directions=4)
+NumPatch4
+
+# Mean Patch Size
+MeanPatch4 = lsm_c_area_mn(forest, directions=4)
+MeanPatch4
+
+# Standard Deviation in Patch Size
+SDPatch4 = lsm_c_area_sd(forest, directions=4)
+SDPatch4
+
+# Mean Nearest-neigbor Distance
+NNDistance4 = lsm_c_enn_mn(forest, directions=4)
+NNDistance4
+
+
+# Total Edge Length
+TEdge4 = lsm_c_te(forest0, directions=4)
+TEdge4
+
 
 # Place your R code for this challenge here.
 ```
 
-Answer Challenge 2 with your written text here.
+As is to be expected, under Queen connectivity rules (8 directions), there are fewer patches, but on average they are larger. This contrasts with a higher number of patches of smaller average sizes under Rook connectivity rules (4 directions). Standard deviation in patch size was higher under Queen connectivity than Rook connectivity, likely a result of the larger patches contrasting more greatly with the small specks of patches on the landscape. Nearest Neighbor patches were closer (or of a smaller value) under the Rook connectivty, likely a result of the increased number of patches overall, increasing the likelihood of a nearby patch. Lastly, total edge length was the exact same under both connectivity levels according to the package run. This seems to make sense, given that regardless of whether or not you consider an area 1 or more plots based on a shared vertex (at a diagonal point), the perimeter of the area bordering non-habitat should remain the same. 
+
+I feel that the biology for a species or group of species being studied should be considered when deciding between using the the Queen or Rook connectivity rules. For species with high levels of mobility, using Queen connectivty rules to define patches may be more appropriate, since the units of habitat, which may be connected diagonally, are still easy to move back and forth between. In contrast, for species that exhibit lower mobility, using the Rook connectivity rules may be more appropriate, given that a very small corridor/gap leading to another larger chunk of habitat may not be realistically used or accessible. 
+
 
 
 ## Challenge 3 (4 points)
