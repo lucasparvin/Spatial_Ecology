@@ -431,7 +431,67 @@ As demonstrated in the code above, from 2011 to 2019, the Shannon's Diversity In
 ```{r}
 set.seed(23)
 
-# Place your R code here.
+vossModel = voss2d(g=7, H=0.5)
+vossModel = rast(vossModel$z)
+
+plot(vossModel)
+
+# 10% cover
+threshold10 = quantile(as.matrix(vossModel), prob=0.1)
+voss10 = ifel(vossModel > threshold10, 0, 1)
+plot(voss10)
+
+# 20% cover
+threshold20 = quantile(as.matrix(vossModel), prob=0.2)
+voss20 = ifel(vossModel > threshold20, 0, 1)
+plot(voss20)
+
+# 30% cover
+threshold30 = quantile(as.matrix(vossModel), prob=0.3)
+voss30 = ifel(vossModel > threshold30, 0, 1)
+plot(voss30)
+
+# 40% cover
+threshold40 = quantile(as.matrix(vossModel), prob=0.4)
+voss40 = ifel(vossModel > threshold40, 0, 1)
+plot(voss40)
+
+# 50% cover
+threshold50 = quantile(as.matrix(vossModel), prob=0.5)
+voss50 = ifel(vossModel > threshold50, 0, 1)
+plot(voss50)
+
+# 60% cover
+threshold60 = quantile(as.matrix(vossModel), prob=0.6)
+voss60 = ifel(vossModel > threshold60, 0, 1)
+plot(voss60)
+
+# 70% cover
+threshold70 = quantile(as.matrix(vossModel), prob=0.7)
+voss70 = ifel(vossModel > threshold70, 0, 1)
+plot(voss70)
+
+# 80% cover
+threshold80 = quantile(as.matrix(vossModel), prob=0.8)
+voss80 = ifel(vossModel > threshold80, 0, 1)
+plot(voss80)
+
+# 90% cover
+threshold90 = quantile(as.matrix(vossModel), prob=0.9)
+voss90 = ifel(vossModel > threshold90, 0, 1)
+plot(voss90)
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 
