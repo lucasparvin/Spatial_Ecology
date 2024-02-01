@@ -16,6 +16,7 @@ require(FedData)
 require(sf)
 require(tidyterra)
 require(landscapemetrics)
+require(PerformanceAnalytics)
 ```
 ```
 
@@ -121,8 +122,6 @@ patchShape
 
 ```{r}
 
-require(PerformanceAnalytics)
-
 # Combine metric values into a single data frame
 landscape_metrics_df <- data.frame(
   Area = patchArea$value,
@@ -143,10 +142,7 @@ chart.Correlation(landscape_metrics_df, histogram=TRUE, pch=19)
   
 ```
 
-
-**The landscapemetrics package has functions for calculating 12 patch-level metrics. Calculate all 12 of these for every forest patch in our nlcdSimple raster (using the 8-direction rule). This will result in 12 unique values associated with each forest patch. Use the chart.Correlation() function from the PerformanceAnalytics package to examine the correlation among all 12 of these variables. What patterns do you notice, and what do they tell you about the uniqueness or redundancy of the patch-level metrics you calculated?**
-
-Overall, the relationships are complex and varied because there are so many metrics being correlated to one another. That said, a primary takeaway is that there is a significant amount of correlation across nearly all metrics. -0.99 for contiguity and perimeter-area ratio. 1 for Area and core. 0.85 area and perimeter. 
+Given that there are 12 patch-level metrics that can be correlated to one another, there are many varied patterns that exist when observing these correlation plots. However, a primary takeaway is that the vast majority of metrics have highly significant correlations with other metrics. Some metrics, such as "Area" and "Core" are completely redundant in this scenario, with a highly significant correlation value equal to 1.00. On the opposite end of the spectrum, "Contiguity" and "Perimeter-area ratio" have a highly signifcant correlation of -0.99, a near perfect inverse. Many other metrics also have highly significant relationships that exhibit more moderate slopes one way or the other. Whereas, others, like "Area" and "Euclidean Nearest-Neighbor Distance" have no signficiant relationship (indicated by lack of astrices). The process of finding all of these values is worthwhile to initially observe their relationships, but using them all in further analysis would be needless for values that strongly predict one another. 
 
 
 ## Challenge 2 (4 points)
