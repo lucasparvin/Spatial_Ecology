@@ -19,7 +19,7 @@ require(landscapemetrics)
 require(PerformanceAnalytics)
 require(ggplot2)
 ```
-```
+
 
 ## Challenge 1 (4 points)
 
@@ -30,8 +30,6 @@ studyArea = st_read('/vsicurl/https://github.com/ValenteJJ/SpatialEcology/raw/ma
 nlcd = get_nlcd(studyArea, label='AlLandscape', year=2011)
 
 # values(nlcd) = as.character(values(nlcd))
-
-plot(nlcd)
 
 nlcdSimple = nlcd
 nlcdSimple[nlcdSimple==11] = 1 #Wet areas are a 1 now
@@ -57,9 +55,6 @@ forest = nlcdSimple %>%
 setValues(NA)
   
 forest[nlcdSimple ==4] = 1
-
-plot(forest)
-  
 
 forestPatchId = patches(forest, directions=8, zeroAsNA=T, allowGaps=F)
 
@@ -221,18 +216,157 @@ I feel that the biology for a species or group of species being studied should b
 **Using the same zoomed-in study area that we used in the lab, download NLCD raster data for the years 2001 and 2019 and simplify these rasters into 6 landcover categories (wet, developed, barren, forest, grassland, and agriculture). Plot these two rasters. What are some of the initial changes you notice between 2001 and 2019?**
 
 ```{r}
-# Place your R code here.
+# Pull NLCD Data For Both Years
+nlcd2001 = get_nlcd(studyArea, label='AlLandscape', year=2001)
+nlcd2019 = get_nlcd(studyArea, label='AlLandscape', year=2019)
+
+# Simplify 2001
+nlcd2001 = nlcd2001
+nlcd2001[nlcd2001==11] = 1 #Wet areas are a 1 now
+nlcd2001[nlcd2001 %in% c(21, 22, 23, 24)] = 2 #All developed areas are 2
+nlcd2001[nlcd2001 %in% c(31, 52)] = 3 #Barren land and shrub/scrub are 3
+nlcd2001[nlcd2001 %in% c(41,42,43)] = 4 #All forest types are 4
+nlcd2001[nlcd2001 == 71] = 5 #Grassland is 5
+nlcd2001[nlcd2001 %in% c(81,82)] = 6 #And agriculture is 6
+
+#Give these numbers category names
+tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
+                 'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
+nlcd2001 = categories(nlcd2001, value=tmp)
+
+
+# Simplify 2019
+nlcd2019 = nlcd2019
+nlcd2019[nlcd2019==11] = 1 # Wet areas are a 1 now
+nlcd2019[nlcd2019 %in% c(21, 22, 23, 24)] = 2 # All developed areas are 2
+nlcd2019[nlcd2019 %in% c(31, 52)] = 3 # Barren land and shrub/scrub are 3
+nlcd2019[nlcd2019 %in% c(41,42,43)] = 4 # All forest types are 4
+nlcd2019[nlcd2019 == 71] = 5 # Grassland is 5
+nlcd2019[nlcd2019 %in% c(81,82)] = 6 # And agriculture is 6
+
+# Give these numbers category names
+tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
+                 'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
+nlcd2019 = categories(nlcd2019, value=tmp) # This line may need adjustment based on actual function to assign categories
+
+
+
+# Plot 2001 and 2019 NLCD data
+
+# 2001
+ggplot(nlcd2001, aes(x=x, y=y, fill=category)) +
+  geom_raster()+
+  scale_fill_manual(values=c('blue', 'black', 'gray', 'darkolivegreen', 'orange', 'yellow'))
+
+# 2019
+ggplot(nlcd2019, aes(x=x, y=y, fill=category)) +
+  geom_raster() +
+  scale_fill_manual(values=c('blue', 'black', 'gray', 'darkolivegreen', 'orange', 'yellow'))
+
+
+
 ```
 
-Place your text here.
+Between 2001 and 2019, a significant amount of forest seems to have been lost. Forest looks to have been replaced by grassland, agriculture, and open areas, presumably all a function of agricultural expansion. 
 
 **Quantify this at the class level by calculating and reporting the changes in (1) the total amount of each land cover type (2) mean patch size for each land cover type, and (3) mean nearest neighbor distance for each cover type between the years 2011 and 2019. Give a short description of how you interpret the changes in these values.**
 
 ```{r}
-# Place your R code here.
+# Total Amount of Each Land Cover Type
+
+# 2001
+# Calculation
+TotArea2001 = lsm_c_ca(nlcd2001, directions=8)
+
+# Change numeric classes to category names
+class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
+TotArea2001$class <- factor(TotArea2001$class, levels = 1:6, labels = class_labels)
+
+TotArea2001
+
+# 2019
+# Calculation
+TotArea2019 = lsm_c_ca(nlcd2019, directions=8)
+
+# Change numeric classes to category names
+class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
+TotArea2019$class <- factor(TotArea2019$class, levels = 1:6, labels = class_labels)
+
+TotArea2019
+
+# Difference
+Area_Change <- TotArea2019$value - TotArea2001$value
+names(Area_Change) <- class_labels
+Area_Change
+#########################################################################################
+
+# Mean Patch Size of Each Land Cover Type
+
+# 2001
+# Calculation
+MeanPatch2001 = lsm_c_area_mn(nlcd2001, directions=8)
+
+# Change numeric classes to category names
+class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
+MeanPatch2001$class <- factor(MeanPatch2001$class, levels = 1:6, labels = class_labels)
+
+MeanPatch2001
+
+# 2019
+# Calculation
+MeanPatch2019 = lsm_c_area_mn(nlcd2019, directions=8)
+
+# Change numeric classes to category names
+class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
+MeanPatch2019$class <- factor(MeanPatch2019$class, levels = 1:6, labels = class_labels)
+
+MeanPatch2019
+
+# Difference
+MeanPatch_Change <- MeanPatch2019$value - MeanPatch2001$value
+names(MeanPatch_Change) <- class_labels
+MeanPatch_Change
+#########################################################################################
+
+# Mean Nearest Neighbor Distance of Each Land Cover Type
+
+# 2001
+# Calculation
+MeanNND2001 = lsm_c_enn_mn(nlcd2001, directions=8)
+
+# Change numeric classes to category names
+class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
+MeanNND2001$class <- factor(MeanNND2001$class, levels = 1:6, labels = class_labels)
+
+MeanNND2001
+
+# 2019
+# Calculation
+MeanNND2019 = lsm_c_enn_mn(nlcd2019, directions=8)
+
+# Change numeric classes to category names
+class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
+MeanNND2019$class <- factor(MeanNND2019$class, levels = 1:6, labels = class_labels)
+
+MeanNND2019
+
+# Difference
+MeanNND_Change <- MeanNND2019$value - MeanNND2001$value
+names(MeanNND_Change) <- class_labels
+MeanNND_Change
 ```
 
-Place your text here.
+As demonstrated by the labeled change vectors, the following metrics have been changed in the following ways:
+(1) Total amount of each land cover type 
+- Wetland
+- Developed 
+- Open
+- Forest
+- Grassland
+_ Agriculture
+(2) Mean patch size for each land cover type
+(3) Mean nearest neighbor distance for each cover type
+
 
 **Quantify these changes at the landscape level by calculating and reporting on changes in the (1) Shannon diversity and (2) Shannon evenness of the landscapes at the different time points. Give a short description of how you interpret the changes in these values.**
 
