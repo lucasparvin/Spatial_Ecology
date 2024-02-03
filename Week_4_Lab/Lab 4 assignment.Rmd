@@ -1,5 +1,7 @@
 ---
 title: "Lab 4 Assignment - Landcover"
+author: "Lucas Parvin"
+date: "2-3-2024"
 output:
   html_document:
     df_print: paged
@@ -7,8 +9,11 @@ output:
 
 
 ```{r, warning=F, error=F, message=F}
-# Load Packages test
+
+# Clear Workspace
 rm(list=ls())
+
+# Load Packages
 require(Voss)
 require(tidyverse)
 require(terra)
@@ -24,12 +29,15 @@ require(ggplot2)
 
 **The landscapemetrics package has functions for calculating 12 patch-level metrics. Calculate all 12 of these for every forest patch in our nlcdSimple raster (using the 8-direction rule). This will result in 12 unique values associated with each forest patch. Use the chart.Correlation() function from the PerformanceAnalytics package to examine the correlation among all 12 of these variables. What patterns do you notice, and what do they tell you about the uniqueness or redundancy of the patch-level metrics you calculated?**
 
-```{r}
+```{r, warning=F, error=F, message=F}
+
+# Bring In Study Area
 studyArea = st_read('/vsicurl/https://github.com/ValenteJJ/SpatialEcology/raw/main/Week4/studyArea.shp')
+
+# Bring in NLCD Data for Study Area
 nlcd = get_nlcd(studyArea, label='AlLandscape', year=2011)
 
-# values(nlcd) = as.character(values(nlcd))
-
+# Simplify NLCD Categories
 nlcdSimple = nlcd
 nlcdSimple[nlcdSimple==11] = 1 #Wet areas are a 1 now
 nlcdSimple[nlcdSimple %in% c(21, 22, 23, 24)] = 2 #All developed areas are 2
@@ -38,31 +46,29 @@ nlcdSimple[nlcdSimple %in% c(41,42,43)] = 4 #All forest types are 4
 nlcdSimple[nlcdSimple == 71] = 5 #Grassland is 5
 nlcdSimple[nlcdSimple %in% c(81,82)] = 6 #And agriculture is 6
 
-#Give these numbers category names
+# Define Reclassified Values with Labels
 tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
                  'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
 nlcdSimple = categories(nlcdSimple, value=tmp)
 
-#And plot the new raster
+# Plot the Simplified Raster
 ggplot(nlcdSimple, aes(x=x, y=y, fill=category)) +
   geom_raster()+
   scale_fill_manual(values=c('blue', 'black', 'gray', 'darkolivegreen', 'orange', 'yellow'))
   
-  
-  
+# Convert Simplifed Raster to Forest Cover
 forest = nlcdSimple %>% 
 setValues(NA)
-  
 forest[nlcdSimple ==4] = 1
-
 forestPatchId = patches(forest, directions=8, zeroAsNA=T, allowGaps=F)
 
+# Plot Forest Cover
 plot(forestPatchId)
 ```
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
-# Calculation patch-level charactertics
+# Calculate All Patch-level Metrics
 
 # Area
 patchArea = lsm_p_area(forest, directions=8)
@@ -115,9 +121,9 @@ patchShape
   
 ```
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
-# Combine metric values into a single data frame
+# Combine Patch-level Metric Values Into a Single Data Frame
 landscape_metrics_df <- data.frame(
   Area = patchArea$value,
   CoreAreaIndex = patchcai$value,
@@ -133,20 +139,21 @@ landscape_metrics_df <- data.frame(
   Shape = patchShape$value
 )
 
+# Examine the Correlations Among Patch-level Metrics
 PerformanceAnalytics::chart.Correlation(landscape_metrics_df, histogram=TRUE, pch=19)
   
 ```
 
-Given that there are 12 patch-level metrics that can be correlated to one another, there are many varied patterns that exist when observing these correlation plots. However, a primary takeaway is that the vast majority of metrics have highly significant correlations with other metrics. Some metrics, such as "Area" and "Core" are completely redundant in this scenario, with a highly significant correlation value equal to 1.00. On the opposite end of the spectrum, "Contiguity" and "Perimeter-area ratio" have a highly signifcant correlation of -0.99, a near perfect inverse. Many other metrics also have highly significant relationships that exhibit more moderate slopes one way or the other. Whereas, others, like "Area" and "Euclidean Nearest-Neighbor Distance" have no signficiant relationship (indicated by lack of astrices). The process of finding all of these values is worthwhile to initially observe their relationships, but using them all in further analysis would be needless for values that strongly predict one another. 
+**ANSWER:** Given that there are 12 patch-level metrics that can be correlated to one another, there are many varied patterns that exist when observing these correlation plots. However, a primary takeaway is that the vast majority of metrics have highly significant correlations with other metrics. Some metrics, such as "Area" and "Core" are completely redundant in this scenario, with a highly significant correlation value equal to 1.00. On the opposite end of the spectrum, "Contiguity" and "Perimeter-area ratio" have a highly signifcant correlation of -0.99, a near perfect inverse. Many other metrics also have highly significant relationships that exhibit more moderate slopes one way or the other. Whereas, others, like "Area" and "Euclidean Nearest-Neighbor Distance" have no signficiant relationship (indicated by lack of astrices). The process of finding all of these values is worthwhile to initially observe their relationships, but using them all in further analysis would be needless for values that strongly predict one another. 
 
 
 ## Challenge 2 (4 points)
 
 **In our lab, we used the 8-direction or "queen" rule to delineate patches. Using the nlcdSimple raster we created, explore the differences in patch characteristics if you were to use the 4-direction or "rook" rule for delineating patches. Calculate the following class-level metrics for forest cover for both the queen and rook patch delineation rules: number of patches, mean patch size, standard deviation in patch size, nearest-neighbor distance, and total edge length. What patterns do you notice? When might it be appropriate to use one rule vs. the other?**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
-#Queen (8)
+# Queen Delineation Rules (8 Directions)
 
 # Number of Patches
 NumPatch8 = lsm_c_np(forest, directions=8)
@@ -164,11 +171,11 @@ SDPatch8
 NNDistance8 = lsm_c_enn_mn(forest, directions=8)
 NNDistance8
 
-
+################################################################################
 # --> Create New Forest Layer for Computing Total Edge <--
-
 forest0 = forest
 forest0[is.na(forest)]=0
+################################################################################
 
 # Total Edge Length
 TEdge8 = lsm_c_te(forest0, directions=8)
@@ -176,7 +183,7 @@ TEdge8
 
 
 
-#Rook (4)
+#Rook Delineation Rules (4 Directions)
 
 # Number of Patches
 NumPatch4 = lsm_c_np(forest, directions=4)
@@ -194,18 +201,14 @@ SDPatch4
 NNDistance4 = lsm_c_enn_mn(forest, directions=4)
 NNDistance4
 
-
-# Total Edge Length
+# Total Edge Length --> Again, use forest0 to avoid total edge value = 0
 TEdge4 = lsm_c_te(forest0, directions=4)
 TEdge4
-
-
-# Place your R code for this challenge here.
 ```
 
-As is to be expected, under Queen connectivity rules (8 directions), there are fewer patches, but on average they are larger. This contrasts with a higher number of patches of smaller average sizes under Rook connectivity rules (4 directions). Standard deviation in patch size was higher under Queen connectivity than Rook connectivity, likely a result of the larger patches contrasting more greatly with the small specks of patches on the landscape. Nearest Neighbor patches were closer (or of a smaller value) under the Rook connectivty, likely a result of the increased number of patches overall, increasing the likelihood of a nearby patch. Lastly, total edge length was the exact same under both connectivity levels according to the package run. This seems to make sense, given that regardless of whether or not you consider an area 1 or more plots based on a shared vertex (at a diagonal point), the perimeter of the area bordering non-habitat should remain the same. 
+**ANSWER:** As is to be expected, under Queen connectivity rules (8 directions), there are fewer patches, but on average they are larger. This contrasts with a higher number of patches of smaller average sizes under Rook connectivity rules (4 directions). Standard deviation in patch size was higher under Queen connectivity than Rook connectivity, likely a result of the larger patches contrasting more greatly with the small specks of patches on the landscape. Nearest Neighbor patches were closer (or of a smaller value) under the Rook connectivity, likely a result of the increased number of patches overall, increasing the likelihood of a nearby patch. Lastly, total edge length was the exact same under both connectivity levels according to the package run. This seems to make sense, given that regardless of whether or not you consider an area 1 or more plots based on a shared vertex (at a diagonal point), the perimeter of the area bordering non-habitat should remain the same. 
 
-I feel that the biology for a species or group of species being studied should be considered when deciding between using the the Queen or Rook connectivity rules. For species with high levels of mobility, using Queen connectivty rules to define patches may be more appropriate, since the units of habitat, which may be connected diagonally, are still easy to move back and forth between. In contrast, for species that exhibit lower mobility, using the Rook connectivity rules may be more appropriate, given that a very small corridor/gap leading to another larger chunk of habitat may not be realistically used or accessible. 
+I feel that the biology for a species or group of species being studied should be considered when deciding between using the the Queen or Rook connectivity rules. For species with high levels of mobility, using Queen connectivity rules to define patches may be more appropriate, since the units of habitat, which may be connected diagonally, are still easy to move back and forth between. In contrast, for species that exhibit lower mobility, using the Rook connectivity rules may be more appropriate, given that a very small corridor/gap leading to another larger chunk of habitat may not be realistically used or accessible. 
 
 
 
@@ -214,7 +217,7 @@ I feel that the biology for a species or group of species being studied should b
 
 **Using the same zoomed-in study area that we used in the lab, download NLCD raster data for the years 2001 and 2019 and simplify these rasters into 6 landcover categories (wet, developed, barren, forest, grassland, and agriculture). Plot these two rasters. What are some of the initial changes you notice between 2001 and 2019?**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Pull NLCD Data For Both Years
 nlcd2001 = get_nlcd(studyArea, label='AlLandscape', year=2001)
 nlcd2019 = get_nlcd(studyArea, label='AlLandscape', year=2019)
@@ -228,7 +231,7 @@ nlcd2001[nlcd2001 %in% c(41,42,43)] = 4 #All forest types are 4
 nlcd2001[nlcd2001 == 71] = 5 #Grassland is 5
 nlcd2001[nlcd2001 %in% c(81,82)] = 6 #And agriculture is 6
 
-#Give these numbers category names
+# Define Reclassified Values with Labels
 tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
                  'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
 nlcd2001 = categories(nlcd2001, value=tmp)
@@ -243,7 +246,7 @@ nlcd2019[nlcd2019 %in% c(41,42,43)] = 4 # All forest types are 4
 nlcd2019[nlcd2019 == 71] = 5 # Grassland is 5
 nlcd2019[nlcd2019 %in% c(81,82)] = 6 # And agriculture is 6
 
-# Give these numbers category names
+# Define Reclassified Values with Labels
 tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
                  'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
 nlcd2019 = categories(nlcd2019, value=tmp) # This line may need adjustment based on actual function to assign categories
@@ -251,7 +254,6 @@ nlcd2019 = categories(nlcd2019, value=tmp) # This line may need adjustment based
 
 
 # Plot 2001 and 2019 NLCD data
-
 # 2001
 ggplot(nlcd2001, aes(x=x, y=y, fill=category)) +
   geom_raster()+
@@ -266,11 +268,11 @@ ggplot(nlcd2019, aes(x=x, y=y, fill=category)) +
 
 ```
 
-Between 2001 and 2019, a significant amount of forest seems to have been lost. Forest looks to have been replaced by grassland, agriculture, and open areas, presumably all a function of agricultural expansion. 
+**ANSWER:** Between 2001 and 2019, a significant amount of forest seems to have been lost. Forest looks to have been replaced by grassland, agriculture, and open areas, presumably all a function of agricultural expansion. 
 
 **Quantify this at the class level by calculating and reporting the changes in (1) the total amount of each land cover type (2) mean patch size for each land cover type, and (3) mean nearest neighbor distance for each cover type between the years 2011 and 2019. Give a short description of how you interpret the changes in these values.**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Total Amount of Each Land Cover Type
 
 # 2001
@@ -280,7 +282,6 @@ TotArea2001 = lsm_c_ca(nlcd2001, directions=8)
 # Change numeric classes to category names
 class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
 TotArea2001$class <- factor(TotArea2001$class, levels = 1:6, labels = class_labels)
-
 TotArea2001
 
 # 2019
@@ -290,14 +291,13 @@ TotArea2019 = lsm_c_ca(nlcd2019, directions=8)
 # Change numeric classes to category names
 class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
 TotArea2019$class <- factor(TotArea2019$class, levels = 1:6, labels = class_labels)
-
 TotArea2019
 
 # Difference
 Area_Change <- TotArea2019$value - TotArea2001$value
 names(Area_Change) <- class_labels
 Area_Change
-#########################################################################################
+################################################################################
 
 # Mean Patch Size of Each Land Cover Type
 
@@ -308,7 +308,6 @@ MeanPatch2001 = lsm_c_area_mn(nlcd2001, directions=8)
 # Change numeric classes to category names
 class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
 MeanPatch2001$class <- factor(MeanPatch2001$class, levels = 1:6, labels = class_labels)
-
 MeanPatch2001
 
 # 2019
@@ -318,14 +317,13 @@ MeanPatch2019 = lsm_c_area_mn(nlcd2019, directions=8)
 # Change numeric classes to category names
 class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
 MeanPatch2019$class <- factor(MeanPatch2019$class, levels = 1:6, labels = class_labels)
-
 MeanPatch2019
 
 # Difference
 MeanPatch_Change <- MeanPatch2019$value - MeanPatch2001$value
 names(MeanPatch_Change) <- class_labels
 MeanPatch_Change
-#########################################################################################
+################################################################################
 
 # Mean Nearest Neighbor Distance of Each Land Cover Type
 
@@ -336,7 +334,6 @@ MeanNND2001 = lsm_c_enn_mn(nlcd2001, directions=8)
 # Change numeric classes to category names
 class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
 MeanNND2001$class <- factor(MeanNND2001$class, levels = 1:6, labels = class_labels)
-
 MeanNND2001
 
 # 2019
@@ -346,7 +343,6 @@ MeanNND2019 = lsm_c_enn_mn(nlcd2019, directions=8)
 # Change numeric classes to category names
 class_labels <- c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture')
 MeanNND2019$class <- factor(MeanNND2019$class, levels = 1:6, labels = class_labels)
-
 MeanNND2019
 
 # Difference
@@ -355,33 +351,61 @@ names(MeanNND_Change) <- class_labels
 MeanNND_Change
 ```
 
-As demonstrated by the labeled change vectors, the following metrics have been changed in the following ways between 2001 and 2019:
-(1) Total amount of each land cover type 
+**ANSWER:** As demonstrated by the labeled "Change" vectors, the following metrics have been changed in the following ways between 2001 and 2019:
+
+**(1) Total amount of each land cover type:**
+
 - Wetland: No Change
+
 - Developed: Gain of 1.35 hectares
+
 - Open: Gain of 159.39 hectares
+
 - Forest: Loss of 413.46 hectares
+
 - Grassland: Gain of 125.64 hectares
+
 - Agriculture: Gain of 127.08 hectares
-(2) Mean patch size for each land cover type
+
+*The primary takeaway here is that forest has been lost and replaced by open areas, grassland, and agriculture.*
+
+
+**(2) Mean patch size for each land cover type**
+
 - Wetland: No Change
+
 - Developed: Loss of 0.18 hectares
+
 - Open: Gain of 2.53 hectares
+
 - Forest: Loss of 31.16 hectares
+
 - Grassland: Gain of 1.77 hectares
+
 - Agriculture: Gain of 4.78 hectares
-(3) Mean nearest neighbor distance for each cover type
+
+*The primary takeaway here is that average patch sizes for most land cover types increased -- at the expense of forest patch sizes decreasing on average.*
+
+
+**(3) Mean nearest neighbor distance for each cover type**
+
 - Wetland: No Change
+
 - Developed: Loss of 6.42 meters
+
 - Open: Loss of 197.80 meters
+
 - Forest: Loss of 4.26 meters
+
 - Grassland: Loss of 64.44 meters
+
 - Agriculture: Loss of 3.12 meters
 
+*The primary takeaway here is that mean nearest neighbor patches for all land cover types, other than wetlands, decreased. This means that distinct patches, on average, are closer to one another, likely a result of the fragmentation that occurred.* 
 
 **Quantify these changes at the landscape level by calculating and reporting on changes in the (1) Shannon diversity and (2) Shannon evenness of the landscapes at the different time points. Give a short description of how you interpret the changes in these values.**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
 # Shannon Diversity
 
@@ -419,20 +443,21 @@ SEvenness_Change
 
 ```
 
-As demonstrated in the code above, from 2011 to 2019, the Shannon's Diversity Index for the landscape classes increased by 0.3930831 and Shannon's evenness index increased by 0.2193839. These results demonstrate that landscape has become more diversified, in that there is more of an even representation of each land cover type. Given the same 6 land cover types are observed in both years, there is no gain or loss of an entire class. From a wildlife perspective, this diversification in land cover type is not inherently beneficial because some of the cover types (i.e agriculture, developed, etc.) are generally poor habitat for many species. Moreover, fragmentation of land cover types can have mixed effects on wildlife communities, dependent on species-specific adaptations. 
-
+**ANSWER:** As demonstrated in the code above, from 2011 to 2019, the Shannon's Diversity Index for the landscape classes increased by 0.3930831 and Shannon's evenness index increased by 0.2193839. These results demonstrate that landscape has become more diversified, in that there is more of an even representation of each land cover type. Given the same 6 land cover types are observed in both years, there is no gain or loss of an entire class. From a wildlife perspective, this diversification in land cover type is not inherently beneficial because some of the cover types (i.e agriculture, developed, etc.) are generally poor habitat for many species. Moreover, fragmentation of land cover types can have mixed effects on wildlife communities, dependent on species-specific adaptations. 
 
 
 ## Challenge 4 (4 points)
 
 **Use the voss2d() function to simulate a surface where g = 7 and H = 0.5. From that, create 9 'landscapes' with 10%, 20%, 30%, ..., 90% threshold values. The '1' values here can represent anything your imagination comes up with. It could be forest cover, cover of some other land cover type, bodies of water, temperatures above a threshold, etc. I suggest you set the seed for your simulation value so that you get the same outcome each time you run the code. Plot these landscapes and comment on what patterns you see changing as the value increases from a 10% cover to 90% cover.**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 set.seed(23)
 
+#Set vossModel Parameters
 vossModel = voss2d(g=7, H=0.5)
 vossModel = rast(vossModel$z)
 
+# Plot Initial vossModel
 plot(vossModel)
 
 # 10% Forest cover
@@ -481,11 +506,12 @@ voss90 = ifel(vossModel > threshold90, 0, 1)
 plot(voss90)
 
 ```
-As forest cover increases, it mostly expands from the previously established forest cover, rather than popping up randomly in the middle of non-forest patches. Thus, as the forest cover expands, it seems to decrease the total number of forest patches as they become connected, while increasing average patch size. Furthermore, as forest cover increases, intuitively, distances to the nearest neighbor patches seem to decrease, given there is more cover overall to be close to.
+
+**ANSWER:** As forest cover increases, it mostly expands from the previously established forest cover, rather than popping up randomly in the middle of non-forest patches. Thus, as the forest cover expands, it seems to decrease the total number of distinct forest patches because they become connected. I would predict that this results in an increase of average patch size. Furthermore, as forest cover increases, intuitively, distances to the nearest neighbor patches seem to decrease, given there is more overall cover to be in proximity to.
 
 **Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is threshold value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
 # Number of Patches
 NumPatchVoss10 = lsm_c_np(voss10, directions=8)
@@ -516,6 +542,7 @@ NumPatchData <- data.frame(
                  NumPatchVoss70, NumPatchVoss80, NumPatchVoss90)
 )
 
+# Create Line of Best Fit For Inclusion on Figure
 PatchModel <- lm(NumPatches ~ Threshold, data = NumPatchData)
 PatchSlope <- coef(PatchModel)["Threshold"]
 PatchIntercept <- coef(PatchModel)["(Intercept)"]
@@ -524,16 +551,15 @@ PatchLineLabel <- paste("y =", round(PatchIntercept, 2), round(PatchSlope, 2), "
 
 
 ggplot(NumPatchData, aes(x = Threshold, y = NumPatches)) +
-  geom_point() +  # Add points
-  geom_line() +   # Connect points with lines
-  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  geom_point() +  
+  geom_smooth(method = "lm", se = TRUE, color = "red") + 
   annotate("text", x = 0.5, y = min(NumPatchData$NumPatches) * 1.05, label = PatchLineLabel, hjust = 0, vjust = 0, color = "red") +
   theme_minimal() +
-  labs(title = "Number of Patches vs Threshold",
+  labs(title = "Number of Patches vs Threshold Values",
        x = "Threshold",
        y = "Number of Patches")
 
-#####################################################################################################################
+################################################################################
 
 # Mean Patch Size
 MeanPatch10 = lsm_c_area_mn(voss10, directions=8)
@@ -563,7 +589,7 @@ MeanPatchData <- data.frame(
                  MeanPatch70, MeanPatch80, MeanPatch90)
 )
 
-
+# Create Line of Best Fit For Inclusion on Figure
 MeanPatchModel <- lm(MeanPatches ~ Threshold, data = MeanPatchData)
 MeanPatchSlope <- coef(MeanPatchModel)["Threshold"]
 MeanPatchIntercept <- coef(MeanPatchModel)["(Intercept)"]
@@ -571,17 +597,14 @@ MeanPatchLineLabel <- paste("y =", round(MeanPatchIntercept, 2), "+", round(Mean
 
 
 ggplot(MeanPatchData, aes(x = Threshold, y = MeanPatches)) +
-  geom_point() +  # Add points
-  geom_line() +   # Connect points with lines
-  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  geom_point() +  
+  geom_smooth(method = "lm", se = TRUE, color = "red") + 
   annotate("text", x = 0.5, y = min(MeanPatchData$MeanPatches) * 1.05, label = MeanPatchLineLabel, hjust = 0, vjust = 0, color = "red") +
   theme_minimal() +
-  labs(title = "Mean Patch Size vs Threshold",
+  labs(title = "Mean Patch Size vs Threshold Value",
        x = "Threshold",
        y = "Mean Patch Size")
-
-
-
+################################################################################
 
 # Mean Nearest-neigbor Distance
 
@@ -613,44 +636,41 @@ ENNData <- data.frame(
                  ENN70, ENN80, ENN90)
 )
 
-
+# Create Line of Best Fit For Inclusion on Figure
 ENNModel <- lm(ENNValues ~ Threshold, data = ENNData)
 ENNSlope <- coef(ENNModel)["Threshold"]
 ENNIntercept <- coef(ENNModel)["(Intercept)"]
 ENNLineLabel <- paste("y =", round(ENNIntercept, 2), round(ENNSlope, 2), "x")
 
 ggplot(ENNData, aes(x = Threshold, y = ENNValues)) +
-  geom_point() +  # Add data points
-  geom_line() +   # Connect the points with lines
-  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE, color = "red") + 
   annotate("text", x = 0.5, y = min(ENNData$ENNValues) * 1.05, label = ENNLineLabel, hjust = 0, vjust = 0, color = "red") +
   theme_minimal() +
-  labs(title = "Mean Nearest-Neighbor Distance vs Threshold",
+  labs(title = "Mean Nearest-Neighbor Distance vs Threshold Value",
        x = "Threshold",
        y = "Mean Nearest-Neighbor Distance")
-
-
 
 ```
 
 **Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is threshold value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
-Number of Patches: I chose this metric because as I incrementally increased forest cover with the Voss package, it appeared as if the cover increased in a systematic way, expanding from previous forest patches. Thus, I anticipated that as forest cover expanded, patches would connect, thus reducing the total number of distinct patches. After plotting threshold on the x-axis and number of patches on the y-axis, my eye test appears supported by a negative  slope. That said, with 0% cover and 100% cover, the total number of patches would be 0 and 1 respectively, so this relationships may not be best represented by a linear slope.
+**ANSWER:**
+*Class Level Number of Patches:* I chose this metric because as I incrementally increased forest cover with the Voss package, it appeared as if the cover increased in a systematic way, expanding from previous forest patches. Thus, I anticipated that as forest cover expanded, patches would connect, thus reducing the total number of distinct patches. After plotting threshold on the x-axis and number of patches on the y-axis, my eye test appears supported by a negative  slope. That said, with 0% cover and 100% cover, the total number of patches would be 0 and 1 respectively, so this relationships may not be best represented by a linear slope.
 
-Mean Patch Size: I chose this metric because as previously discussed, forest cover seemed to increase in a systematic way. As forest cover expanded, patches seemed to connect, and so I predicted mean patch size would increase with threshold. After plotting threshold on the x-axis and mean patch size on the y-axis, this prediction appears supported by a positive slope. However, yet again, the true relationship is most likely not linear. 
+*Class Level Mean Patch Size:* I chose this metric because as previously discussed, forest cover seemed to increase in a systematic way. As forest cover expanded, patches seemed to connect, and so I predicted mean patch size would increase with threshold. After plotting threshold on the x-axis and mean patch size on the y-axis, this prediction appears supported by a positive slope. However, yet again, the true relationship is most likely not linear. 
 
-Mean Nearest-Neighbor Distance: I chose this metric because intuitively, I would assume that increasing cover increases spatial coverage, reduces open space, and thus, on average, reduces the distance from patch to patch. This prediction was supported by the negative slope observed when comparing threshold to mean nearest-neighbor values. Of the three metrics I investigated, this is the metric that appears the most linear to me. Generally, with very low tree cover, I would assume that forest patches would be sparse and likely separated by long distances. However, with an increasing saturation of forest patches, I would assume a steady decline in distance that separates them. 
-
-
+*Class Level Nearest-Neighbor Mean Distance:* I chose this metric because intuitively, I would assume that increasing cover increases spatial coverage, reduces open space, and thus, on average, reduces the distance from patch to patch. This prediction was supported by the negative slope observed when comparing threshold to mean nearest-neighbor values. Of the three metrics I investigated, this is the metric that appears the most linear to me. Generally, with very low tree cover, I would assume that forest patches would be sparse and likely separated by long distances. However, with an increasing saturation of forest patches, I would assume a steady decline in distance that separates them. 
 
 
 ## Challenge 5 (4 points)
 
 **Use the voss2d() function to simulate 9 surfaces. In each one, g should be 7, but vary the value of H from 0.1 to 0.9. Create a unique landscape from each of these with a threshold value of 30% cover. Again, the 1 values can represent anything you desire, and again I suggest you set the seed for your simulation value so that you get the same outcome each time you run the code. Plot these landscapes and comment on what patterns you see changing as the H value increases from 0.1 to 0.9.**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 set.seed(23)
 
+# Set Parameters for vossModels
 vossModel.1 = voss2d(g=7, H=0.1)
 vossModel.1 = rast(vossModel.1$z)
 
@@ -677,6 +697,9 @@ vossModel.8 = rast(vossModel.8$z)
 
 vossModel.9 = voss2d(g=7, H=0.9)
 vossModel.9 = rast(vossModel.9$z)
+
+
+# Plot voss Forest Covers
 
 # 30% Forest Cover --> H = 0.1
 surface1 = quantile(as.matrix(vossModel.1), prob=0.3)
@@ -725,13 +748,13 @@ plot(vosssurface9)
 
 ```
 
-As H increases from 0.1 to 0.9, it seems that the forest cover across the landscape becomes more clumpy, and thus less patchy. For example, when H is 0.9, it appears the forest cover is nearly composed of one large patch (with the exception of a few isolated pixels). In contrast, when H is 0.1, the forest cover appears significantly more scattered across the landscape.
+**ANSWER:** As H increases from 0.1 to 0.9, it seems that the forest cover across the landscape becomes more clumpy, and thus less patchy. For example, when H is 0.9, it appears the forest cover is nearly composed of one large patch (with the exception of a few isolated pixels). In contrast, when H is 0.1, the forest cover appears significantly more scattered across the landscape.
+
 
 **Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. THESE MUST BE DIFFERENT THAN THOSE METRICS YOU USED IN CHALLENGE 2. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is H-value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Landscape Patch Cohesion
-
 PatchCohesion.1 = lsm_l_cohesion(vosssurface1, directions=8)
 PatchCohesion.1 <- PatchCohesion.1$value
 PatchCohesion.2 = lsm_l_cohesion(vosssurface2, directions=8)
@@ -760,32 +783,29 @@ LandscapeCohesion <- data.frame(
                  PatchCohesion.7, PatchCohesion.8, PatchCohesion.9)
 )
 
+# Create Line of Best Fit For Inclusion on Figure
 CohesionModel <- lm(CohesionValues ~ HValue, data = LandscapeCohesion)
 CohesionSlope <- coef(CohesionModel)["HValue"]
 CohesionIntercept <- coef(CohesionModel)["(Intercept)"]
 CohesionLineLabel <- paste("y =", round(CohesionIntercept, 2), "+", round(CohesionSlope, 2), "H")
 
-# Assuming your previous setup for LandscapeCohesion and the linear model
-
 # Adjust the y position for the annotation to be within the visible range
-adjusted_y_position_for_label <- 99.5 # Adjust this value as needed
+adjusted_y_position_for_label <- 99.5 
 
+# Plot
 ggplot(LandscapeCohesion, aes(x = HValue, y = CohesionValues)) +
-  geom_point() +  # Add points
-  geom_line() +   # Connect points with lines (optional)
-  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  geom_point() +  
+  geom_smooth(method = "lm", se = TRUE, color = "red") + 
   annotate("text", x = 0.5, y = adjusted_y_position_for_label, label = CohesionLineLabel, hjust = 0, vjust = 1, color = "red") +
-  coord_cartesian(ylim = c(99, max(LandscapeCohesion$CohesionValues, na.rm = TRUE))) + # Adjust y-axis limits
+  coord_cartesian(ylim = c(99, max(LandscapeCohesion$CohesionValues, na.rm = TRUE))) + 
   theme_minimal() +
-  labs(title = "Patch Cohesion vs H Value",
+  labs(title = "Landscape Patch Cohesion vs H Value",
        x = "H",
        y = "Patch Cohesion")
 
+################################################################################
 
-
-
-
-#######################################################################################################
+#Landscape Core Area Means
 CoreAreaMean.1 = lsm_l_cai_mn(vosssurface1, directions=8)
 CoreAreaMean.1 <- CoreAreaMean.1$value
 CoreAreaMean.2 = lsm_l_cai_mn(vosssurface2, directions=8)
@@ -813,23 +833,24 @@ LandscapeCoreAreaMean <- data.frame(
                  CoreAreaMean.7, CoreAreaMean.8, CoreAreaMean.9)
 )
 
+# Create Line of Best Fit For Inclusion on Figure
 CoreAreaMeanModel <- lm(CoreAreaValues ~ HValue, data = LandscapeCoreAreaMean)
 CoreAreaMeanSlope <- coef(CoreAreaMeanModel)["HValue"]
 CoreAreaMeanIntercept <- coef(CoreAreaMeanModel)["(Intercept)"]
 CoreAreaMeanLineLabel <- paste("y =", round(CoreAreaMeanIntercept, 2), "+", round(CoreAreaMeanSlope, 2), "H")
 
-
+# Plot
 ggplot(LandscapeCoreAreaMean, aes(x = HValue, y = CoreAreaValues)) +
-  geom_point() +  # Add points
-  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  geom_point() +  
+  geom_smooth(method = "lm", se = TRUE, color = "red") + 
   annotate("text", x = 0.5, y = max(LandscapeCoreAreaMean$CoreAreaValues, na.rm = TRUE), label = CoreAreaMeanLineLabel, hjust = 0, vjust = 1, color = "red") +
   theme_minimal() +
-  labs(title = "Core Area Mean vs H Value",
+  labs(title = "Landscape Core Area Mean vs H Value",
        x = "H",
        y = "Core Area Mean")
+################################################################################
 
-####################################################################################################
-
+# Landscape Number of Core Areas
 NumCoreAreas.1 = lsm_l_ndca(vosssurface1, directions=8)
 NumCoreAreas.1 <- NumCoreAreas.1$value
 NumCoreAreas.2 = lsm_l_ndca(vosssurface2, directions=8)
@@ -857,28 +878,29 @@ LandscapeNumCoreAreas <- data.frame(
                  NumCoreAreas.7, NumCoreAreas.8, NumCoreAreas.9)
 )
 
+# Create Line of Best Fit For Inclusion on Figure
 NumCoreAreasmodel <- lm(CoreAreas ~ HValue, data = LandscapeNumCoreAreas)
 NumCoreAreasmodelslope <- coef(NumCoreAreasmodel)["HValue"]
 NumCoreAreasmodelintercept <- coef(NumCoreAreasmodel)["(Intercept)"]
-NumCoreAreasmodelline_label <- paste("y =", round(intercept, 2), round(slope, 2), "H")
+NumCoreAreasmodelline_label <- paste("y =", round(NumCoreAreasmodelintercept, 2), round(NumCoreAreasmodelslope, 2), "H")
 
+# Plot
 ggplot(LandscapeNumCoreAreas, aes(x = HValue, y = CoreAreas)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE, color = "red") +
   annotate("text", x = 0.5, y = max(LandscapeNumCoreAreas$CoreAreas), label = NumCoreAreasmodelline_label, hjust = 0, vjust = 1, color = "red") +
   theme_minimal() +
-  labs(title = "Number of Disjunct Core Areas vs H Value",
+  labs(title = "Landscape Core Areas vs H Values",
        x = "H",
        y = "Number of Disjunct Core Areas")
 
 
 ```
-**Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. THESE MUST BE DIFFERENT THAN THOSE METRICS YOU USED IN CHALLENGE 2. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is H-value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
-Landscape Patch Cohesion Index: I chose this metric because as I increased the value of H, the forest cover appeared to become more clumped together. Thus, I expected that as the value of H increased, the Patch Cohesion Index, a measure of aggregation, would also increase. After plotting H on the x-axis and the Landscape Patch Cohesion Index on the y-axis, my prediction appears supported by a positive slope. However, overall, the Patch Cohesion Index seemed to vary only slightly, with a minimum value of ~99.05 and a maximum value of ~99.5.
+**ANSWER:**
+*Landscape Patch Cohesion Index:* I chose this metric because as I increased the value of H, the forest cover appeared to become more clumped together. Thus, I expected that as the value of H increased, the Patch Cohesion Index, a measure of aggregation, would also increase. After plotting H on the x-axis and the Landscape Patch Cohesion Index on the y-axis, my prediction appears supported by a positive slope. However, overall, the Patch Cohesion Index seemed to vary only slightly, with a minimum value of ~99.05 and a maximum value of ~99.5.
 
+*Landscape Mean of Core Area Index:* I chose this metric because as previously noted, forest cover appeared to become more clumped together as H increased. Thus, with increasing clumpiness, I also expected an increase in core area (and a decrease in total edge). This anticipation appears supported by the slope of provided in the plot showing values of H on the x-axis and the Landscape Mean of Core Area Index on the y-axis.
 
-Landscape Mean of Core Area Index: I chose this metric because as previously noted, forest cover appeared to become more clumped together as H increased. Thus, with increasing clumpiness, I also expected an increase in core area (and a decrease in total edge). This anticipation appears supported by the slope of provided in the plot showing values of H on the x-axis and the Landscape Mean of Core Area Index on the y-axis.
-
-Landscape Number of Core Areas: Related to the Core Area Index, I chose this metric because as forest cover became more aggregated, I expected the total number of core areas to decrease -- demonstrating an inverse relationship with the Mean of Core Area Index. Again, this prediction was supported by the slope given by the plot. As the values of H increase, the number of disjuct core areas (separate core areas) decrease across the landscape. 
+*Landscape Number of Core Areas:* Related to the Core Area Index, I chose this metric because as forest cover became more aggregated, I expected the total number of core areas to decrease -- demonstrating an inverse relationship with the Mean of Core Area Index. Again, this prediction was supported by the slope given by the plot. As the values of H increase, the number of disjunct core areas (separate core areas) decrease across the landscape. 
 
