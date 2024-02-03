@@ -516,15 +516,24 @@ NumPatchData <- data.frame(
                  NumPatchVoss70, NumPatchVoss80, NumPatchVoss90)
 )
 
+PatchModel <- lm(NumPatches ~ Threshold, data = NumPatchData)
+PatchSlope <- coef(PatchModel)["Threshold"]
+PatchIntercept <- coef(PatchModel)["(Intercept)"]
+PatchLineLabel <- paste("y =", round(PatchIntercept, 2), round(PatchSlope, 2), "x")
+
+
+
 ggplot(NumPatchData, aes(x = Threshold, y = NumPatches)) +
   geom_point() +  # Add points
   geom_line() +   # Connect points with lines
   geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  annotate("text", x = 0.5, y = min(NumPatchData$NumPatches) * 1.05, label = PatchLineLabel, hjust = 0, vjust = 0, color = "red") +
   theme_minimal() +
   labs(title = "Number of Patches vs Threshold",
        x = "Threshold",
        y = "Number of Patches")
 
+#####################################################################################################################
 
 # Mean Patch Size
 MeanPatch10 = lsm_c_area_mn(voss10, directions=8)
@@ -554,14 +563,23 @@ MeanPatchData <- data.frame(
                  MeanPatch70, MeanPatch80, MeanPatch90)
 )
 
+
+MeanPatchModel <- lm(MeanPatches ~ Threshold, data = MeanPatchData)
+MeanPatchSlope <- coef(MeanPatchModel)["Threshold"]
+MeanPatchIntercept <- coef(MeanPatchModel)["(Intercept)"]
+MeanPatchLineLabel <- paste("y =", round(MeanPatchIntercept, 2), "+", round(MeanPatchSlope, 2), "x")
+
+
 ggplot(MeanPatchData, aes(x = Threshold, y = MeanPatches)) +
   geom_point() +  # Add points
   geom_line() +   # Connect points with lines
   geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  annotate("text", x = 0.5, y = min(MeanPatchData$MeanPatches) * 1.05, label = MeanPatchLineLabel, hjust = 0, vjust = 0, color = "red") +
   theme_minimal() +
   labs(title = "Mean Patch Size vs Threshold",
        x = "Threshold",
        y = "Mean Patch Size")
+
 
 
 
@@ -595,14 +613,22 @@ ENNData <- data.frame(
                  ENN70, ENN80, ENN90)
 )
 
+
+ENNModel <- lm(ENNValues ~ Threshold, data = ENNData)
+ENNSlope <- coef(ENNModel)["Threshold"]
+ENNIntercept <- coef(ENNModel)["(Intercept)"]
+ENNLineLabel <- paste("y =", round(ENNIntercept, 2), round(ENNSlope, 2), "x")
+
 ggplot(ENNData, aes(x = Threshold, y = ENNValues)) +
-  geom_point() +  # Add points
-  geom_line() +   # Connect points with lines
+  geom_point() +  # Add data points
+  geom_line() +   # Connect the points with lines
   geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  annotate("text", x = 0.5, y = min(ENNData$ENNValues) * 1.05, label = ENNLineLabel, hjust = 0, vjust = 0, color = "red") +
   theme_minimal() +
-  labs(title = "ENN vs Threshold",
+  labs(title = "Mean Nearest-Neighbor Distance vs Threshold",
        x = "Threshold",
-       y = "ENN Distance")
+       y = "Mean Nearest-Neighbor Distance")
+
 
 
 ```
@@ -651,9 +677,6 @@ vossModel.8 = rast(vossModel.8$z)
 
 vossModel.9 = voss2d(g=7, H=0.9)
 vossModel.9 = rast(vossModel.9$z)
-
-vossModel.1 = voss2d(g=7, H=0.5)
-vossModel.1 = rast(vossModel.1$z)
 
 # 30% Forest Cover --> H = 0.1
 surface1 = quantile(as.matrix(vossModel.1), prob=0.3)
@@ -708,11 +731,154 @@ As H increases from 0.1 to 0.9, it seems that the forest cover across the landsc
 
 ```{r}
 # Landscape Patch Cohesion
-lsm_l_cohesion
 
+PatchCohesion.1 = lsm_l_cohesion(vosssurface1, directions=8)
+PatchCohesion.1 <- PatchCohesion.1$value
+PatchCohesion.2 = lsm_l_cohesion(vosssurface2, directions=8)
+PatchCohesion.2 <- PatchCohesion.2$value
+PatchCohesion.3 = lsm_l_cohesion(vosssurface3, directions=8)
+PatchCohesion.3 <- PatchCohesion.3$value
+PatchCohesion.4 = lsm_l_cohesion(vosssurface4, directions=8)
+PatchCohesion.4 <- PatchCohesion.4$value
+PatchCohesion.5 = lsm_l_cohesion(vosssurface5, directions=8)
+PatchCohesion.5 <- PatchCohesion.5$value
+PatchCohesion.6 = lsm_l_cohesion(vosssurface6, directions=8)
+PatchCohesion.6 <- PatchCohesion.6$value
+PatchCohesion.7 = lsm_l_cohesion(vosssurface7, directions=8)
+PatchCohesion.7 <- PatchCohesion.7$value
+PatchCohesion.8 = lsm_l_cohesion(vosssurface8, directions=8)
+PatchCohesion.8 <- PatchCohesion.8$value
+PatchCohesion.9 = lsm_l_cohesion(vosssurface9, directions=8)
+PatchCohesion.9 <- PatchCohesion.9$value
+
+
+# Data Frame to Plot
+LandscapeCohesion <- data.frame(
+  HValue = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+  CohesionValues = c(PatchCohesion.1, PatchCohesion.2, PatchCohesion.3,
+                 PatchCohesion.4, PatchCohesion.5, PatchCohesion.6,
+                 PatchCohesion.7, PatchCohesion.8, PatchCohesion.9)
+)
+
+CohesionModel <- lm(CohesionValues ~ HValue, data = LandscapeCohesion)
+CohesionSlope <- coef(CohesionModel)["HValue"]
+CohesionIntercept <- coef(CohesionModel)["(Intercept)"]
+CohesionLineLabel <- paste("y =", round(CohesionIntercept, 2), "+", round(CohesionSlope, 2), "H")
+
+# Assuming your previous setup for LandscapeCohesion and the linear model
+
+# Adjust the y position for the annotation to be within the visible range
+adjusted_y_position_for_label <- 99.5 # Adjust this value as needed
+
+ggplot(LandscapeCohesion, aes(x = HValue, y = CohesionValues)) +
+  geom_point() +  # Add points
+  geom_line() +   # Connect points with lines (optional)
+  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  annotate("text", x = 0.5, y = adjusted_y_position_for_label, label = CohesionLineLabel, hjust = 0, vjust = 1, color = "red") +
+  coord_cartesian(ylim = c(99, max(LandscapeCohesion$CohesionValues, na.rm = TRUE))) + # Adjust y-axis limits
+  theme_minimal() +
+  labs(title = "Patch Cohesion vs H Value",
+       x = "H",
+       y = "Patch Cohesion")
+
+
+
+
+
+#######################################################################################################
+CoreAreaMean.1 = lsm_l_cai_mn(vosssurface1, directions=8)
+CoreAreaMean.1 <- CoreAreaMean.1$value
+CoreAreaMean.2 = lsm_l_cai_mn(vosssurface2, directions=8)
+CoreAreaMean.2 <- CoreAreaMean.2$value
+CoreAreaMean.3 = lsm_l_cai_mn(vosssurface3, directions=8)
+CoreAreaMean.3 <- CoreAreaMean.3$value
+CoreAreaMean.4 = lsm_l_cai_mn(vosssurface4, directions=8)
+CoreAreaMean.4 <- CoreAreaMean.4$value
+CoreAreaMean.5 = lsm_l_cai_mn(vosssurface5, directions=8)
+CoreAreaMean.5 <- CoreAreaMean.5$value
+CoreAreaMean.6 = lsm_l_cai_mn(vosssurface6, directions=8)
+CoreAreaMean.6 <- CoreAreaMean.6$value
+CoreAreaMean.7 = lsm_l_cai_mn(vosssurface7, directions=8)
+CoreAreaMean.7 <- CoreAreaMean.7$value
+CoreAreaMean.8 = lsm_l_cai_mn(vosssurface8, directions=8)
+CoreAreaMean.8 <- CoreAreaMean.8$value
+CoreAreaMean.9 = lsm_l_cai_mn(vosssurface9, directions=8)
+CoreAreaMean.9 <- CoreAreaMean.9$value
+
+# Data Frame to Plot
+LandscapeCoreAreaMean <- data.frame(
+  HValue = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+  CoreAreaValues = c(CoreAreaMean.1, CoreAreaMean.2, CoreAreaMean.3,
+                 CoreAreaMean.4, CoreAreaMean.5, CoreAreaMean.6,
+                 CoreAreaMean.7, CoreAreaMean.8, CoreAreaMean.9)
+)
+
+CoreAreaMeanModel <- lm(CoreAreaValues ~ HValue, data = LandscapeCoreAreaMean)
+CoreAreaMeanSlope <- coef(CoreAreaMeanModel)["HValue"]
+CoreAreaMeanIntercept <- coef(CoreAreaMeanModel)["(Intercept)"]
+CoreAreaMeanLineLabel <- paste("y =", round(CoreAreaMeanIntercept, 2), "+", round(CoreAreaMeanSlope, 2), "H")
+
+
+ggplot(LandscapeCoreAreaMean, aes(x = HValue, y = CoreAreaValues)) +
+  geom_point() +  # Add points
+  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  annotate("text", x = 0.5, y = max(LandscapeCoreAreaMean$CoreAreaValues, na.rm = TRUE), label = CoreAreaMeanLineLabel, hjust = 0, vjust = 1, color = "red") +
+  theme_minimal() +
+  labs(title = "Core Area Mean vs H Value",
+       x = "H",
+       y = "Core Area Mean")
+
+####################################################################################################
+
+NumCoreAreas.1 = lsm_l_ndca(vosssurface1, directions=8)
+NumCoreAreas.1 <- NumCoreAreas.1$value
+NumCoreAreas.2 = lsm_l_ndca(vosssurface2, directions=8)
+NumCoreAreas.2 <- NumCoreAreas.2$value
+NumCoreAreas.3 = lsm_l_ndca(vosssurface3, directions=8)
+NumCoreAreas.3 <- NumCoreAreas.3$value
+NumCoreAreas.4 = lsm_l_ndca(vosssurface4, directions=8)
+NumCoreAreas.4 <- NumCoreAreas.4$value
+NumCoreAreas.5 = lsm_l_ndca(vosssurface5, directions=8)
+NumCoreAreas.5 <- NumCoreAreas.5$value
+NumCoreAreas.6 = lsm_l_ndca(vosssurface6, directions=8)
+NumCoreAreas.6 <- NumCoreAreas.6$value
+NumCoreAreas.7 = lsm_l_ndca(vosssurface7, directions=8)
+NumCoreAreas.7 <- NumCoreAreas.7$value
+NumCoreAreas.8 = lsm_l_ndca(vosssurface8, directions=8)
+NumCoreAreas.8 <- NumCoreAreas.8$value
+NumCoreAreas.9 = lsm_l_ndca(vosssurface9, directions=8)
+NumCoreAreas.9 <- NumCoreAreas.9$value
+
+# Data Frame to Plot
+LandscapeNumCoreAreas <- data.frame(
+  HValue = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+  CoreAreas = c(NumCoreAreas.1, NumCoreAreas.2, NumCoreAreas.3,
+                 NumCoreAreas.4, NumCoreAreas.5, NumCoreAreas.6,
+                 NumCoreAreas.7, NumCoreAreas.8, NumCoreAreas.9)
+)
+
+NumCoreAreasmodel <- lm(CoreAreas ~ HValue, data = LandscapeNumCoreAreas)
+NumCoreAreasmodelslope <- coef(NumCoreAreasmodel)["HValue"]
+NumCoreAreasmodelintercept <- coef(NumCoreAreasmodel)["(Intercept)"]
+NumCoreAreasmodelline_label <- paste("y =", round(intercept, 2), round(slope, 2), "H")
+
+ggplot(LandscapeNumCoreAreas, aes(x = HValue, y = CoreAreas)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  annotate("text", x = 0.5, y = max(LandscapeNumCoreAreas$CoreAreas), label = NumCoreAreasmodelline_label, hjust = 0, vjust = 1, color = "red") +
+  theme_minimal() +
+  labs(title = "Number of Disjunct Core Areas vs H Value",
+       x = "H",
+       y = "Number of Disjunct Core Areas")
 
 
 ```
+**Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. THESE MUST BE DIFFERENT THAN THOSE METRICS YOU USED IN CHALLENGE 2. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is H-value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
-Place your text here.
+Landscape Patch Cohesion Index: I chose this metric because as I increased the value of H, the forest cover appeared to become more clumped together. Thus, I expected that as the value of H increased, the Patch Cohesion Index, a measure of aggregation, would also increase. After plotting H on the x-axis and the Landscape Patch Cohesion Index on the y-axis, my prediction appears supported by a positive slope. However, overall, the Patch Cohesion Index seemed to vary only slightly, with a minimum value of ~99.05 and a maximum value of ~99.5.
+
+
+Landscape Mean of Core Area Index: I chose this metric because as previously noted, forest cover appeared to become more clumped together as H increased. Thus, with increasing clumpiness, I also expected an increase in core area (and a decrease in total edge). This anticipation appears supported by the slope of provided in the plot showing values of H on the x-axis and the Landscape Mean of Core Area Index on the y-axis.
+
+Landscape Number of Core Areas: Related to the Core Area Index, I chose this metric because as forest cover became more aggregated, I expected the total number of core areas to decrease -- demonstrating an inverse relationship with the Mean of Core Area Index. Again, this prediction was supported by the slope given by the plot. As the values of H increase, the number of disjuct core areas (separate core areas) decrease across the landscape. 
 
