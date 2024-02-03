@@ -625,11 +625,84 @@ Mean Nearest-Neighbor Distance: I chose this metric because intuitively, I would
 ```{r}
 set.seed(23)
 
-# Place your R code here.
+vossModel.1 = voss2d(g=7, H=0.1)
+vossModel.1 = rast(vossModel.1$z)
+
+vossModel.2 = voss2d(g=7, H=0.2)
+vossModel.2 = rast(vossModel.2$z)
+
+vossModel.3 = voss2d(g=7, H=0.3)
+vossModel.3 = rast(vossModel.3$z)
+
+vossModel.4 = voss2d(g=7, H=0.4)
+vossModel.4 = rast(vossModel.4$z)
+
+vossModel.5 = voss2d(g=7, H=0.5)
+vossModel.5 = rast(vossModel.5$z)
+
+vossModel.6 = voss2d(g=7, H=0.6)
+vossModel.6 = rast(vossModel.6$z)
+
+vossModel.7 = voss2d(g=7, H=0.7)
+vossModel.7 = rast(vossModel.7$z)
+
+vossModel.8 = voss2d(g=7, H=0.8)
+vossModel.8 = rast(vossModel.8$z)
+
+vossModel.9 = voss2d(g=7, H=0.9)
+vossModel.9 = rast(vossModel.9$z)
+
+vossModel.1 = voss2d(g=7, H=0.5)
+vossModel.1 = rast(vossModel.1$z)
+
+# 30% Forest Cover --> H = 0.1
+surface1 = quantile(as.matrix(vossModel.1), prob=0.3)
+vosssurface1 = ifel(vossModel.1 > surface1, 0, 1)
+plot(vosssurface1)
+
+# 30% Forest Cover --> H = 0.2
+surface2 = quantile(as.matrix(vossModel.2), prob=0.3)
+vosssurface2 = ifel(vossModel.2 > surface2, 0, 1)
+plot(vosssurface2)
+
+# 30% Forest Cover --> H = 0.3
+surface3 = quantile(as.matrix(vossModel.3), prob=0.3)
+vosssurface3 = ifel(vossModel.3 > surface3, 0, 1)
+plot(vosssurface3)
+
+# 30% Forest Cover --> H = 0.4
+surface4 = quantile(as.matrix(vossModel.4), prob=0.3)
+vosssurface4 = ifel(vossModel.4 > surface4, 0, 1)
+plot(vosssurface4)
+
+# 30% Forest Cover --> H = 0.5
+surface5 = quantile(as.matrix(vossModel.5), prob=0.3)
+vosssurface5 = ifel(vossModel.5 > surface5, 0, 1)
+plot(vosssurface5)
+
+# 30% Forest Cover --> H = 0.6
+surface6 = quantile(as.matrix(vossModel.6), prob=0.3)
+vosssurface6 = ifel(vossModel.6 > surface6, 0, 1)
+plot(vosssurface6)
+
+# 30% Forest Cover --> H = 0.7
+surface7 = quantile(as.matrix(vossModel.7), prob=0.3)
+vosssurface7 = ifel(vossModel.7 > surface7, 0, 1)
+plot(vosssurface7)
+
+# 30% Forest Cover --> H = 0.8
+surface8 = quantile(as.matrix(vossModel.8), prob=0.3)
+vosssurface8 = ifel(vossModel.8 > surface8, 0, 1)
+plot(vosssurface8)
+
+# 30% Forest Cover --> H = 0.9
+surface9 = quantile(as.matrix(vossModel.9), prob=0.3)
+vosssurface9 = ifel(vossModel.9 > surface9, 0, 1)
+plot(vosssurface9)
 
 ```
 
-Place your text here.
+As H increases from 0.1 to 0.9, it seems that the forest cover across the landscape becomes more clumpy, and thus less patchy. For example, when H is 0.9, it appears the forest cover is nearly composed of one large patch (with the exception of a few isolated pixels). In contrast, when H is 0.1, the forest cover appears significantly more scattered across the landscape.
 
 **Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. THESE MUST BE DIFFERENT THAN THOSE METRICS YOU USED IN CHALLENGE 2. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is H-value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
