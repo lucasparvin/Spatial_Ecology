@@ -508,39 +508,115 @@ NumPatchVoss90 = lsm_c_np(voss90, directions=8)
 NumPatchVoss90 <- NumPatchVoss90$value[2]
 
 
-# Assuming NumPatchVossXX$value extracts the number of patches from the results
-data <- data.frame(
+# Data Frame to Plot
+NumPatchData <- data.frame(
   Threshold = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
   NumPatches = c(NumPatchVoss10, NumPatchVoss20, NumPatchVoss30,
                  NumPatchVoss40, NumPatchVoss50, NumPatchVoss60,
                  NumPatchVoss70, NumPatchVoss80, NumPatchVoss90)
 )
 
-library(ggplot2)
-
-ggplot(data, aes(x = Threshold, y = NumPatches)) +
+ggplot(NumPatchData, aes(x = Threshold, y = NumPatches)) +
   geom_point() +  # Add points
   geom_line() +   # Connect points with lines
+  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
   theme_minimal() +
   labs(title = "Number of Patches vs Threshold",
        x = "Threshold",
        y = "Number of Patches")
 
 
-
-
 # Mean Patch Size
-MeanPatch4 = lsm_c_area_mn(forest, directions=8)
-MeanPatch4
+MeanPatch10 = lsm_c_area_mn(voss10, directions=8)
+MeanPatch10 <- MeanPatch10$value[2]
+MeanPatch20 = lsm_c_area_mn(voss20, directions=8)
+MeanPatch20 <- MeanPatch20$value[2]
+MeanPatch30 = lsm_c_area_mn(voss30, directions=8)
+MeanPatch30 <- MeanPatch30$value[2]
+MeanPatch40 = lsm_c_area_mn(voss40, directions=8)
+MeanPatch40 <- MeanPatch40$value[2]
+MeanPatch50 = lsm_c_area_mn(voss50, directions=8)
+MeanPatch50 <- MeanPatch50$value[2]
+MeanPatch60 = lsm_c_area_mn(voss60, directions=8)
+MeanPatch60 <- MeanPatch60$value[2]
+MeanPatch70 = lsm_c_area_mn(voss70, directions=8)
+MeanPatch70 <- MeanPatch70$value[2]
+MeanPatch80 = lsm_c_area_mn(voss80, directions=8)
+MeanPatch80 <- MeanPatch80$value[2]
+MeanPatch90 = lsm_c_area_mn(voss90, directions=8)
+MeanPatch90 <- MeanPatch90$value[2]
+
+# Data Frame to Plot
+MeanPatchData <- data.frame(
+  Threshold = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+  MeanPatches = c(MeanPatch10, MeanPatch20, MeanPatch30,
+                 MeanPatch40, MeanPatch50, MeanPatch60,
+                 MeanPatch70, MeanPatch80, MeanPatch90)
+)
+
+ggplot(MeanPatchData, aes(x = Threshold, y = MeanPatches)) +
+  geom_point() +  # Add points
+  geom_line() +   # Connect points with lines
+  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  theme_minimal() +
+  labs(title = "Mean Patch Size vs Threshold",
+       x = "Threshold",
+       y = "Mean Patch Size")
+
+
 
 # Mean Nearest-neigbor Distance
-NNDistance4 = lsm_c_enn_mn(forest, directions=8)
-NNDistance4
+
+ENN10 = lsm_c_enn_mn(voss10, directions=8)
+ENN10 <- ENN10$value[2]
+ENN20 = lsm_c_enn_mn(voss20, directions=8)
+ENN20 <- ENN20$value[2]
+ENN30 = lsm_c_enn_mn(voss30, directions=8)
+ENN30 <- ENN30$value[2]
+ENN40 = lsm_c_enn_mn(voss40, directions=8)
+ENN40 <- ENN40$value[2]
+ENN50 = lsm_c_enn_mn(voss50, directions=8)
+ENN50 <- ENN50$value[2]
+ENN60 = lsm_c_enn_mn(voss60, directions=8)
+ENN60 <- ENN60$value[2]
+ENN70 = lsm_c_enn_mn(voss70, directions=8)
+ENN70 <- ENN70$value[2]
+ENN80 = lsm_c_enn_mn(voss80, directions=8)
+ENN80 <- ENN80$value[2]
+ENN90 = lsm_c_enn_mn(voss90, directions=8)
+ENN90 <- ENN90$value[2]
+
+
+# Data Frame to Plot
+ENNData <- data.frame(
+  Threshold = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+  ENNValues = c(ENN10, ENN20, ENN30,
+                 ENN40, ENN50, ENN60,
+                 ENN70, ENN80, ENN90)
+)
+
+ggplot(ENNData, aes(x = Threshold, y = ENNValues)) +
+  geom_point() +  # Add points
+  geom_line() +   # Connect points with lines
+  geom_smooth(method = "lm", se = TRUE, color = "red") + # Add line of best fit with standard error
+  theme_minimal() +
+  labs(title = "ENN vs Threshold",
+       x = "Threshold",
+       y = "ENN Distance")
 
 
 ```
 
-Place your text here.
+**Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is threshold value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
+
+Number of Patches: I chose this metric because as I incrementally increased forest cover with the Voss package, it appeared as if the cover increased in a systematic way, expanding from previous forest patches. Thus, I anticipated that as forest cover expanded, patches would connect, thus reducing the total number of distinct patches. After plotting threshold on the x-axis and number of patches on the y-axis, my eye test appears supported by a negative  slope. That said, with 0% cover and 100% cover, the total number of patches would be 0 and 1 respectively, so this relationships may not be best represented by a linear slope.
+
+Mean Patch Size: I chose this metric because as previously discussed, forest cover seemed to increase in a systematic way. As forest cover expanded, patches seemed to connect, and so I predicted mean patch size would increase with threshold. After plotting threshold on the x-axis and mean patch size on the y-axis, this prediction appears supported by a positive slope. However, yet again, the true relationship is most likely not linear. 
+
+Mean Nearest-Neighbor Distance: I chose this metric because intuitively, I would assume that increasing cover increases spatial coverage, reduces open space, and thus, on average, reduces the distance from patch to patch. This prediction was supported by the negative slope observed when comparing threshold to mean nearest-neighbor values. Of the three metrics I investigated, this is the metric that appears the most linear to me. Generally, with very low tree cover, I would assume that forest patches would be sparse and likely separated by long distances. However, with an increasing saturation of forest patches, I would assume a steady decline in distance that separates them. 
+
+
+
 
 ## Challenge 5 (4 points)
 
