@@ -707,7 +707,11 @@ As H increases from 0.1 to 0.9, it seems that the forest cover across the landsc
 **Identify 3 class-level or landscape-level metrics that help you capture the changes you are observing. THESE MUST BE DIFFERENT THAN THOSE METRICS YOU USED IN CHALLENGE 2. Calculate those metrics for each of the 9 landscapes and plot them (x-axis is H-value and y-axis is calculated metric). Briefly describe why you chose these 3 metrics and how they change with increasing cover.**
 
 ```{r}
-# Place your R code here.
+# Landscape Patch Cohesion
+lsm_l_cohesion
+
+
+
 ```
 
 Place your text here.
