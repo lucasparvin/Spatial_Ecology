@@ -89,4 +89,25 @@ critter2 = read.csv('https://raw.githubusercontent.com/ValenteJJ/SpatialEcology/
   mutate(org = 'critter2')
 ```
 
+Okay, now let's plot the critters.
+
+```{r}
+
+# Convert critter data frames to ppp objects
+ppp_critter1 <- ppp(critter1$x, critter1$y, window = predPreyWin)
+ppp_critter2 <- ppp(critter2$x, critter2$y, window = predPreyWin)
+
+# Plotting
+plot(predPreyWin, main = "Critter Distribution", col = "grey")
+plot(ppp_critter1, add = TRUE, pch = 20, col = "blue")
+plot(ppp_critter2, add = TRUE, pch = 20, col = "red")
+
+```
+Initially, **if I had to guess,** I would say that critter 1 is the prey and critter 2 is the predator. The reason I would guess this is because after plotting the points, it appears that #1 critters behave more similarly to one another. They appear more clumped together, indicating similar repulsion (fear responses) from #2 critter. In contrast, the critter 2 points appear more independent and spread out, indicating they are influenced by the presence of critter 1 points. **Of course, this basic eye-test is not sufficient for the purposes of identify which critter is the predator and which is the prey, so let's dive into some analysis!**
+
+```{r}
+
+# Co
+```
+
 Integrate your answer with additional code chunks here.
