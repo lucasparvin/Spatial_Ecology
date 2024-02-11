@@ -105,9 +105,45 @@ plot(ppp_critter2, add = TRUE, pch = 20, col = "red")
 ```
 Initially, **if I had to guess,** I would say that critter 1 is the prey and critter 2 is the predator. The reason I would guess this is because after plotting the points, it appears that #1 critters behave more similarly to one another. They appear more clumped together, indicating similar repulsion (fear responses) from #2 critter. In contrast, the critter 2 points appear more independent and spread out, indicating they are influenced by the presence of critter 1 points. **Of course, this basic eye-test is not sufficient for the purposes of identify which critter is the predator and which is the prey, so let's dive into some analysis!**
 
-```{r}
+### Let's Check for Ripley's K/L for each individual critter.
+Greater aggregation for a set of critters should hint that they are prey. I think of aggregation as the prey huddling up as they try to all get as far as possible from multiple predators. (ADJUST THIS SENTENCE LATER)
 
-# Co
+```{r}
+#Ripley's K without correction for edge effects 
+kNone1 = Kest(ppp_critter1, correction='none') # Critter 1
+kNone2 = Kest(ppp_critter2, correction='none') # Critter 2
+plot(kNone1) # Critter 1
+plot(kNone2) # Critter 2
+plot(kNone1, .-r~r)
+plot(kNone2, .-r~r)
+
+#Ripley's L without correction for edge effects 
+lNone1 = Lest(ppp_critter1, correction='none') # Critter 1
+lNone2 = Lest(ppp_critter2, correction='none') # Critter 2
+plot(lNone1) # Critter 1
+plot(lNone2) # Critter 2
+plot(lNone1, .-r~r)
+plot(lNone2, .-r~r)
+
+#Ripley's K WITH correction for edge effects 
+kIso1 = Kest(ppp_critter1, correction='isotropic') # Critter 1
+kIso2 = Kest(ppp_critter2, correction='isotropic') # Critter 2
+plot(kIso1) # Critter 1
+plot(kIso2) # Critter 2
+plot(kIso1, .-r~r)
+plot(kIso2, .-r~r)
+
+#Ripley's L WITH correction for edge effects 
+lIso1 = Lest(ppp_critter1, correction='isotropic') # Critter 1
+lIso2 = Lest(ppp_critter2, correction='isotropic') # Critter 2
+plot(lIso1) # Critter 1
+plot(lIso2) # Critter 2
+plot(lIso1, .-r~r)
+plot(lIso2, .-r~r)
+
+# Critter 1 Appears more aggregated that expected, especially indicated by final 4 plots
+
+
 ```
 
 Integrate your answer with additional code chunks here.
