@@ -56,7 +56,7 @@ model_linear <- ppm(OrganismDistribution ~ x + y)
 model_quadratic <- ppm(OrganismDistribution ~ polynom(x, y, 2))
 
 # Calculate the AIC values of the three models
-aic_homogeneous <- AIC(model_homogenous)
+aic_homogeneous <- AIC(model_homogeneous)
 aic_linear <- AIC(model_linear)
 aic_quadratic <- AIC(model_quadratic)
 
