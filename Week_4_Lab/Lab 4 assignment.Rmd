@@ -21,7 +21,7 @@ require(FedData)
 require(sf)
 require(tidyterra)
 require(landscapemetrics)
-require(ggplot2)
+require(ggplot2) #I think ggplot automatically loads as part of the tidyverse. Just FYI.
 ```
 
 
@@ -146,6 +146,9 @@ PerformanceAnalytics::chart.Correlation(landscape_metrics_df, histogram=TRUE, pc
 
 **ANSWER:** Given that there are 12 patch-level metrics that can be correlated to one another, there are many varied patterns that exist when observing these correlation plots. However, a primary takeaway is that the vast majority of metrics have highly significant correlations with other metrics. Some metrics, such as "Area" and "Core" are completely redundant in this scenario, with a highly significant correlation value equal to 1.00. On the opposite end of the spectrum, "Contiguity" and "Perimeter-area ratio" have a highly signifcant correlation of -0.99, a near perfect inverse. Many other metrics also have highly significant relationships that exhibit more moderate slopes one way or the other. Whereas, others, like "Area" and "Euclidean Nearest-Neighbor Distance" have no signficiant relationship (indicated by lack of astrices). The process of finding all of these values is worthwhile to initially observe their relationships, but using them all in further analysis would be needless for values that strongly predict one another. 
 
+$\color{red}{\text{Perfect. +4}}$
+
+
 
 ## Challenge 2 (4 points)
 
@@ -210,6 +213,7 @@ TEdge4
 
 I feel that the biology for a species or group of species being studied should be considered when deciding between using the the Queen or Rook connectivity rules. For species with high levels of mobility, using Queen connectivity rules to define patches may be more appropriate, since the units of habitat, which may be connected diagonally, are still easy to move back and forth between. In contrast, for species that exhibit lower mobility, using the Rook connectivity rules may be more appropriate, given that a very small corridor/gap leading to another larger chunk of habitat may not be realistically used or accessible. 
 
+$\color{red}{\text{Superb. +4}}$
 
 
 ## Challenge 3 (4 points)
@@ -445,6 +449,9 @@ SEvenness_Change
 
 **ANSWER:** As demonstrated in the code above, from 2011 to 2019, the Shannon's Diversity Index for the landscape classes increased by 0.3930831 and Shannon's evenness index increased by 0.2193839. These results demonstrate that landscape has become more diversified, in that there is more of an even representation of each land cover type. Given the same 6 land cover types are observed in both years, there is no gain or loss of an entire class. From a wildlife perspective, this diversification in land cover type is not inherently beneficial because some of the cover types (i.e agriculture, developed, etc.) are generally poor habitat for many species. Moreover, fragmentation of land cover types can have mixed effects on wildlife communities, dependent on species-specific adaptations. 
 
+$\color{red}{\text{Awesome. +4}}$
+
+
 
 ## Challenge 4 (4 points)
 
@@ -660,7 +667,13 @@ ggplot(ENNData, aes(x = Threshold, y = ENNValues)) +
 
 *Class Level Mean Patch Size:* I chose this metric because as previously discussed, forest cover seemed to increase in a systematic way. As forest cover expanded, patches seemed to connect, and so I predicted mean patch size would increase with threshold. After plotting threshold on the x-axis and mean patch size on the y-axis, this prediction appears supported by a positive slope. However, yet again, the true relationship is most likely not linear. 
 
+$\color{red}{\text{Indeed, you should notice it increases before it decreases.}}$
+
+
 *Class Level Nearest-Neighbor Mean Distance:* I chose this metric because intuitively, I would assume that increasing cover increases spatial coverage, reduces open space, and thus, on average, reduces the distance from patch to patch. This prediction was supported by the negative slope observed when comparing threshold to mean nearest-neighbor values. Of the three metrics I investigated, this is the metric that appears the most linear to me. Generally, with very low tree cover, I would assume that forest patches would be sparse and likely separated by long distances. However, with an increasing saturation of forest patches, I would assume a steady decline in distance that separates them. 
+
+$\color{red}{\text{I don't think that the patterns you're seeing (e.g., an increase in mean nearest neighbor distance before a decrease) are a result of random error. I think these patterns are to be expected. Good work overall. +4}}$
+
 
 
 ## Challenge 5 (4 points)
@@ -904,3 +917,4 @@ ggplot(LandscapeNumCoreAreas, aes(x = HValue, y = CoreAreas)) +
 
 *Landscape Number of Core Areas:* Related to the Core Area Index, I chose this metric because as forest cover became more aggregated, I expected the total number of core areas to decrease -- demonstrating an inverse relationship with the Mean of Core Area Index. Again, this prediction was supported by the slope given by the plot. As the values of H increase, the number of disjunct core areas (separate core areas) decrease across the landscape. 
 
+$\color{red}{\text{My only major comment is that you should make sure not to let your inclination to smooth out the trends obscure your ability to notice nuance. Great job, Lucas. +4}}$
