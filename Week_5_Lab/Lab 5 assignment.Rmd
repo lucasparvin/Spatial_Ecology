@@ -5,8 +5,17 @@ output:
     df_print: paged
 ---
 
-```{r}
-#Place your required packages here.
+```{r, warning=F, error=F, message=F}
+rm(list=ls())
+
+require(spatstat)
+require(tidyverse)
+require(terra)
+require(ggplot2)
+# Place others as well
+
+# Lcross has i and j arguments. If i is species 1, you are measuring how far species are to species 1. i and j can be species 1 and 2 or both. 
+
 ```
 
 
