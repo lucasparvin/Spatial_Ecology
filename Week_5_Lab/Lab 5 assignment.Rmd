@@ -24,23 +24,53 @@ require(ggplot2)
 Create a simulation window on a landscape stretching from 0 to 100 units in both the x and y directions. Now simulate the distribution of an organism on this landscape using a Poisson process with a lambda value of 0.01. Plot this organism's distribution. How many organisms are there on your landscape? What is the expected number of organisms that you should find on this landscape based on your simulation parameters? Why?
 
 ```{r}
-#Put your code here.
+# Window
+SimWindow = owin(xrange=c(0,100), yrange=c(0,100))
 
-#Choose your favorite number and set the seed here.
-set.seed()
+# Simulation of organism distribution
+set.seed(2024)
+OrganismDistribution = rpoispp(lambda = 0.01, win = SimWindow)
+summary(OrganismDistribution)
+
+# Plot
+plot(OrganismDistribution, main="Distribution of Organisms", xlab="X-coordinate", ylab="Y-coordinate")
+
+# Number of organisms
+print(paste("There are", OrganismDistribution$n, "organisms!")) # For Fun
 ```
 
-Place your answer to Challenge 1 here.
+As output by my code, there are 109 organisms! Although, the exclamation mark isn't really necessary because based on the simulation parameters, the expected amount would be 100, which is close enough. Given that the simulation window is 100 x 100 units (10,000 units total) and that the lambda value (intensity value) is 0.01, a number near `0.1 x 100 x 100 = 100` should be expected. In other words, our actual value of 109 is 9% higher than what would initially be expected. 
 
 # Challenge 2 (3 points)
 
 Verify that there no linear or quadratic pattern in the distribution of your organisms using fitted Poisson process models. Show the outcome of this analysis and explain your conclusion.
 
 ```{r}
-#Place your code here.
+# Fit a homogeneous PPM
+model_homogeneous <- ppm(OrganismDistribution ~ 1)
+
+# Fit an inhomogeneous PPM with a linear trend
+model_linear <- ppm(OrganismDistribution ~ x + y)
+
+# Fit an inhomogeneous PPM with a quadratic trend
+model_quadratic <- ppm(OrganismDistribution ~ polynom(x, y, 2))
+
+# Calculate the AIC values of the three models
+aic_homogeneous <- AIC(model_homogenous)
+aic_linear <- AIC(model_linear)
+aic_quadratic <- AIC(model_quadratic)
+
+# Compare the AIC Values
+data.frame(model = c('Homogeneous', 'Linear', 'Quadratic'),
+           AIC = c(aic_homogeneous, aic_linear, aic_quadratic))
+
+print(paste("The AIC for the Homogeneous Model is", aic_homogeneous))
+print(paste("The AIC for the Linear Model is", aic_linear))
+print(paste("The AIC for the Quadratic Model is", aic_quadratic))
+
 ```
 
-Place your answer to Challenge 2 here.
+The model with the lowest AIC value is considered the best. In this scenario, the lowest AIC value belongs to the homogeneous model, indicating neither the linear or quadratic trends improve the model. This means there is no evidence to suggest that there are linear or quadratic patterns in the distribution of points.
 
 # Challenge 3 (14 points)
 
