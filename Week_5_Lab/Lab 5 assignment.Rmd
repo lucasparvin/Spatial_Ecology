@@ -14,8 +14,6 @@ require(terra)
 require(ggplot2)
 # Place others as well
 
-# Lcross has i and j arguments. If i is species 1, you are measuring how far species are to species 1. i and j can be species 1 and 2 or both. 
-
 ```
 
 
@@ -89,7 +87,7 @@ critter2 = read.csv('https://raw.githubusercontent.com/ValenteJJ/SpatialEcology/
   mutate(org = 'critter2')
 ```
 
-Okay, now let's plot the critters.
+After uploading the data you provided, I will plot the critters to get an initial visualization of their distributions.
 
 ```{r}
 
@@ -97,13 +95,57 @@ Okay, now let's plot the critters.
 ppp_critter1 <- ppp(critter1$x, critter1$y, window = predPreyWin)
 ppp_critter2 <- ppp(critter2$x, critter2$y, window = predPreyWin)
 
+# Summarize data frames
+summary(ppp_critter1)
+summary(ppp_critter2)
+
+
 # Plotting
 plot(predPreyWin, main = "Critter Distribution", col = "grey")
 plot(ppp_critter1, add = TRUE, pch = 20, col = "blue")
 plot(ppp_critter2, add = TRUE, pch = 20, col = "red")
 
 ```
-Initially, **if I had to guess,** I would say that critter 1 is the prey and critter 2 is the predator. The reason I would guess this is because after plotting the points, it appears that #1 critters behave more similarly to one another. They appear more clumped together, indicating similar repulsion (fear responses) from #2 critter. In contrast, the critter 2 points appear more independent and spread out, indicating they are influenced by the presence of critter 1 points. **Of course, this basic eye-test is not sufficient for the purposes of identify which critter is the predator and which is the prey, so let's dive into some analysis!**
+Initially, **if I had to guess,** I would say that critter 1 is the prey and critter 2 is the predator. The reason I would guess this is because after plotting the points, it appears that #1 critters behave more similarly to one another. Specifically, they appear more clumped together, indicating similar repulsion (fear responses) from #2 critters. In contrast, the critter 2 points appear more independent from exterior influences. They appear more randomly and evenly spread out, aligning more with the behavior of non-territorial predators than with the behavior of avoidant prey species. For more extensive visualization, I will now synthesize density plots.
+
+```{r}
+# Density Plots
+plot(density(ppp_critter1, 1)) # <-- Density is indicated by a scale with a larer maximum
+plot(density(ppp_critter2, 1))
+
+```
+At first, these plots do not appear significantly different in any way. However, if you observe the scale on the right side of each plot, you can see that the density scale is higher for #1 critters than for #2 critters. To me, this indicates that #1 critters likely display greater rates of aggregation, which again would be more characteristic of prey species being pushed into similar places on account of similar avoidance behaviors. **Of course, mere eye-tests and observations are not sufficient for the purposes of identifying which of these critters is the predator and which is the prey... so let's dive into some analysis!**
+
+First, let's overlay a 4x4 grid on our study area and determine whether the number of critters/quadrat conforms to complete spatial randomness (CSR) for each species. We will employ a chi-square test for both sets of critters independently.
+
+
+```{r}
+# Critter 1
+q1 = quadratcount(ppp_critter1, nx=4, ny=4)
+plot(ppp_critter1)
+plot(q1, add=T)
+ChiSquareTest1 <- quadrat.test(ppp_critter1, nx=4, ny=4, method='Chisq')
+print(paste("The p-value for the critter 1 chi-square test is:", ChiSquareTest1$p.value))
+
+# Evidence to suggest this is not random
+
+# Critter 2
+q2 = quadratcount(ppp_critter2, nx=4, ny=4)
+plot(ppp_critter2)
+plot(q2, add=T)
+ChiSquareTest2 <- quadrat.test(ppp_critter2, nx=4, ny=4, method='Chisq')
+print(paste("The p-value for the critter 2 chi-square test is:", ChiSquareTest2$p.value))
+
+# No evidence to really suggest this is not random
+
+
+
+```
+Indicated by my code above, there is evidence to suggest that #1 critters do not conform to CSR tendencies (p<0.05).
+
+In contrast, there is not substantial evidence suggesting that #2 critters do not conform to CSR tendencies (p>0.05)
+
+Let's parse this out further by examining Ripley's K and L values, measurements of aggregation.
 
 ### Let's Check for Ripley's K/L for each individual critter.
 Greater aggregation for a set of critters should hint that they are prey. I think of aggregation as the prey huddling up as they try to all get as far as possible from multiple predators. (ADJUST THIS SENTENCE LATER)
@@ -114,36 +156,184 @@ kNone1 = Kest(ppp_critter1, correction='none') # Critter 1
 kNone2 = Kest(ppp_critter2, correction='none') # Critter 2
 plot(kNone1) # Critter 1
 plot(kNone2) # Critter 2
-plot(kNone1, .-r~r)
-plot(kNone2, .-r~r)
 
+```
+
+Overall, I don't glean very much after plotting Ripley's K without correction for edge effects for each species. As far as I can tell, both critters behave similarly in that they closely follow the poisson distribution until ~15-20 m mark.
+
+Let's proceed with Ripley's L function, which can be scaled around zero, and in my opinion, used for easier interpretation.
+
+
+```{r}
 #Ripley's L without correction for edge effects 
 lNone1 = Lest(ppp_critter1, correction='none') # Critter 1
 lNone2 = Lest(ppp_critter2, correction='none') # Critter 2
 plot(lNone1) # Critter 1
 plot(lNone2) # Critter 2
+# Adjusted
 plot(lNone1, .-r~r)
 plot(lNone2, .-r~r)
-
-#Ripley's K WITH correction for edge effects 
-kIso1 = Kest(ppp_critter1, correction='isotropic') # Critter 1
-kIso2 = Kest(ppp_critter2, correction='isotropic') # Critter 2
-plot(kIso1) # Critter 1
-plot(kIso2) # Critter 2
-plot(kIso1, .-r~r)
-plot(kIso2, .-r~r)
 
 #Ripley's L WITH correction for edge effects 
 lIso1 = Lest(ppp_critter1, correction='isotropic') # Critter 1
 lIso2 = Lest(ppp_critter2, correction='isotropic') # Critter 2
-plot(lIso1) # Critter 1
-plot(lIso2) # Critter 2
 plot(lIso1, .-r~r)
 plot(lIso2, .-r~r)
 
-# Critter 1 Appears more aggregated that expected, especially indicated by final 4 plots
+#### Critter 1 Appears more aggregated that expected, especially indicated by final 4 plots
+
+#Ripley's L WITH toroidal shift 
+lTrans1 = Lest(ppp_critter1, correction='translate') # Critter 1
+lTrans2 = Lest(ppp_critter2, correction='translate') # Critter 2
+plot(lTrans1, .-r~r)
+plot(lTrans2, .-r~r)
 
 
 ```
+
+
+
+
+```{r}
+
+#Comparison to Complete Spatial Randomness
+lCsr1 = envelope(ppp_critter1, Lest, nsim=99, rank=1, correction='translate', global=F)
+lCsr2 = envelope(ppp_critter2, Lest, nsim=99, rank=1, correction='translate', global=F)
+plot(lCsr1, .-r~r, shade=c('hi', 'lo'), legend=F)
+plot(lCsr2, .-r~r, shade=c('hi', 'lo'), legend=F)
+```
+
+
+```{r}
+## Pair correlation function (g function)
+pTrans1 = pcf(ppp_critter1, correction='translate')
+pTrans2 = pcf(ppp_critter2, correction='translate')
+plot(pTrans1)
+plot(pTrans2)
+
+pEnv1 = envelope(ppp_critter1, pcf, nsim=99, rank=1, correction='translate', global=F)
+pEnv2 = envelope(ppp_critter2, pcf, nsim=99, rank=1, correction='translate', global=F)
+plot(pEnv1, shade=c('hi', 'lo'), legend=F)
+plot(pEnv2, shade=c('hi', 'lo'), legend=F)
+
+# This is telling us that we're seeing spatial aggregation roughly between X AND Y...
+```
+
+
+
+```{r}
+# G-function: nearest neighbors
+gTrans1 = Gest(ppp_critter1, correction='rs')
+gTrans2 = Gest(ppp_critter2, correction='rs')
+plot(gTrans1, legend=F)
+plot(gTrans2, legend=F)
+
+
+
+gEnv1 = envelope(ppp_critter1, Gest, nsim=99, rank=1, correction='rs', global=F)
+gEnv2 = envelope(ppp_critter2, Gest, nsim=99, rank=1, correction='rs', global=F)
+plot(gEnv1, shade=c('hi', 'lo'), legend=F)
+plot(gEnv2, shade=c('hi', 'lo'), legend=F)
+
+
+# CHANGE This suggests that nearest neighbor distances are random at small spatial scales, but closer than expected at larger scales. Taken together, we start to get a picture of the distribution of prickly pear in space. These guys are aggregated at scales of 2-13 m, according to the K/L functions. According to our pairwise correlation, this aggregation is concentrated between 2 and 6 m.  And nearest neighbor distances are similarly smaller than expected from 2-4 m as well. I'd say we have a clumped distribution. CHANGE
+
+
+```
+
+```{r}
+# Prepare combined data frame
+combinedCritters <- rbind(
+  data.frame(x=critter1$x, y=critter1$y, species=rep("critter1", nrow(critter1))),
+  data.frame(x=critter2$x, y=critter2$y, species=rep("critter2", nrow(critter2)))
+)
+
+# Ensure 'species' column is a factor, crucial for a multitype point pattern
+combinedCritters$species <- as.factor(combinedCritters$species)
+
+# Define the observation window based on the combined range of x and y coordinates
+obsWindow <- owin(xrange=range(combinedCritters$x), yrange=range(combinedCritters$y))
+
+# Convert to ppp object
+pppCombined <- ppp(x=combinedCritters$x, y=combinedCritters$y, marks=combinedCritters$species, window=obsWindow)
+
+# Now, pppCombined should be recognized as a multitype point pattern
+# Calculate Lcross
+lCrossResult <- Lcross(pppCombined, "critter1", "critter2")
+
+# Plot Lcross result
+plot(lCrossResult, main="Lcross for Critter1 vs Critter2")
+
+
+##################################### SIG
+
+# Calculate Lcross envelope to compare against CSR
+lCrossEnv <- envelope(pppCombined, Lcross, nsim=99, rank=1, global = F, i="critter1", j="critter2", simulate=expression(rlabel(pppCombined)))
+
+# Plot the envelope
+plot(lCrossEnv, main="Lcross Envelope for Critter1 vs Critter2")
+plot(lCrossEnv, .-r~r, legend=T, main="Lcross Envelope for Critter1 vs Critter2")
+
+####################################### SIG
+
+```
+
+
+```{r}
+#NND Histograms
+# For critter 1
+nndist_critter1 <- nndist(ppp_critter1)
+summary(nndist_critter1)
+
+# For critter 2
+nndist_critter2 <- nndist(ppp_critter2)
+summary(nndist_critter2)
+
+# From critter 1 to critter 2
+nn_cross_1_to_2 <- nncross(ppp_critter1, ppp_critter2)
+summary(nn_cross_1_to_2)
+
+# From critter 2 to critter 1 (for completeness)
+nn_cross_2_to_1 <- nncross(ppp_critter2, ppp_critter1)
+summary(nn_cross_2_to_1)
+
+
+
+
+
+
+# Convert the distances to data frames for ggplot
+df_nndist_critter1 <- data.frame(distance = nndist_critter1, group = "Critter 1")
+df_nndist_critter2 <- data.frame(distance = nndist_critter2, group = "Critter 2")
+df_nn_cross_1_to_2 <- data.frame(distance = nn_cross_1_to_2$dist, group = "Critter 1 to 2")
+df_nn_cross_2_to_1 <- data.frame(distance = nn_cross_2_to_1$dist, group = "Critter 2 to 1")
+
+
+# Combine data frames
+crit1_distances <- rbind(df_nndist_critter1, df_nn_cross_1_to_2)
+
+# Plot
+ggplot(crit1_distances, aes(x = distance, fill = group)) +
+  geom_histogram(alpha = 0.6, position = "identity", binwidth = 0.5) +
+  theme_minimal() +
+  labs(title = "Distribution of Nearest Neighbor Distances", x = "Distance", y = "Frequency") +
+  scale_fill_brewer(palette = "Set1")
+
+
+# Combine data frames
+crit2_distances <- rbind(df_nndist_critter2, df_nn_cross_2_to_1)
+
+# Plot
+ggplot(crit2_distances, aes(x = distance, fill = group)) +
+  geom_histogram(alpha = 0.6, position = "identity", binwidth = 0.5) +
+  theme_minimal() +
+  labs(title = "Distribution of Nearest Neighbor Distances", x = "Distance", y = "Frequency") +
+  scale_fill_brewer(palette = "Set1")
+
+
+```
+
+
+
 
 Integrate your answer with additional code chunks here.
