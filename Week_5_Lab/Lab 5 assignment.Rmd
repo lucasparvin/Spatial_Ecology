@@ -106,6 +106,7 @@ plot(ppp_critter1, add = TRUE, pch = 20, col = "blue")
 plot(ppp_critter2, add = TRUE, pch = 20, col = "red")
 
 ```
+
 Initially, **if I had to guess,** I would say that critter 1 is the prey and critter 2 is the predator. The reason I would guess this is because after plotting the points, it appears that #1 critters behave more similarly to one another. Specifically, they appear more clumped together, indicating similar repulsion (fear responses) from #2 critters. In contrast, the critter 2 points appear more independent from exterior influences. They appear more randomly and evenly spread out, aligning more with the behavior of non-territorial predators than with the behavior of avoidant prey species. For more extensive visualization, I will now synthesize density plots.
 
 ```{r}
@@ -114,6 +115,7 @@ plot(density(ppp_critter1, 1)) # <-- Density is indicated by a scale with a lare
 plot(density(ppp_critter2, 1))
 
 ```
+
 At first, these plots do not appear significantly different in any way. However, if you observe the scale on the right side of each plot, you can see that the density scale is higher for #1 critters than for #2 critters. To me, this indicates that #1 critters likely display greater rates of aggregation, which again would be more characteristic of prey species being pushed into similar places on account of similar avoidance behaviors. **Of course, mere eye-tests and observations are not sufficient for the purposes of identifying which of these critters is the predator and which is the prey... so let's dive into some analysis!**
 
 First, let's overlay a 4x4 grid on our study area and determine whether the number of critters/quadrat conforms to complete spatial randomness (CSR) for each species. We will employ a chi-square test for both sets of critters independently.
@@ -141,6 +143,7 @@ print(paste("The p-value for the critter 2 chi-square test is:", ChiSquareTest2$
 
 
 ```
+
 Indicated by my code above, there is evidence to suggest that #1 critters do not conform to CSR tendencies (p<0.05).
 
 In contrast, there is not substantial evidence suggesting that #2 critters do not conform to CSR tendencies (p>0.05)
@@ -159,87 +162,80 @@ plot(kNone2) # Critter 2
 
 ```
 
-Overall, I don't glean very much after plotting Ripley's K without correction for edge effects for each species. As far as I can tell, both critters behave similarly in that they closely follow the poisson distribution until ~15-20 m mark.
+Overall, I don't glean very much after plotting Ripley's K without correction for edge effects for each species. As far as I can tell, both critters behave similarly in that they closely follow the poisson distribution until the ~15-20 unit (units were not specified) mark.
 
-Let's proceed with Ripley's L function, which can be scaled around zero, and in my opinion, used for easier interpretation.
+Let's proceed with Ripley's L function, which is plotted linearly and can be scaled around zero. In my opinion, it is easier to interpret.
 
 
 ```{r}
-#Ripley's L without correction for edge effects 
+# Ripley's L without correction for edge effects - Critter 1
 lNone1 = Lest(ppp_critter1, correction='none') # Critter 1
+plot(lNone1, main = "Ripley's L without Correction for Edge Effects - Critter 1")
+plot(lNone1, .-r~r, main = "Adjusted Ripley's L without Correction - Critter 1")
+
+# Ripley's L without correction for edge effects - Critter 2
 lNone2 = Lest(ppp_critter2, correction='none') # Critter 2
-plot(lNone1) # Critter 1
-plot(lNone2) # Critter 2
-# Adjusted
-plot(lNone1, .-r~r)
-plot(lNone2, .-r~r)
+plot(lNone2, main = "Ripley's L without Correction for Edge Effects - Critter 2")
+plot(lNone2, .-r~r, main = "Adjusted Ripley's L without Correction - Critter 2")
+```
+Before any type of edge correction, it appears that #1 critters consistently demonstrate a higher-than-expected degree of aggregation up until about a radius of 12 units, when compared to a poisson distribution. At about 12 units, the true Ripley's L values plummet well below the expected values for a poisson distribution. 
 
-#Ripley's L WITH correction for edge effects 
+Up until ~15 units, #2 critters demonstrate more sporadic Ripley's L values that hover near the expected values for a poisson distribution. Then, their Ripley's L values also plummet well below what is expected for a poisson distribution.
+
+**Overall, these findings hint that #1 critters are aggregating, while #2 critters are demonstrating more random levels of aggregation. Given that Ripley's L values plummet for both critters, I expect this is a function of not correcting for edge effects. For example, for any given critter 5 units away from an edge, you would expect the level of aggregation to decrease as you expand past 5 units. This can be attributed to the fact that despite expanding your radius, you wouldn't be increasing the number of points to interact with on the side of the nearest edge(s), thus introducing bias.**
+
+For a more complete understanding of what is going on, let's account for these edge effects.
+
+
+```{r}
+# Ripley's L with isotropic correction - Critter 1
 lIso1 = Lest(ppp_critter1, correction='isotropic') # Critter 1
-lIso2 = Lest(ppp_critter2, correction='isotropic') # Critter 2
-plot(lIso1, .-r~r)
-plot(lIso2, .-r~r)
+plot(lIso1, .-r~r, main = "Ripley's L with Isotropic Correction - Critter 1")
 
-#### Critter 1 Appears more aggregated that expected, especially indicated by final 4 plots
-
-#Ripley's L WITH toroidal shift 
+# Ripley's L with toroidal shift correction - Critter 1
 lTrans1 = Lest(ppp_critter1, correction='translate') # Critter 1
-lTrans2 = Lest(ppp_critter2, correction='translate') # Critter 2
-plot(lTrans1, .-r~r)
-plot(lTrans2, .-r~r)
+plot(lTrans1, .-r~r, main = "Ripley's L with Toroidal Shift - Critter 1")
 
+
+# Ripley's L with isotropic correction - Critter 2
+lIso2 = Lest(ppp_critter2, correction='isotropic') # Critter 2
+plot(lIso2, .-r~r, main = "Ripley's L with Isotropic Correction - Critter 2")
+
+# Ripley's L with toroidal shift correction - Critter 2
+lTrans2 = Lest(ppp_critter2, correction='translate') # Critter 2
+plot(lTrans2, .-r~r, main = "Ripley's L with Toroidal Shift - Critter 2")
 
 ```
 
+Okay, so there are multiple interesting findings here:
+1. First, we don't see the plummet of Ripley's L values across all figures after a certain threshold, indicating edge effects were definitely impacting our previous findings.
+2. Ripley's L values for #1 critters appear pretty different when using isotropic vs toroidal shift corrections, while the values for #2 critters appear nearly identical across both correction types. At first, I found this odd, so I dove a bit deeper into how these corrections actually function. While isotropic correction weighs points differently depending on their proximity to an edge, a toroidal shift artificially creates a continuous landscape, using opposite edges of the window to continue the distribution of points. In our scenario, I find it more appropriate to use an isotropic correction, because provided a more extensive landscape (toroidal shift), it is likely that our prey species would not behave precisely the same way. In our simulation, the prey species is repelled by predators AND confined by edges. Thus, we may see greater clustering near edges, which appears to be the case. A toroidal shift would repeat/project these clusters, which originally formed near edges, across a greater landscape with edges that are theoretically farther away. In short, a toroidal shift is less representative of the true patterns exhibited by our prey critters than an isotropic correction, whereas for our predators, it should make little difference if they are randomly dispersed. 
+3. The levels of aggregation for our #1 critters are much higher than what would be expected under a poisson distribution, leading me to believe they are the prey species.
+4. While Ripley's L values spike around 15 units for #2 critters, the values are overall much closer to a poisson distribution than what is demonstrated by #1 critters, leading me to believe #2 critters are the predators.  
 
+While I am feeling pretty confident that #1 critters are the prey and #2 critters are the predators, let's continue our analysis.
 
 
 ```{r}
 
 #Comparison to Complete Spatial Randomness
-lCsr1 = envelope(ppp_critter1, Lest, nsim=99, rank=1, correction='translate', global=F)
-lCsr2 = envelope(ppp_critter2, Lest, nsim=99, rank=1, correction='translate', global=F)
-plot(lCsr1, .-r~r, shade=c('hi', 'lo'), legend=F)
-plot(lCsr2, .-r~r, shade=c('hi', 'lo'), legend=F)
-```
+lCsr1 = envelope(ppp_critter1, Lest, nsim=99, rank=1, correction='isotropic', global=F)
+lCsr2 = envelope(ppp_critter2, Lest, nsim=99, rank=1, correction='isotropic', global=F)
 
+# CSR Envelope Comparison for Critter 1
+plot(lCsr1, .-r~r, shade=c('hi', 'lo'), legend=F, 
+     main="CSR Envelope Comparison for Critter 1")
 
-```{r}
-## Pair correlation function (g function)
-pTrans1 = pcf(ppp_critter1, correction='translate')
-pTrans2 = pcf(ppp_critter2, correction='translate')
-plot(pTrans1)
-plot(pTrans2)
-
-pEnv1 = envelope(ppp_critter1, pcf, nsim=99, rank=1, correction='translate', global=F)
-pEnv2 = envelope(ppp_critter2, pcf, nsim=99, rank=1, correction='translate', global=F)
-plot(pEnv1, shade=c('hi', 'lo'), legend=F)
-plot(pEnv2, shade=c('hi', 'lo'), legend=F)
-
-# This is telling us that we're seeing spatial aggregation roughly between X AND Y...
-```
-
-
-
-```{r}
-# G-function: nearest neighbors
-gTrans1 = Gest(ppp_critter1, correction='rs')
-gTrans2 = Gest(ppp_critter2, correction='rs')
-plot(gTrans1, legend=F)
-plot(gTrans2, legend=F)
-
-
-
-gEnv1 = envelope(ppp_critter1, Gest, nsim=99, rank=1, correction='rs', global=F)
-gEnv2 = envelope(ppp_critter2, Gest, nsim=99, rank=1, correction='rs', global=F)
-plot(gEnv1, shade=c('hi', 'lo'), legend=F)
-plot(gEnv2, shade=c('hi', 'lo'), legend=F)
-
-
-# CHANGE This suggests that nearest neighbor distances are random at small spatial scales, but closer than expected at larger scales. Taken together, we start to get a picture of the distribution of prickly pear in space. These guys are aggregated at scales of 2-13 m, according to the K/L functions. According to our pairwise correlation, this aggregation is concentrated between 2 and 6 m.  And nearest neighbor distances are similarly smaller than expected from 2-4 m as well. I'd say we have a clumped distribution. CHANGE
+# CSR Envelope Comparison for Critter 2
+plot(lCsr2, .-r~r, shade=c('hi', 'lo'), legend=F,
+     main="CSR Envelope Comparison for Critter 2")
 
 
 ```
+
+After our comparison to CSR, it is clear that critter 1, across ~4-21 units, aggregates more strongly than what should reasonably be expected of a random distribution. This is not the case for critter 2, which does not exhibit significant differences from CSR. Now we can confidentially infer that #1 critters are the prey, given that they are aggregating, which can be anticipated due to shared repulsion from predators. However, let's take a look at how they directly respond to #2 critters, the expected predators.
+
+
 
 ```{r}
 # Prepare combined data frame
