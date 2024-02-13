@@ -14,7 +14,6 @@ require(spatstat)
 require(tidyverse)
 require(terra)
 require(ggplot2)
-# Place others as well
 
 ```
 
