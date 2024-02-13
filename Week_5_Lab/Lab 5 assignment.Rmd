@@ -1,5 +1,7 @@
 ---
 title: "Lab 5 assignment - Point pattern analysis"
+author: "Lucas Parvin"
+date: "2-13-2024"
 output:
   html_document:
     df_print: paged
@@ -21,7 +23,7 @@ require(ggplot2)
 
 Create a simulation window on a landscape stretching from 0 to 100 units in both the x and y directions. Now simulate the distribution of an organism on this landscape using a Poisson process with a lambda value of 0.01. Plot this organism's distribution. How many organisms are there on your landscape? What is the expected number of organisms that you should find on this landscape based on your simulation parameters? Why?
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Window
 SimWindow = owin(xrange=c(0,100), yrange=c(0,100))
 
@@ -37,13 +39,13 @@ plot(OrganismDistribution, main="Distribution of Organisms", xlab="X-coordinate"
 print(paste("There are", OrganismDistribution$n, "organisms!")) # For Fun
 ```
 
-As output by my code, there are 109 organisms! Although, the exclamation mark isn't really necessary because based on the simulation parameters, the expected amount would be 100, which is close enough. Given that the simulation window is 100 x 100 units (10,000 units total) and that the lambda value (intensity value) is 0.01, a number near `0.1 x 100 x 100 = 100` should be expected. In other words, our actual value of 109 is 9% higher than what would initially be expected. 
+As output by my code, there are 109 organisms! The exclamation mark isn't really necessary though because based on the simulation parameters, the expected amount would be 100. Given that the simulation window is 100 x 100 units (10,000 units total) and that the lambda value (intensity value) is 0.01, a number near `0.1 * 100 * 100 = 100` should be expected. In other words, our actual value of 109 is 9% higher than what would initially be expected, doesn't seem too crazy. 
 
 # Challenge 2 (3 points)
 
 Verify that there no linear or quadratic pattern in the distribution of your organisms using fitted Poisson process models. Show the outcome of this analysis and explain your conclusion.
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Fit a homogeneous PPM
 model_homogeneous <- ppm(OrganismDistribution ~ 1)
 
@@ -61,7 +63,9 @@ aic_quadratic <- AIC(model_quadratic)
 # Compare the AIC Values
 data.frame(model = c('Homogeneous', 'Linear', 'Quadratic'),
            AIC = c(aic_homogeneous, aic_linear, aic_quadratic))
+```
 
+```{r, warning=F, error=F, message=F, echo=F}
 print(paste("The AIC for the Homogeneous Model is", aic_homogeneous))
 print(paste("The AIC for the Linear Model is", aic_linear))
 print(paste("The AIC for the Quadratic Model is", aic_quadratic))
@@ -75,7 +79,7 @@ The model with the lowest AIC value is considered the best. In this scenario, th
 I have simulated the distributions of 2 critters and provided their x-y coordinates. One of them is a non-territorial predator. The second is a critter that is preyed upon by the predator and exhibits a fear response to the predator's presence. Use the tools you learned in the lab to explore the distributions of these two critters. Identify which one is the predator and which is the prey, and provide code and a thorough justification supporting your conclusion.
 
 
-```{r}
+```{r, warning=F, error=F, message=F}
 #Use this code chunk to get you started.
 
 predPreyWin = owin(xrange = c(0, 100), yrange = c(0, 100))
@@ -89,7 +93,9 @@ critter2 = read.csv('https://raw.githubusercontent.com/ValenteJJ/SpatialEcology/
 
 After uploading the data you provided, I will plot the critters to get an initial visualization of their distributions.
 
-```{r}
+### ***Initial Plot***
+
+```{r, warning=F, error=F, message=F}
 
 # Convert critter data frames to ppp objects
 ppp_critter1 <- ppp(critter1$x, critter1$y, window = predPreyWin)
@@ -109,19 +115,21 @@ plot(ppp_critter2, add = TRUE, pch = 20, col = "red")
 
 Initially, **if I had to guess,** I would say that critter 1 is the prey and critter 2 is the predator. The reason I would guess this is because after plotting the points, it appears that #1 critters behave more similarly to one another. Specifically, they appear more clumped together, indicating similar repulsion (fear responses) from #2 critters. In contrast, the critter 2 points appear more independent from exterior influences. They appear more randomly and evenly spread out, aligning more with the behavior of non-territorial predators than with the behavior of avoidant prey species. For more extensive visualization, I will now synthesize density plots.
 
-```{r}
+### ***Density Plots***
+
+```{r, warning=F, error=F, message=F}
 # Density Plots
-plot(density(ppp_critter1, 1)) # <-- Density is indicated by a scale with a larer maximum
+plot(density(ppp_critter1, 1))
 plot(density(ppp_critter2, 1))
 
 ```
 
 At first, these plots do not appear significantly different in any way. However, if you observe the scale on the right side of each plot, you can see that the density scale is higher for #1 critters than for #2 critters. To me, this indicates that #1 critters likely display greater rates of aggregation, which again would be more characteristic of prey species being pushed into similar places on account of similar avoidance behaviors. **Of course, mere eye-tests and observations are not sufficient for the purposes of identifying which of these critters is the predator and which is the prey... so let's dive into some analysis!**
 
-First, let's overlay a 4x4 grid on our study area and determine whether the number of critters/quadrat conforms to complete spatial randomness (CSR) for each species. We will employ a chi-square test for both sets of critters independently.
+First, let's overlay a 4x4 grid on our study area and determine whether the number of critters per quadrat conform to complete spatial randomness (CSR) for each species. We will employ a chi-square test for both sets of critters independently.
 
-
-```{r}
+### ***Quadrat Counts & Chi-square Tests***
+```{r, warning=F, error=F, message=F}
 # Critter 1
 q1 = quadratcount(ppp_critter1, nx=4, ny=4)
 plot(ppp_critter1)
@@ -129,31 +137,22 @@ plot(q1, add=T)
 ChiSquareTest1 <- quadrat.test(ppp_critter1, nx=4, ny=4, method='Chisq')
 print(paste("The p-value for the critter 1 chi-square test is:", ChiSquareTest1$p.value))
 
-# Evidence to suggest this is not random
-
 # Critter 2
 q2 = quadratcount(ppp_critter2, nx=4, ny=4)
 plot(ppp_critter2)
 plot(q2, add=T)
 ChiSquareTest2 <- quadrat.test(ppp_critter2, nx=4, ny=4, method='Chisq')
 print(paste("The p-value for the critter 2 chi-square test is:", ChiSquareTest2$p.value))
-
-# No evidence to really suggest this is not random
-
-
-
 ```
 
-Indicated by my code above, there is evidence to suggest that #1 critters do not conform to CSR tendencies (p<0.05).
++ Indicated by my code above, **there is evidence** to suggest that #1 critters do not conform to CSR tendencies (p<0.05).
++ In contrast, **there is not substantial evidence** to suggest that #2 critters do not conform to CSR tendencies (p>0.05)
 
-In contrast, there is not substantial evidence suggesting that #2 critters do not conform to CSR tendencies (p>0.05)
+Let's parse this out further by examining Ripley's K and L values, measurements of aggregation, for each critter type.
 
-Let's parse this out further by examining Ripley's K and L values, measurements of aggregation.
+### ***Ripley's K***
 
-### Let's Check for Ripley's K/L for each individual critter.
-Greater aggregation for a set of critters should hint that they are prey. I think of aggregation as the prey huddling up as they try to all get as far as possible from multiple predators. (ADJUST THIS SENTENCE LATER)
-
-```{r}
+```{r, warning=F, error=F, message=F}
 #Ripley's K without correction for edge effects 
 kNone1 = Kest(ppp_critter1, correction='none') # Critter 1
 kNone2 = Kest(ppp_critter2, correction='none') # Critter 2
@@ -166,8 +165,9 @@ Overall, I don't glean very much after plotting Ripley's K without correction fo
 
 Let's proceed with Ripley's L function, which is plotted linearly and can be scaled around zero. In my opinion, it is easier to interpret.
 
+### ***Ripley's L***
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Ripley's L without correction for edge effects - Critter 1
 lNone1 = Lest(ppp_critter1, correction='none') # Critter 1
 plot(lNone1, main = "Ripley's L without Correction for Edge Effects - Critter 1")
@@ -178,16 +178,18 @@ lNone2 = Lest(ppp_critter2, correction='none') # Critter 2
 plot(lNone2, main = "Ripley's L without Correction for Edge Effects - Critter 2")
 plot(lNone2, .-r~r, main = "Adjusted Ripley's L without Correction - Critter 2")
 ```
-Before any type of edge correction, it appears that #1 critters consistently demonstrate a higher-than-expected degree of aggregation up until about a radius of 12 units, when compared to a poisson distribution. At about 12 units, the true Ripley's L values plummet well below the expected values for a poisson distribution. 
 
-Up until ~15 units, #2 critters demonstrate more sporadic Ripley's L values that hover near the expected values for a poisson distribution. Then, their Ripley's L values also plummet well below what is expected for a poisson distribution.
++ Before any type of edge correction, it appears that #1 critters consistently demonstrate a higher-than-expected degree of aggregation up until about a radius of 12 units, when compared to a poisson distribution. At about 12 units, the true Ripley's L values plummet well below the expected values for a poisson distribution. 
 
-**Overall, these findings hint that #1 critters are aggregating, while #2 critters are demonstrating more random levels of aggregation. Given that Ripley's L values plummet for both critters, I expect this is a function of not correcting for edge effects. For example, for any given critter 5 units away from an edge, you would expect the level of aggregation to decrease as you expand past 5 units. This can be attributed to the fact that despite expanding your radius, you wouldn't be increasing the number of points to interact with on the side of the nearest edge(s), thus introducing bias.**
++ Up until ~15 units, #2 critters demonstrate more sporadic Ripley's L values that hover near the expected values for a poisson distribution. Then, their Ripley's L values also plummet well below what is expected for a poisson distribution.
+
+**Overall, these findings hint that #1 critters may aggregate, while #2 critters demonstrate more random levels of aggregation.** ***Given that Ripley's L values plummet for both critters, I expect this is a function of not correcting for edge effects.*** For example, for any given critter 5 units away from an edge, you would expect the level of aggregation to decrease as you expand past 5 units. This can be attributed to the fact that despite expanding your radius, the actual space covered (and potnetial for interaction among points) would not scale proportionately with the radius because it would be limited by the nearest edge(s) of the window, thus introducing bias.
 
 For a more complete understanding of what is going on, let's account for these edge effects.
 
+### ***Ripley's L with Corrections***
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Ripley's L with isotropic correction - Critter 1
 lIso1 = Lest(ppp_critter1, correction='isotropic') # Critter 1
 plot(lIso1, .-r~r, main = "Ripley's L with Isotropic Correction - Critter 1")
@@ -208,15 +210,20 @@ plot(lTrans2, .-r~r, main = "Ripley's L with Toroidal Shift - Critter 2")
 ```
 
 Okay, so there are multiple interesting findings here:
+
 1. First, we don't see the plummet of Ripley's L values across all figures after a certain threshold, indicating edge effects were definitely impacting our previous findings.
-2. Ripley's L values for #1 critters appear pretty different when using isotropic vs toroidal shift corrections, while the values for #2 critters appear nearly identical across both correction types. At first, I found this odd, so I dove a bit deeper into how these corrections actually function. While isotropic correction weighs points differently depending on their proximity to an edge, a toroidal shift artificially creates a continuous landscape, using opposite edges of the window to continue the distribution of points. In our scenario, I find it more appropriate to use an isotropic correction, because provided a more extensive landscape (toroidal shift), it is likely that our prey species would not behave precisely the same way. In our simulation, the prey species is repelled by predators AND confined by edges. Thus, we may see greater clustering near edges, which appears to be the case. A toroidal shift would repeat/project these clusters, which originally formed near edges, across a greater landscape with edges that are theoretically farther away. In short, a toroidal shift is less representative of the true patterns exhibited by our prey critters than an isotropic correction, whereas for our predators, it should make little difference if they are randomly dispersed. 
-3. The levels of aggregation for our #1 critters are much higher than what would be expected under a poisson distribution, leading me to believe they are the prey species.
-4. While Ripley's L values spike around 15 units for #2 critters, the values are overall much closer to a poisson distribution than what is demonstrated by #1 critters, leading me to believe #2 critters are the predators.  
 
-While I am feeling pretty confident that #1 critters are the prey and #2 critters are the predators, let's continue our analysis.
+2. Second, Ripley's L values for critter 1 appear pretty different when using isotropic vs toroidal shift corrections, while the values for critter 2 appear nearly identical across both correction types. At first, I found this odd, so I dove a bit deeper into how these corrections actually function. While isotropic correction weighs points differently depending on their proximity to an edge, a toroidal shift artificially creates a continuous landscape, using opposite edges of the window to continue the distribution of points. In our scenario, **I find it more appropriate to use an isotropic correction**, because provided a more extensive landscape (toroidal shift), it is likely that our prey species would not behave precisely the same way. In our simulation, the prey species is repelled by predators AND confined by edges. Thus, we could see greater clustering near edges, which appears to be the case based on the eye-test. A toroidal shift would repeat/project these clusters, which originally formed near edges, across a greater landscape with edges that are theoretically farther away. In short, a toroidal shift is less representative of the true patterns exhibited by our prey critters than an isotropic correction. For our predators, it should make little difference if they are not territorial and randomly dispersed. 
 
+3. **The levels of aggregation for our #1 critters are much higher than what would be expected under a poisson distribution, leading me to believe they are the prey species.**
 
-```{r}
+4. While Ripley's L values spike around 15 units **for #2 critters, the values are overall much closer to a poisson distribution than what is demonstrated by #1 critters, leading me to believe #2 critters are the predators.** 
+
+While I am feeling pretty confident that critter 1 is the prey and that critter 2 is the predator, let's continue our analysis.
+
+### ***Comparison to Complete Spatial Randomness (CSR)***
+```{r, warning=F, error=F, message=F}
+set.seed(2024)
 
 #Comparison to Complete Spatial Randomness
 lCsr1 = envelope(ppp_critter1, Lest, nsim=99, rank=1, correction='isotropic', global=F)
@@ -233,103 +240,41 @@ plot(lCsr2, .-r~r, shade=c('hi', 'lo'), legend=F,
 
 ```
 
-After our comparison to CSR, it is clear that critter 1, across ~4-21 units, aggregates more strongly than what should reasonably be expected of a random distribution. This is not the case for critter 2, which does not exhibit significant differences from CSR. Now we can confidentially infer that #1 critters are the prey, given that they are aggregating, which can be anticipated due to shared repulsion from predators. However, let's take a look at how they directly respond to #2 critters, the expected predators.
+After our comparison to CSR, **it is clear that critter 1**, across ~4-21 units, **aggregates more strongly than what should reasonably be expected of a random distribution.** This is not the case for critter 2, which does not exhibit significant differences from CSR. Now we can confidentially infer that critter 1 is the prey, given that they are aggregating, which can be anticipated due to shared repulsion from predators. However, let's take a look at how they directly respond to #2 critters, the expected predators.
 
+### ***Observing Aggregation of Critter 1 Around Critter 2: Multitype L-function***
 
-
-```{r}
+```{r, warning=F, error=F, message=F}
 # Prepare combined data frame
 combinedCritters <- rbind(
   data.frame(x=critter1$x, y=critter1$y, species=rep("critter1", nrow(critter1))),
   data.frame(x=critter2$x, y=critter2$y, species=rep("critter2", nrow(critter2)))
 )
 
-# Ensure 'species' column is a factor, crucial for a multitype point pattern
+# Ensure 'species' column is a factor
 combinedCritters$species <- as.factor(combinedCritters$species)
 
-# Define the observation window based on the combined range of x and y coordinates
-obsWindow <- owin(xrange=range(combinedCritters$x), yrange=range(combinedCritters$y))
+# Convert to ppp object to be recognized as a multitype point pattern
+pppCombined <- ppp(x=combinedCritters$x, y=combinedCritters$y, marks=combinedCritters$species, window=SimWindow)
 
-# Convert to ppp object
-pppCombined <- ppp(x=combinedCritters$x, y=combinedCritters$y, marks=combinedCritters$species, window=obsWindow)
+# Calculate and plot Lcross
+lCrossResult <- Lcross(pppCombined, i="critter1", j="critter2")
+plot(lCrossResult, .-r~r, legend=T, main="Lcross for Critter1 vs Critter2")
+```
 
-# Now, pppCombined should be recognized as a multitype point pattern
-# Calculate Lcross
-lCrossResult <- Lcross(pppCombined, "critter1", "critter2")
+This figure demonstrates that **#1 critters are less aggregated around #2 critters than what would be expected in a poisson distribution.** The only line that is not under the expected value (0.0; blue dashed line) for the entire length of the plot is L^bord (the green dashed line), which I am not familiar with. Both the "iso" and "trans" lines (black and red lines), representing isotropic and toroidal shift corrections respectively, are below the expected Ripley's L values for the entire length, and are lowest between 10-15 units. **This is direct evidence that critter 1 is avoiding critter 2.** However, for some final validation, let's run a simulation to check if #1 critters are found farther from #2 critters than what would be expected given CSR.
 
-# Plot Lcross result
-plot(lCrossResult, main="Lcross for Critter1 vs Critter2")
-
-
-##################################### SIG
-
+### ***Observing Aggregation of Critter 1 Around Critter 2: Multitype L-function***
+```{r, warning=F, error=F, message=F}
+set.seed(2024)
 # Calculate Lcross envelope to compare against CSR
 lCrossEnv <- envelope(pppCombined, Lcross, nsim=99, rank=1, global = F, i="critter1", j="critter2", simulate=expression(rlabel(pppCombined)))
 
 # Plot the envelope
-plot(lCrossEnv, main="Lcross Envelope for Critter1 vs Critter2")
-plot(lCrossEnv, .-r~r, legend=T, main="Lcross Envelope for Critter1 vs Critter2")
-
-####################################### SIG
+plot(lCrossEnv, .-r~r, legend=F, main="Lcross Envelope for Critter1 vs Critter2")
 
 ```
 
+Here, we find that critter 1 is observed aggregating around critter 2 far less than what is represented in 99 simulations, in which there is not interaction between the critters. The values break the lower boundary of the envelope around 3 units and remain well below the envelope until ~22 units. We can confidentially ascertain that these critters are interacting and that critter 1 is being repelled by critter 2. 
 
-```{r}
-#NND Histograms
-# For critter 1
-nndist_critter1 <- nndist(ppp_critter1)
-summary(nndist_critter1)
-
-# For critter 2
-nndist_critter2 <- nndist(ppp_critter2)
-summary(nndist_critter2)
-
-# From critter 1 to critter 2
-nn_cross_1_to_2 <- nncross(ppp_critter1, ppp_critter2)
-summary(nn_cross_1_to_2)
-
-# From critter 2 to critter 1 (for completeness)
-nn_cross_2_to_1 <- nncross(ppp_critter2, ppp_critter1)
-summary(nn_cross_2_to_1)
-
-
-
-
-
-
-# Convert the distances to data frames for ggplot
-df_nndist_critter1 <- data.frame(distance = nndist_critter1, group = "Critter 1")
-df_nndist_critter2 <- data.frame(distance = nndist_critter2, group = "Critter 2")
-df_nn_cross_1_to_2 <- data.frame(distance = nn_cross_1_to_2$dist, group = "Critter 1 to 2")
-df_nn_cross_2_to_1 <- data.frame(distance = nn_cross_2_to_1$dist, group = "Critter 2 to 1")
-
-
-# Combine data frames
-crit1_distances <- rbind(df_nndist_critter1, df_nn_cross_1_to_2)
-
-# Plot
-ggplot(crit1_distances, aes(x = distance, fill = group)) +
-  geom_histogram(alpha = 0.6, position = "identity", binwidth = 0.5) +
-  theme_minimal() +
-  labs(title = "Distribution of Nearest Neighbor Distances", x = "Distance", y = "Frequency") +
-  scale_fill_brewer(palette = "Set1")
-
-
-# Combine data frames
-crit2_distances <- rbind(df_nndist_critter2, df_nn_cross_2_to_1)
-
-# Plot
-ggplot(crit2_distances, aes(x = distance, fill = group)) +
-  geom_histogram(alpha = 0.6, position = "identity", binwidth = 0.5) +
-  theme_minimal() +
-  labs(title = "Distribution of Nearest Neighbor Distances", x = "Distance", y = "Frequency") +
-  scale_fill_brewer(palette = "Set1")
-
-
-```
-
-
-
-
-Integrate your answer with additional code chunks here.
+#### **Specifically, critter 1 is the prey species and avoiding critter 2, the predator.**
