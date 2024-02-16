@@ -1,5 +1,7 @@
 ---
-title: "R Notebook"
+title: "Lab 6 assignment"
+author: "Lucas Parvin"
+date: "2-17-2024"
 output:
   html_document:
     df_print: paged
@@ -85,7 +87,7 @@ ggplot(tmp, aes(x=dist.class, y=coef))+
 **Answer:** Given that statistically significant differences (from what would be expected if the bee values were randomly distributed) are designated by red and black points, an envelope is not needed in this correlogram. This correlogram demonstrates positive spatial dependence among bee abundance within 20 m. It also demonstrates less intense significant negative spatial dependence between ~30-50 m and ~80-90 m. The max distance between two points is `max(distMat)` = 134.3503, so the maximum distance at which I am interpreting my figures is `2/3*134.3503` = 89.56686. Overall, the correlogram has a wave-like pattern, hinting at spatial dependence with positive and negative influences on bee abundance at different distances. 
 
 #### **Semi-Variogram**
-```{r, warning=F, error=F, message=F, comment=F}
+```{r, warning=F, error=F, message=F}
 # Prepare geoR object
 geoBee = as.geodata(blueVanes)
 
@@ -101,7 +103,7 @@ plot(empGeor, envelope=empEnv)
 **Answer:** This semi-variogram demonstrates significant spatial covariance between bee abundances at blue vanes within ~25 m of one another. Additionally, variance between points ~75-90 m away from one another are significantly greater than what would be expected for a random distribution of bee abundances. This semi-variogram is limited to 2/3 of the maximum distance, ~89.6 m.
 
 #### **Testing Model AIC Values Against CSR**
-```{r, warning=F, error=F, message=F, comment=F}
+```{r, warning=F, error=F, message=F}
 # Create Exponential Model
 mlExp = likfit(geoBee, cov.model='exp', ini=c(7, 60))
 
@@ -284,5 +286,7 @@ Answer the question here.
 # Challenge 6 (3 points)
 
 What is your assessment regarding the distribution of bee abundance in this study area? Does it exhibit spatial dependence, and if so, what is driving that pattern?
+
+**Answer:** Bee abundance appears driven by density of floral resources. In this way, bees are exhibiting spatial dependence on flowers, but not on each other. This is demonstrated by the fact that residuals for bee abundance appear totally random after accounting for density of floral resources.
 
 Answer the question here.
