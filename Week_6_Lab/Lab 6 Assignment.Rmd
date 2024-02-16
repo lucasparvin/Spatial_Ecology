@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r, warning=F, error=F, message=F}
@@ -222,7 +224,7 @@ plot(floral)
 newraster = focalMat(floral, 15, type='circle', fillNA=FALSE)
 newraster
 
-FlowerDistribution = focal(floral, w = newraster, fun='mean')
+FlowerDistribution = focal(floral, w = newraster, fun='sum')
 plot(FlowerDistribution)
 
 # Convert the raster to a dataframe for plotting
@@ -230,7 +232,7 @@ FlowerDistribution_df <- as.data.frame(FlowerDistribution, xy = TRUE)
 
 # Plot with ggplot2
 ggplot() +
-  geom_raster(data = FlowerDistribution_df, aes(x = x, y = y, fill = focal_mean)) +
+  geom_raster(data = FlowerDistribution_df, aes(x = x, y = y, fill = focal_sum)) +
   geom_point(data = blueVanes, aes(x = x, y = y, color = meanBee)) +
   scale_fill_viridis_c() + # Using viridis color scale for raster
   scale_color_gradient(low = "white", high = "red", name = "Mean Bee Abundance") +
@@ -251,7 +253,7 @@ Extract the focal flower value from the raster you just created at each point us
 #Place your code here.
 blueVaneCoords = blueVanes[,-3]
 flowerextraction = extract(FlowerDistribution, blueVaneCoords)
-blueVanes$meanflowers = flowerextraction$focal_mean
+blueVanes$meanflowers = flowerextraction$focal_sum
 
 linearmodel_floral_covar <- lm(meanBee ~ meanflowers, data = blueVanes)
 
