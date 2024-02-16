@@ -217,12 +217,26 @@ Conventional wisdom indicates that the distribution of floral resources may subs
 ```{r}
 
 floral = rast('https://github.com/ValenteJJ/SpatialEcology/raw/main/Week6/floralResources.tif')
+plot(floral)
 
-?focalMat
+newraster = focalMat(floral, 15, type='circle', fillNA=FALSE)
+newraster
 
-flowerMatrix = focalMat(floral, 15, type='circle', fillNA=FALSE)
-flowerMatrix
+FlowerDistribution = focal(floral, w = newraster, fun='mean')
+plot(FlowerDistribution)
 
+# Convert the raster to a dataframe for plotting
+FlowerDistribution_df <- as.data.frame(FlowerDistribution, xy = TRUE)
+
+# Plot with ggplot2
+ggplot() +
+  geom_raster(data = FlowerDistribution_df, aes(x = x, y = y, fill = focal_mean)) +
+  geom_point(data = blueVanes, aes(x = x, y = y, color = meanBee)) +
+  scale_fill_viridis_c() + # Using viridis color scale for raster
+  scale_color_gradient(low = "white", high = "red", name = "Mean Bee Abundance") +
+  labs(title = "Flower Distribution and Mean Bee Abundance",
+       x = "X Coordinate", y = "Y Coordinate") +
+  theme_minimal()
 
 
 ```
@@ -235,6 +249,41 @@ Extract the focal flower value from the raster you just created at each point us
 
 ```{r}
 #Place your code here.
+blueVaneCoords = blueVanes[,-3]
+flowerextraction = extract(FlowerDistribution, blueVaneCoords)
+blueVanes$meanflowers = flowerextraction$focal_mean
+
+linearmodel_floral_covar <- lm(meanBee ~ meanflowers, data = blueVanes)
+
+
+
+# Floral Linear model residuals
+linearmodel_floral_covar_residuals <- residuals(linearmodel_floral_covar)
+
+# Create new data frame with linear model residuals in place of bee abundance column
+blueVaneslm_floral = blueVanes
+blueVaneslm_floral$linearmodel_residuals_floral = linearmodel_floral_covar_residuals
+
+# Create Correlogram
+lmresidual_correlog_floral <- pgirmess::correlog(coords, blueVaneslm_floral$linearmodel_residuals_floral, method='Moran', nbclass=26, alternative = 'two.sided')
+round(lmresidual_correlog_floral, 2)
+
+# Plot Correlogram
+tmp3 = data.frame(lmresidual_correlog_floral) %>%
+  mutate(significant = ifelse(p.value < 0.05, 'yes', 'no')) # <-- In Place of Envelope
+
+ggplot(tmp3, aes(x=dist.class, y=coef))+
+  geom_line()+
+  geom_point(aes(color=significant, size=n))+
+  scale_color_manual(values=c('black', 'red'))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  geom_hline(yintercept=0, linetype='dashed')+
+  geom_vline(xintercept=maxDist, color='red')+
+  scale_x_continuous(breaks=seq(0, 130, 10))
+
+
+
 ```
 
 Answer the question here.
