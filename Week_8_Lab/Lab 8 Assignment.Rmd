@@ -99,33 +99,170 @@ tmp = presCovs %>% select(elev, precip, mesic1km, canopy) %>%
   as.matrix()
 
 bioclim = envelope(tmp)
-
-
-bioclimMap = predict(layers, bioclim)
-plot(bioclimMap)
 ```
 
 ```{r}
-#Place code here
-```
+# Set up bioclim envelope
+bioclimMap = predict(layers, bioclim)
 
+# Set up the GLM model
+glmModel = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family='binomial', data=presBackCovs)
+glmMap = predict(layers, glmModel, type='response')
+
+# Set up the random forest model
+tuneRF(y = as.factor(presBackCovs$pres), x=presBackCovs[,3:6], stepFactor = 2, ntreeTry = 500)
+rfModel = randomForest(as.factor(pres) ~ canopy + elev + mesic1km + precip, data=presBackCovs, mtry=2, ntree=500, na.action = na.omit)
+rfMap = predict(layers, rfModel, type='prob', index=2)
+
+# Plot all maps next to one another
+layers2 = c(bioclimMap, glmMap, rfMap)
+names(layers2) = c('Bioclim Envelope Map', 'GLM Model Map', 'Random Forest Map')
+plot(layers2)
+
+```
+**ANSWER:**
 
 # Challenge 2 (4 points)
 
 When we fit our GLM in lab, we used background points, rather than true absence points, to represent pseudo-absences. Fit the exact same GLM model, only this time use presence and true absence data. That is, replace the background rows in the dataframe with rows that represent actual sites where surveys were completed but Varied Thrush were not detected. Once you've fit the GLM, build a new SDM from this fitted model and visually compare the prediction surface to that built based on the presence-background model. What discrepancies do you notice, and what is your intuition regarding which of these two models is more reliable?
 
 ```{r}
-#Place code here
+absCovs = extract(layers, vathAbsXy)
+absCovs = data.frame(vathAbsXy, absCovs, pres=0)
+absCovs = absCovs[complete.cases(absCovs),]
+
+
+
+colnames(absCovs)[1:2] = c('x', 'y')
+
+
+
 ```
+
+```{r}
+
+presAbsCovs = rbind(presCovs, absCovs)
+
+glmModelAbs = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family='binomial', data=presAbsCovs)
+
+summary(glmModelAbs)
+
+glmMapAbs = predict(layers, glmModelAbs, type='response')
+
+layers3 = c(glmMap, glmMapAbs)
+names(layers3) = c('GLM Map (Pseudo-absences)', 'GLM  Map (True Absences)')
+plot(layers3)
+
+```
+**ANSWER:** More absences in original (2000 simulated absences v 700 true absences) drives lower overall suitability. However, distribution of true absences (and presences) are likely to be biased due to accessibility of various sampling sites. Let's visualize that.
+
+
+
+```{r}
+
+ggplot() +
+  geom_raster(data=elev, aes(x=x, y=y, fill=elev_km)) +
+  geom_point(data=backXy, aes(x=x, y=y)) +
+  geom_point(data=vathPres, aes(x=EASTING, y=NORTHING), color='red', alpha=0.3) +
+  geom_point(data=vathAbs, aes(x=EASTING, y=NORTHING), color = 'yellow', alpha=0.3)+
+  coord_fixed()
+
+```
+
+**ANSWER:** Discuss distribution and overlap. Clarify which is yellow and black and red.
+
 
 # Challenge 3 (4 points)
 
 Now plot the relationship between the 4 explanatory variables and the predicted occupancy values based on the two fitted GLM models (presence-background and presence-absence). Recall that we did this in the latter part of our lab. Do you notice any differences in the covariate patterns between the two models? Does this help you interpret the discrepancies between the predicted surfaces from the two models?
 
 ```{r}
-#Place code here
+
+# Elevation
+tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+elevData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:elev) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'elevation')
+
+# Canopy
+tmp = expand.grid(elev = mean(backCovs$elev),
+                  canopy = seq(min(backCovs$canopy), max(backCovs$elev), length=1000),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+canopyData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:maxent, canopy) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'canopy')
+
+# Precipitation
+tmp = expand.grid(elev = mean(backCovs$elev),
+                  canopy = mean(backCovs$canopy),
+                  precip = seq(min(backCovs$precip), max(backCovs$precip), length=1000),
+                  mesic1km = mean(backCovs$mesic1km))
+
+precipData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:maxent, precip) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'precipitation')
+
+# Mesic Trees
+
+tmp = expand.grid(elev = mean(backCovs$elev),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = seq(min(backCovs$mesic1km), max(backCovs$mesic1km), length=1000))
+
+mesicData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:maxent, mesic1km) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'mesic1km')
+
+# Plots
+colnames(elevData)[1] = colnames(canopyData)[1] = colnames(precipData)[1] = colnames(mesicData)[1] = 'xValue'
+
+tmp = rbind(elevData, canopyData, precipData, mesicData)
+
+ggplot(tmp, aes(x=xValue, y=value, color=name))+
+  facet_wrap(~variable, scales='free_x')+
+  geom_line()+
+  theme_bw()+
+  theme(panel.grid=element_blank())
+
+
+
 ```
 
+**ANSWER:**
 
 # Challenge 4 (4 points)
 
@@ -137,6 +274,10 @@ Using the SDM built from the random forest model, convert the landscape into "ha
 #Place code here
 ```
 
+**ANSWER:**
+
+
+
 # Challenge 5 (4 points)
 
 When we fit the Maxent model in the lab, we used a regularization constant of 1. Fit the model two more times, using regularization (regmult) constants of 0.5 and 3. Construct figures showing the relationship between the 4 explanatory variables and the predicted outcome from these 3 fitted Maxent models. What is the regularization constant doing? Hint: you may need to Google it.
@@ -144,3 +285,6 @@ When we fit the Maxent model in the lab, we used a regularization constant of 1.
 ```{r}
 #Place code here
 ```
+
+**ANSWER:**
+
