@@ -177,86 +177,138 @@ ggplot() +
 Now plot the relationship between the 4 explanatory variables and the predicted occupancy values based on the two fitted GLM models (presence-background and presence-absence). Recall that we did this in the latter part of our lab. Do you notice any differences in the covariate patterns between the two models? Does this help you interpret the discrepancies between the predicted surfaces from the two models?
 
 ```{r}
-
-# Elevation
+## Elevation
+# Elevation for backCovs
 tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
                   canopy = mean(backCovs$canopy),
                   precip = mean(backCovs$precip),
                   mesic1km = mean(backCovs$mesic1km))
 
-elevData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
-  cbind(tmp) %>% 
-  select(bioclim:elev) %>% 
-  pivot_longer(bioclim:maxent) %>% 
-  mutate(variable = 'elevation')
+# Elevation for absCovs
+tmp2 = expand.grid(elev = seq(min(absCovs$elev), max(absCovs$elev), length=1000),
+                  canopy = mean(absCovs$canopy),
+                  precip = mean(absCovs$precip),
+                  mesic1km = mean(absCovs$mesic1km))
 
-# Canopy
-tmp = expand.grid(elev = mean(backCovs$elev),
-                  canopy = seq(min(backCovs$canopy), max(backCovs$elev), length=1000),
-                  precip = mean(backCovs$precip),
-                  mesic1km = mean(backCovs$mesic1km))
+# Assuming bioclim model uses tmp (backCovs) and glmModel uses tmp (backCovs), but glmModelAbs uses tmp2 (absCovs)
+elevData = data.frame(
+  bioclim = predict(bioclim, tmp),
+  glm = predict(glmModel, tmp, type='response'),
+  glm2 = predict(glmModelAbs, tmp2, type='response')
+) %>%
+cbind(tmp) %>%  # Assuming you want to add tmp's variables to the data frame
+mutate(variable = 'elevation')
 
-canopyData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
-  cbind(tmp) %>% 
-  select(bioclim:maxent, canopy) %>% 
-  pivot_longer(bioclim:maxent) %>% 
-  mutate(variable = 'canopy')
 
-# Precipitation
-tmp = expand.grid(elev = mean(backCovs$elev),
-                  canopy = mean(backCovs$canopy),
-                  precip = seq(min(backCovs$precip), max(backCovs$precip), length=1000),
-                  mesic1km = mean(backCovs$mesic1km))
+## Canopy
+# Canopy for backCovs
+tmp_canopy = expand.grid(
+  elev = mean(backCovs$elev),
+  canopy = seq(min(backCovs$canopy), max(backCovs$canopy), length=1000),
+  precip = mean(backCovs$precip),
+  mesic1km = mean(backCovs$mesic1km)
+)
 
-precipData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
-  cbind(tmp) %>% 
-  select(bioclim:maxent, precip) %>% 
-  pivot_longer(bioclim:maxent) %>% 
-  mutate(variable = 'precipitation')
+# Canopy for absCovs
+tmp2_canopy = expand.grid(
+  elev = mean(absCovs$elev),
+  canopy = seq(min(absCovs$canopy), max(absCovs$canopy), length=1000),
+  precip = mean(absCovs$precip),
+  mesic1km = mean(absCovs$mesic1km)
+)
 
-# Mesic Trees
+# Data for Canopy
+canopyData = data.frame(
+  bioclim = predict(bioclim, tmp_canopy),
+  glm = predict(glmModel, tmp_canopy, type='response'),
+  glm2 = predict(glmModelAbs, tmp2_canopy, type='response')
+) %>%
+cbind(tmp_canopy) %>%
+mutate(variable = 'canopy')
 
-tmp = expand.grid(elev = mean(backCovs$elev),
-                  canopy = mean(backCovs$canopy),
-                  precip = mean(backCovs$precip),
-                  mesic1km = seq(min(backCovs$mesic1km), max(backCovs$mesic1km), length=1000))
 
-mesicData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
-  cbind(tmp) %>% 
-  select(bioclim:maxent, mesic1km) %>% 
-  pivot_longer(bioclim:maxent) %>% 
-  mutate(variable = 'mesic1km')
+## Precipitation
+# Precipitation for backCovs
+tmp_precip = expand.grid(
+  elev = mean(backCovs$elev),
+  canopy = mean(backCovs$canopy),
+  precip = seq(min(backCovs$precip), max(backCovs$precip), length=1000),
+  mesic1km = mean(backCovs$mesic1km)
+)
+
+# Precipitation for absCovs
+tmp2_precip = expand.grid(
+  elev = mean(absCovs$elev),
+  canopy = mean(absCovs$canopy),
+  precip = seq(min(absCovs$precip), max(absCovs$precip), length=1000),
+  mesic1km = mean(absCovs$mesic1km)
+)
+
+# Data for Precipitation
+precipData = data.frame(
+  bioclim = predict(bioclim, tmp_precip),
+  glm = predict(glmModel, tmp_precip, type='response'),
+  glm2 = predict(glmModelAbs, tmp2_precip, type='response')
+) %>%
+cbind(tmp_precip) %>%
+mutate(variable = 'precipitation')
+
+
+## Mesic Trees
+# Mesic Trees for backCovs
+tmp_mesic = expand.grid(
+  elev = mean(backCovs$elev),
+  canopy = mean(backCovs$canopy),
+  precip = mean(backCovs$precip),
+  mesic1km = seq(min(backCovs$mesic1km), max(backCovs$mesic1km), length=1000)
+)
+
+# Mesic Trees for absCovs
+tmp2_mesic = expand.grid(
+  elev = mean(absCovs$elev),
+  canopy = mean(absCovs$canopy),
+  precip = mean(absCovs$precip),
+  mesic1km = seq(min(absCovs$mesic1km), max(absCovs$mesic1km), length=1000)
+)
+
+# Data for Mesic Trees
+mesicData = data.frame(
+  bioclim = predict(bioclim, tmp_mesic),
+  glm = predict(glmModel, tmp_mesic, type='response'),
+  glm2 = predict(glmModelAbs, tmp2_mesic, type='response')
+) %>%
+cbind(tmp_mesic) %>%
+mutate(variable = 'mesic1km')
+
 
 # Plots
 colnames(elevData)[1] = colnames(canopyData)[1] = colnames(precipData)[1] = colnames(mesicData)[1] = 'xValue'
 
 tmp = rbind(elevData, canopyData, precipData, mesicData)
 
-ggplot(tmp, aes(x=xValue, y=value, color=name))+
+
+ggplot(tmp, aes(x=xValue, y=value, color=variable))+
   facet_wrap(~variable, scales='free_x')+
   geom_line()+
   theme_bw()+
   theme(panel.grid=element_blank())
+
+
+
+
+
+
+# Reshape the data
+tmp_long <- tmp %>%
+  pivot_longer(cols = c(glm, glm2), names_to = "modelType", values_to = "predicted_value")
+
+# Plot the combined data
+ggplot(tmp_long, aes(x = xValue, y = predicted_value, color = modelType)) +
+  facet_wrap(~variable, scales = 'free_x') +
+  geom_line() +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  labs(color = "Model Type")
 
 
 
