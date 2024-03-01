@@ -40,6 +40,9 @@ print(paste("There are", OrganismDistribution$n, "organisms!")) # For Fun
 
 As output by my code, there are 109 organisms! The exclamation mark isn't really necessary though because based on the simulation parameters, the expected amount would be 100. Given that the simulation window is 100 x 100 units (10,000 units total) and that the lambda value (intensity value) is 0.01, a number near `0.1 * 100 * 100 = 100` should be expected. In other words, our actual value of 109 is 9% higher than what would initially be expected, doesn't seem too crazy. 
 
+$\color{red}{\text{Perfect. +3}}$
+
+
 # Challenge 2 (3 points)
 
 Verify that there no linear or quadratic pattern in the distribution of your organisms using fitted Poisson process models. Show the outcome of this analysis and explain your conclusion.
@@ -72,6 +75,9 @@ print(paste("The AIC for the Quadratic Model is", aic_quadratic))
 ```
 
 The model with the lowest AIC value is considered the best. In this scenario, the lowest AIC value belongs to the homogeneous model, indicating neither the linear or quadratic trends improve the model. This means there is no evidence to suggest that there are linear or quadratic patterns in the distribution of points.
+
+$\color{red}{\text{Nice. +3}}$
+
 
 # Challenge 3 (14 points)
 
@@ -277,3 +283,5 @@ plot(lCrossEnv, .-r~r, legend=F, main="Lcross Envelope for Critter1 vs Critter2"
 Here, we find that critter 1 is observed aggregating around critter 2 far less than what is represented in 99 simulations, in which there is not interaction between the critters. The values break the lower boundary of the envelope around 3 units and remain well below the envelope until ~22 units. We can confidentially ascertain that these critters are interacting and that critter 1 is being repelled by critter 2. 
 
 #### **Specifically, critter 1 is the prey species and avoiding critter 2, the predator.**
+
+$\color{red}{\text{Nice work, Lucasl. +14}}$
