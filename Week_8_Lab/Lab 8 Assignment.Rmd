@@ -16,6 +16,7 @@ require(randomForest)
 require(maxnet)
 require(enmSdmX)
 require(gbm)
+require(patchwork)
 #add any others needed
 ```
 
@@ -136,7 +137,6 @@ absCovs = absCovs[complete.cases(absCovs),]
 colnames(absCovs)[1:2] = c('x', 'y')
 
 
-
 ```
 
 ```{r}
@@ -176,143 +176,91 @@ ggplot() +
 
 Now plot the relationship between the 4 explanatory variables and the predicted occupancy values based on the two fitted GLM models (presence-background and presence-absence). Recall that we did this in the latter part of our lab. Do you notice any differences in the covariate patterns between the two models? Does this help you interpret the discrepancies between the predicted surfaces from the two models?
 
+
 ```{r}
-## Elevation
-# Elevation for backCovs
-tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
-                  canopy = mean(backCovs$canopy),
-                  precip = mean(backCovs$precip),
-                  mesic1km = mean(backCovs$mesic1km))
+# Step 1: Generate a sequence of values for 'elevation'
+elevation_seq <- seq(min(presBackCovs$elev, na.rm = TRUE), max(presBackCovs$elev, na.rm = TRUE), length.out = 100)
+data_seq <- data.frame(elev = elevation_seq)
 
-# Elevation for absCovs
-tmp2 = expand.grid(elev = seq(min(absCovs$elev), max(absCovs$elev), length=1000),
-                  canopy = mean(absCovs$canopy),
-                  precip = mean(absCovs$precip),
-                  mesic1km = mean(absCovs$mesic1km))
-
-# Assuming bioclim model uses tmp (backCovs) and glmModel uses tmp (backCovs), but glmModelAbs uses tmp2 (absCovs)
-elevData = data.frame(
-  bioclim = predict(bioclim, tmp),
-  glm = predict(glmModel, tmp, type='response'),
-  glm2 = predict(glmModelAbs, tmp2, type='response')
-) %>%
-cbind(tmp) %>%  # Assuming you want to add tmp's variables to the data frame
-mutate(variable = 'elevation')
+# Step 2: Predict occupancy probabilities using both GLM models for the sequence
+data_seq$predPseudoAbsences <- predict(glmModel, newdata = transform(data_seq, canopy=mean(presBackCovs$canopy, na.rm=TRUE), mesic1km=mean(presBackCovs$mesic1km, na.rm=TRUE), precip=mean(presBackCovs$precip, na.rm=TRUE)), type = "response")
+data_seq$predTrueAbsences <- predict(glmModelAbs, newdata = transform(data_seq, canopy=mean(presAbsCovs$canopy, na.rm=TRUE), mesic1km=mean(presAbsCovs$mesic1km, na.rm=TRUE), precip=mean(presAbsCovs$precip, na.rm=TRUE)), type = "response")
 
 
-## Canopy
-# Canopy for backCovs
-tmp_canopy = expand.grid(
-  elev = mean(backCovs$elev),
-  canopy = seq(min(backCovs$canopy), max(backCovs$canopy), length=1000),
-  precip = mean(backCovs$precip),
-  mesic1km = mean(backCovs$mesic1km)
-)
+# Generate a sequence of values for 'canopy'
+canopy_seq <- seq(min(presBackCovs$canopy, na.rm = TRUE), max(presBackCovs$canopy, na.rm = TRUE), length.out = 100)
+data_seq_canopy <- data.frame(canopy = canopy_seq)
 
-# Canopy for absCovs
-tmp2_canopy = expand.grid(
-  elev = mean(absCovs$elev),
-  canopy = seq(min(absCovs$canopy), max(absCovs$canopy), length=1000),
-  precip = mean(absCovs$precip),
-  mesic1km = mean(absCovs$mesic1km)
-)
-
-# Data for Canopy
-canopyData = data.frame(
-  bioclim = predict(bioclim, tmp_canopy),
-  glm = predict(glmModel, tmp_canopy, type='response'),
-  glm2 = predict(glmModelAbs, tmp2_canopy, type='response')
-) %>%
-cbind(tmp_canopy) %>%
-mutate(variable = 'canopy')
+# Predict occupancy probabilities using both GLM models for the sequence
+data_seq_canopy$predPseudoAbsences <- predict(glmModel, newdata = transform(data_seq_canopy, elev=mean(presBackCovs$elev, na.rm=TRUE), mesic1km=mean(presBackCovs$mesic1km, na.rm=TRUE), precip=mean(presBackCovs$precip, na.rm=TRUE)), type = "response")
+data_seq_canopy$predTrueAbsences <- predict(glmModelAbs, newdata = transform(data_seq_canopy, elev=mean(presAbsCovs$elev, na.rm=TRUE), mesic1km=mean(presAbsCovs$mesic1km, na.rm=TRUE), precip=mean(presAbsCovs$precip, na.rm=TRUE)), type = "response")
 
 
-## Precipitation
-# Precipitation for backCovs
-tmp_precip = expand.grid(
-  elev = mean(backCovs$elev),
-  canopy = mean(backCovs$canopy),
-  precip = seq(min(backCovs$precip), max(backCovs$precip), length=1000),
-  mesic1km = mean(backCovs$mesic1km)
-)
+# Generate a sequence of values for 'mesic1km'
+mesic1km_seq <- seq(min(presBackCovs$mesic1km, na.rm = TRUE), max(presBackCovs$mesic1km, na.rm = TRUE), length.out = 100)
+data_seq_mesic1km <- data.frame(mesic1km = mesic1km_seq)
 
-# Precipitation for absCovs
-tmp2_precip = expand.grid(
-  elev = mean(absCovs$elev),
-  canopy = mean(absCovs$canopy),
-  precip = seq(min(absCovs$precip), max(absCovs$precip), length=1000),
-  mesic1km = mean(absCovs$mesic1km)
-)
-
-# Data for Precipitation
-precipData = data.frame(
-  bioclim = predict(bioclim, tmp_precip),
-  glm = predict(glmModel, tmp_precip, type='response'),
-  glm2 = predict(glmModelAbs, tmp2_precip, type='response')
-) %>%
-cbind(tmp_precip) %>%
-mutate(variable = 'precipitation')
+# Predict occupancy probabilities using both GLM models for the sequence
+data_seq_mesic1km$predPseudoAbsences <- predict(glmModel, newdata = transform(data_seq_mesic1km, elev=mean(presBackCovs$elev, na.rm=TRUE), canopy=mean(presBackCovs$canopy, na.rm=TRUE), precip=mean(presBackCovs$precip, na.rm=TRUE)), type = "response")
+data_seq_mesic1km$predTrueAbsences <- predict(glmModelAbs, newdata = transform(data_seq_mesic1km, elev=mean(presAbsCovs$elev, na.rm=TRUE), canopy=mean(presAbsCovs$canopy, na.rm=TRUE), precip=mean(presAbsCovs$precip, na.rm=TRUE)), type = "response")
 
 
-## Mesic Trees
-# Mesic Trees for backCovs
-tmp_mesic = expand.grid(
-  elev = mean(backCovs$elev),
-  canopy = mean(backCovs$canopy),
-  precip = mean(backCovs$precip),
-  mesic1km = seq(min(backCovs$mesic1km), max(backCovs$mesic1km), length=1000)
-)
+# Generate a sequence of values for 'precip'
+precip_seq <- seq(min(presBackCovs$precip, na.rm = TRUE), max(presBackCovs$precip, na.rm = TRUE), length.out = 100)
+data_seq_precip <- data.frame(precip = precip_seq)
 
-# Mesic Trees for absCovs
-tmp2_mesic = expand.grid(
-  elev = mean(absCovs$elev),
-  canopy = mean(absCovs$canopy),
-  precip = mean(absCovs$precip),
-  mesic1km = seq(min(absCovs$mesic1km), max(absCovs$mesic1km), length=1000)
-)
-
-# Data for Mesic Trees
-mesicData = data.frame(
-  bioclim = predict(bioclim, tmp_mesic),
-  glm = predict(glmModel, tmp_mesic, type='response'),
-  glm2 = predict(glmModelAbs, tmp2_mesic, type='response')
-) %>%
-cbind(tmp_mesic) %>%
-mutate(variable = 'mesic1km')
-
-
-# Plots
-colnames(elevData)[1] = colnames(canopyData)[1] = colnames(precipData)[1] = colnames(mesicData)[1] = 'xValue'
-
-tmp = rbind(elevData, canopyData, precipData, mesicData)
-
-
-ggplot(tmp, aes(x=xValue, y=value, color=variable))+
-  facet_wrap(~variable, scales='free_x')+
-  geom_line()+
-  theme_bw()+
-  theme(panel.grid=element_blank())
+# Predict occupancy probabilities using both GLM models for the sequence
+data_seq_precip$predPseudoAbsences <- predict(glmModel, newdata = transform(data_seq_precip, elev=mean(presBackCovs$elev, na.rm=TRUE), mesic1km=mean(presBackCovs$mesic1km, na.rm=TRUE), canopy=mean(presBackCovs$canopy, na.rm=TRUE)), type = "response")
+data_seq_precip$predTrueAbsences <- predict(glmModelAbs, newdata = transform(data_seq_precip, elev=mean(presAbsCovs$elev, na.rm=TRUE), mesic1km=mean(presAbsCovs$mesic1km, na.rm=TRUE), canopy=mean(presAbsCovs$canopy, na.rm=TRUE)), type = "response")
 
 
 
+# Adjusted plot definitions with custom legend title
+plot_elevation <- ggplot(data_seq, aes(x = elev)) +
+  geom_line(aes(y = predPseudoAbsences, colour = "Pseudo-Absences")) +
+  geom_line(aes(y = predTrueAbsences, colour = "True Absences")) +
+  labs(x = "Elevation", y = "Value", colour = "GLM Type") +
+  scale_colour_manual(values = c("Pseudo-Absences" = "blue", "True Absences" = "red")) +
+  theme_minimal() +
+  ggtitle("Elevation")
 
+plot_canopy <- ggplot(data_seq_canopy, aes(x = canopy)) +
+  geom_line(aes(y = predPseudoAbsences, colour = "Pseudo-Absences")) +
+  geom_line(aes(y = predTrueAbsences, colour = "True Absences")) +
+  labs(x = "Canopy", y = "Value", colour = "GLM Type") +
+  scale_colour_manual(values = c("Pseudo-Absences" = "blue", "True Absences" = "red")) +
+  theme_minimal() +
+  ggtitle("Canopy")
 
+plot_mesic1km <- ggplot(data_seq_mesic1km, aes(x = mesic1km)) +
+  geom_line(aes(y = predPseudoAbsences, colour = "Pseudo-Absences")) +
+  geom_line(aes(y = predTrueAbsences, colour = "True Absences")) +
+  labs(x = "Mesic1km", y = "Value", colour = "GLM Type") +
+  scale_colour_manual(values = c("Pseudo-Absences" = "blue", "True Absences" = "red")) +
+  theme_minimal() +
+  ggtitle("Mesic1km")
 
-# Reshape the data
-tmp_long <- tmp %>%
-  pivot_longer(cols = c(glm, glm2), names_to = "modelType", values_to = "predicted_value")
+plot_precip <- ggplot(data_seq_precip, aes(x = precip)) +
+  geom_line(aes(y = predPseudoAbsences, colour = "Pseudo-Absences")) +
+  geom_line(aes(y = predTrueAbsences, colour = "True Absences")) +
+  labs(x = "Precipitation", y = "Value", colour = "GLM Type") +
+  scale_colour_manual(values = c("Pseudo-Absences" = "blue", "True Absences" = "red")) +
+  theme_minimal() +
+  ggtitle("Precipitation")
 
-# Plot the combined data
-ggplot(tmp_long, aes(x = xValue, y = predicted_value, color = modelType)) +
-  facet_wrap(~variable, scales = 'free_x') +
-  geom_line() +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  labs(color = "Model Type")
+# Combine the plots with the adjusted legend title
+combined_plot <- plot_elevation + plot_canopy + plot_mesic1km + plot_precip +
+  plot_layout(ncol = 2)
+
+# Print the combined plot with the adjusted legend title
+combined_plot
+
 
 
 
 ```
+
+
 
 **ANSWER:**
 
