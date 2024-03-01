@@ -272,10 +272,25 @@ Using the SDM built from the random forest model, convert the landscape into "ha
 
 ```{r}
 
+# Plot Mesic Forest
+mesic_binary <- ifel(mesic == 1, 1, 0)
+plot(mesic_binary, main="Binary Mesic Forest Raster", col=c("white", "green"), legend=TRUE, axes=TRUE)
+
+# Mesic Forest Patches
+mesic_patches <- patches(mesic_binary, directions=8, zeroAsNA=T)
+plot(mesic_patches, main="Mesic Patches", legend=TRUE)
+
+# Calculate mean patch size
+mesic_patch_areas <- table(values(mesic_patches))
+mesic_mean_patch_size_sqkm <- (mean(mesic_patch_areas * cell_area))/1000000
+mesic_mean_patch_size_roundedsqkm <- round(mesic_mean_patch_size_sqkm, 2)
+
 # Calculate total area of mesic forest
 
 # Sum mesic forest values
 mesic_forest_cells <- sum(values(mesic) == 1, na.rm = TRUE)
+non_mesic_forest_cells <- sum(values(mesic) != 1, na.rm = TRUE)
+mesic_percent_rounded <- round((mesic_forest_cells/(mesic_forest_cells+non_mesic_forest_cells)*100),2)
 
 # Calculate the area of a single cell (in square meters)
 cell_area_square_meters <- res(mesic)[1] * res(mesic)[2]  # Cell resolution (width * height) = 200 m x 200 m
@@ -283,13 +298,41 @@ cell_area_sqkm <- cell_area_square_meters/1000000 # Convert to square kilometers
 
 # Calculate total mesic forest area
 total_mesic_area <- mesic_forest_cells * cell_area_sqkm
-print(paste("In our study area, mesic forest covers",  total_mesic_area, "square kilometers"))
+print(paste("In our study area, mesic forest covers",  total_mesic_area, "square kilometers, which accounts for", mesic_percent_rounded, "% of the study area."))
+# Output results
+print(paste("Furthermore, the mean patch size of mesic forest is", mesic_mean_patch_size_roundedsqkm, "square kilometers."))
 
+
+```
+Now calculate the total amount of habitat and mean size of habitat patches based on this new raster (i.e., create patches of "habitat" based on aggregations of cells you deemed 1). How do the habitat amount and patch size values compare between the mesic forest approach and the SDM-based approach? In what situations might you rely on one map over the other?
+
+```{r}
+
+# Plot Habitat Threshold above 0.5 & apply threshold to convert probabilities to binary habitat classification
+rf_binary <- ifel(rfMap > 0.5, 1, 0)
+plot(rf_binary, main="Binary rf Habitat Raster", col=c("white", "green"), legend=TRUE, axes=TRUE)
+
+# Step 2: Identify habitat patches
+habitat_patches <- patches(rf_binary, directions=8, zeroAsNA=T)
+plot(habitat_patches, main="Habitat Patches", legend=TRUE)
+
+
+# Calculate total habitat area 
+cell_area <- res(rf_binary)[1] * res(rf_binary)[2] # Cell resolution (width * height)
+total_habitat_area_sqkm <- (sum(values(rf_binary) == 1, na.rm = TRUE) * cell_area)/1000000 # Convert square km
+
+# Calculate mean patch size
+patch_areas <- table(values(habitat_patches))
+mean_patch_size_sqkm <- (mean(patch_areas * cell_area))/1000000
+mean_patch_size_roundedsqkm <- round(mean_patch_size_sqkm, 2)
+
+# Output results
+print(paste("According to the random forest model (with a >0.5 threshold for habitat), the total habitat area is", total_habitat_area_sqkm, "square kilometers, while the mean patch size is", mean_patch_size_roundedsqkm, "square kilometers."))
 
 
 ```
 
-**ANSWER:**
+**ANSWER:** Discuss how rf model is much smaller. How patch sizes are tiny, especially compared to mesic forest.
 
 
 
