@@ -271,7 +271,22 @@ Varied Thrush are considered forest-dependent, and thus one might characterize m
 Using the SDM built from the random forest model, convert the landscape into "habitat" and "non-habitat." To do this, choose a threshold value in your SDM and convert all cells with predicted outcomes greater than this threshold to 1 and all cells with predicted values below your threshold to 0. Justify your choice of your threshold value. Now calculate the total amount of habitat and mean size of habitat patches based on this new raster (i.e., create patches of "habitat" based on aggregations of cells you deemed 1). How do the habitat amount and patch size values compare between the mesic forest approach and the SDM-based approach? In what situations might you rely on one map over the other?
 
 ```{r}
-#Place code here
+
+# Calculate total area of mesic forest
+
+# Sum mesic forest values
+mesic_forest_cells <- sum(values(mesic) == 1, na.rm = TRUE)
+
+# Calculate the area of a single cell (in square meters)
+cell_area_square_meters <- res(mesic)[1] * res(mesic)[2]  # Cell resolution (width * height) = 200 m x 200 m
+cell_area_sqkm <- cell_area_square_meters/1000000 # Convert to square kilometers
+
+# Calculate total mesic forest area
+total_mesic_area <- mesic_forest_cells * cell_area_sqkm
+print(paste("In our study area, mesic forest covers",  total_mesic_area, "square kilometers"))
+
+
+
 ```
 
 **ANSWER:**
