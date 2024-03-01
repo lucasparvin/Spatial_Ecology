@@ -280,11 +280,6 @@ plot(mesic_binary, main="Binary Mesic Forest Raster", col=c("white", "green"), l
 mesic_patches <- patches(mesic_binary, directions=8, zeroAsNA=T)
 plot(mesic_patches, main="Mesic Patches", legend=TRUE)
 
-# Calculate mean patch size
-mesic_patch_areas <- table(values(mesic_patches))
-mesic_mean_patch_size_sqkm <- (mean(mesic_patch_areas * cell_area))/1000000
-mesic_mean_patch_size_roundedsqkm <- round(mesic_mean_patch_size_sqkm, 2)
-
 # Calculate total area of mesic forest
 
 # Sum mesic forest values
@@ -298,6 +293,12 @@ cell_area_sqkm <- cell_area_square_meters/1000000 # Convert to square kilometers
 
 # Calculate total mesic forest area
 total_mesic_area <- mesic_forest_cells * cell_area_sqkm
+
+# Calculate mean patch size
+mesic_patch_areas <- table(values(mesic_patches))
+mesic_mean_patch_size_sqkm <- mean(mesic_patch_areas * cell_area_sqkm)
+mesic_mean_patch_size_roundedsqkm <- round(mesic_mean_patch_size_sqkm, 2)
+
 print(paste("In our study area, mesic forest covers",  total_mesic_area, "square kilometers, which accounts for", mesic_percent_rounded, "% of the study area."))
 # Output results
 print(paste("Furthermore, the mean patch size of mesic forest is", mesic_mean_patch_size_roundedsqkm, "square kilometers."))
@@ -319,11 +320,11 @@ plot(habitat_patches, main="Habitat Patches", legend=TRUE)
 
 # Calculate total habitat area 
 cell_area <- res(rf_binary)[1] * res(rf_binary)[2] # Cell resolution (width * height)
-total_habitat_area_sqkm <- (sum(values(rf_binary) == 1, na.rm = TRUE) * cell_area)/1000000 # Convert square km
+total_habitat_area_sqkm <- (sum(values(rf_binary) == 1, na.rm = TRUE) * cell_area_sqkm) # Convert square km
 
 # Calculate mean patch size
 patch_areas <- table(values(habitat_patches))
-mean_patch_size_sqkm <- (mean(patch_areas * cell_area))/1000000
+mean_patch_size_sqkm <- (mean(patch_areas * cell_area_sqkm))
 mean_patch_size_roundedsqkm <- round(mean_patch_size_sqkm, 2)
 
 # Output results
@@ -342,7 +343,90 @@ When we fit the Maxent model in the lab, we used a regularization constant of 1.
 
 ```{r}
 #Place code here
+pbVect = presBackCovs$pres
+covs = presBackCovs %>% select(canopy:precip)
+
+maxentModel.5 = maxnet(p = pbVect,
+                     data= covs,
+                     regmult = 0.5,
+                     classes='lqpht')
+
+maxentModel = maxnet(p = pbVect,
+                     data= covs,
+                     regmult = 1,
+                     classes='lqpht')
+
+maxentModel3 = maxnet(p = pbVect,
+                     data= covs,
+                     regmult = 3,
+                     classes='lqpht')
+
+plot(maxentModel.5, type='logistic')
+plot(maxentModel, type='logistic')
+plot(maxentModel3, type='logistic')
+
+
+
+tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+elevData = data.frame(elev = tmp$elev,
+                      maxent.5 = predict(maxentModel.5, tmp, type='logistic')[,1],
+                      maxent = predict(maxentModel, tmp, type='logistic')[,1],
+                      maxent3 = predict(maxentModel3, tmp, type='logistic')[,1]) %>%
+  pivot_longer(-elev, names_to = "model", values_to = "prediction") %>%
+  mutate(variable = 'elevation')
+
+tmp = expand.grid(elev = mean(backCovs$elev),
+                  canopy = seq(min(backCovs$canopy), max(backCovs$canopy), length=1000),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+canopyData = data.frame(canopy = tmp$canopy,
+                        maxent.5 = predict(maxentModel.5, tmp, type='logistic')[,1],
+                        maxent = predict(maxentModel, tmp, type='logistic')[,1],
+                        maxent3 = predict(maxentModel3, tmp, type='logistic')[,1]) %>%
+  pivot_longer(-canopy, names_to = "model", values_to = "prediction") %>%
+  mutate(variable = 'canopy')
+
+tmp = expand.grid(elev = mean(backCovs$elev),
+                  canopy = mean(backCovs$canopy),
+                  precip = seq(min(backCovs$precip), max(backCovs$precip), length=1000),
+                  mesic1km = mean(backCovs$mesic1km))
+
+precipData = data.frame(precip = tmp$precip,
+                        maxent.5 = predict(maxentModel.5, tmp, type='logistic')[,1],
+                        maxent = predict(maxentModel, tmp, type='logistic')[,1],
+                        maxent3 = predict(maxentModel3, tmp, type='logistic')[,1]) %>%
+  pivot_longer(-precip, names_to = "model", values_to = "prediction") %>%
+  mutate(variable = 'precipitation')
+
+tmp = expand.grid(elev = mean(backCovs$elev),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = seq(min(backCovs$mesic1km), max(backCovs$mesic1km), length=1000))
+
+mesicData = data.frame(mesic1km = tmp$mesic1km,
+                        maxent.5 = predict(maxentModel.5, tmp, type='logistic')[,1],
+                        maxent = predict(maxentModel, tmp, type='logistic')[,1],
+                        maxent3 = predict(maxentModel3, tmp, type='logistic')[,1]) %>%
+  pivot_longer(-mesic1km, names_to = "model", values_to = "prediction") %>%
+  mutate(variable = 'mesic1km')
+
+colnames(elevData)[1] = colnames(canopyData)[1] = colnames(precipData)[1] = colnames(mesicData)[1] = 'xValue'
+combined_data = rbind(elevData, canopyData, precipData, mesicData)
+
+ggplot(combined_data, aes(x=xValue, y=prediction, color=model))+
+  facet_wrap(~variable, scales='free_x')+
+  geom_line()+
+  theme_bw()+
+  theme(panel.grid=element_blank())
+
+
+
 ```
 
-**ANSWER:**
+**ANSWER:** The higher it is, the more the trend appears smoothed out.
 
