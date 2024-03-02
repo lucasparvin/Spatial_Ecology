@@ -1,9 +1,13 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Lab 8 assignment"
+author: "Lucas Parvin"
+date: "3-2-2024"
+output:
+  html_document:
+    df_print: paged
 ---
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Load Packages
 require(tidyterra)
 require(dismo)
@@ -17,7 +21,6 @@ require(maxnet)
 require(enmSdmX)
 require(gbm)
 require(patchwork)
-#add any others needed
 ```
 
 
@@ -26,84 +29,59 @@ require(patchwork)
 
 In the lab, we created 6 species distribution models (SDMs) for the same species using 6 different techniques. Plot the maps generated from (1) the bioclim envelope function, (2) the GLM model, and (3) the random forest model next to one another. What similarities and differences do you notice among these maps? What might explain some of these differences?
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Loading the relevant data using the same code used in the lab
-
+################################################################################
 vathData = read.csv('https://raw.githubusercontent.com/ValenteJJ/SpatialEcology/main/Week8/vath_2004.csv')
-
 vathPres = vathData %>% filter(VATH==1)
 vathAbs = vathData %>% filter(VATH==0)
-
 vathPresXy = as.matrix(vathPres %>% select(EASTING, NORTHING))
 vathAbsXy = as.matrix(vathAbs %>% select(EASTING, NORTHING))
-
-
 vathVal = read.csv('https://raw.githubusercontent.com/ValenteJJ/SpatialEcology/main/Week8/vath_VALIDATION.csv')
-
 vathValPres = vathVal %>% filter(VATH==1)
 vathValAbs = vathVal %>% filter(VATH==0)
-
 vathValXy = as.matrix(vathVal %>% select(EASTING, NORTHING))
 vathValPresXy = as.matrix(vathValPres %>% select(EASTING, NORTHING))
 vathValAbsXy = as.matrix(vathValAbs %>% select(EASTING, NORTHING))
-
 elev = rast('https://github.com/ValenteJJ/SpatialEcology/raw/main/Week8/elevation.tif')
 canopy = rast('https://github.com/ValenteJJ/SpatialEcology/raw/main/Week8/canopy.tif')
 mesic = rast('https://github.com/ValenteJJ/SpatialEcology/raw/main/Week8/mesic.tif')
 precip = rast('https://github.com/ValenteJJ/SpatialEcology/raw/main/Week8/precip.tif')
-
 crs(elev) = crs(mesic)
 crs(canopy) = crs(mesic)
-
 mesic = resample(x = mesic, y = elev, 'near')
 precip = resample(x = precip, y = elev, 'bilinear')
-
 mesic = mask(mesic, elev)
 precip = mask(precip, elev)
-
 compareGeom(elev, precip, canopy, mesic)
-
 probMatrix = focalMat(mesic, 1000, type='circle', fillNA=FALSE)
 mesic1km = focal(mesic, probMatrix, fun='sum')
-
 layers = c(canopy, elev, mesic, mesic1km, precip)
 names(layers) = c('canopy', 'elev', 'mesic', 'mesic1km', 'precip')
-
 layers = c(canopy, elev, mesic1km, precip)
 names(layers) = c('canopy', 'elev', 'mesic1km', 'precip') # mesic was removed because of high correlation with mesic1km
-
 set.seed(23)
 backXy = data.frame(backgroundSample(layers, n=2000, p=vathPresXy))
-
 presCovs = extract(layers, vathPresXy)
 backCovs = extract(layers, backXy)
 valCovs = extract(layers, vathValXy)
-
 presCovs = data.frame(vathPresXy, presCovs, pres=1)
 backCovs = data.frame(backXy, backCovs, pres=0)
 valCovs = data.frame(vathValXy, valCovs)
-
-
-
 presCovs = presCovs[complete.cases(presCovs),]
 backCovs = backCovs[complete.cases(backCovs),]
 valCovs = valCovs[complete.cases(valCovs),]
-
-
 backCovs = backCovs %>% select(-ID)
 colnames(presCovs)[1:2] = c('x', 'y')
-
-presBackCovs = rbind(presCovs, backCovs)
-
-
-tmp = presCovs %>% select(elev, precip, mesic1km, canopy) %>% 
-  as.matrix()
-
-bioclim = envelope(tmp)
+################################################################################
 ```
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Set up bioclim envelope
+presBackCovs = rbind(presCovs, backCovs)
+tmp = presCovs %>% select(elev, precip, mesic1km, canopy) %>% 
+  as.matrix()
+bioclim = envelope(tmp)
 bioclimMap = predict(layers, bioclim)
 
 # Set up the GLM model
@@ -121,55 +99,48 @@ names(layers2) = c('Bioclim Envelope Map', 'GLM Model Map', 'Random Forest Map')
 plot(layers2)
 
 ```
-**ANSWER:**
+
+**ANSWER:** *Similarities-* 1) All three models demonstrate similar spatial patterns for distributions of VATH, meaning the highest values generally fall in the same places for each figure, along with the lowest values (even if the values themselves differ map to map). This is likely the result of certain environmental variables that strongly influence the species' distribution, resulting in all models highlighting similar regions as important due to these variables' influence, even if the variables aren't attributed the exact weights model to model. 2) The Bioclim Envelope Map and the Random Forest Map use the same scale, maxing out around ~1. *Differences-* 1) The GLM and bioclim models produced smoother, more continuous SDM maps, compared to the Random forest model. As Random Forest methods use machine learning and are more nuanced, they might predict more fragmented habitats due to their ability to capture complex patterns, leading to patchier distribution maps. 2) The Bioclim Envelope model appears to exhibit higher values overall than the other models. This is likely due to the the fact that it is relatively simple and assumes niche boundaries based on the observed maximums and minimums of environmental variables. This could allow an overestimation of prediction values in some areas and make it overly sensitive to environmental outliers associated with some of the presence data. 3) While the other models appear to have maximum values of ~1, the GLM model Map appears to max out around 0.4. This is likely the result of the Random Forest model being the most complex, and being able to parse out areas with vary high likelihood of VATH presence (values near 1) and the Bicoclim Envelope model overestimating presence in many areas, also leading to high values. Given that the GLM model is not as good at parsing out areas with very high-likelihood of presence AND not as prone to overestimation, the maximum value is lower. 
 
 # Challenge 2 (4 points)
 
 When we fit our GLM in lab, we used background points, rather than true absence points, to represent pseudo-absences. Fit the exact same GLM model, only this time use presence and true absence data. That is, replace the background rows in the dataframe with rows that represent actual sites where surveys were completed but Varied Thrush were not detected. Once you've fit the GLM, build a new SDM from this fitted model and visually compare the prediction surface to that built based on the presence-background model. What discrepancies do you notice, and what is your intuition regarding which of these two models is more reliable?
 
-```{r}
+```{r, warning=F, error=F, message=F}
+# Set up using code similar to what was demonstrated in lab
 absCovs = extract(layers, vathAbsXy)
 absCovs = data.frame(vathAbsXy, absCovs, pres=0)
 absCovs = absCovs[complete.cases(absCovs),]
-
-
-
 colnames(absCovs)[1:2] = c('x', 'y')
-
-
-```
-
-```{r}
-
 presAbsCovs = rbind(presCovs, absCovs)
-
 glmModelAbs = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family='binomial', data=presAbsCovs)
-
 summary(glmModelAbs)
-
 glmMapAbs = predict(layers, glmModelAbs, type='response')
 
+#Plot
 layers3 = c(glmMap, glmMapAbs)
 names(layers3) = c('GLM Map (Pseudo-absences)', 'GLM  Map (True Absences)')
 plot(layers3)
 
 ```
-**ANSWER:** More absences in original (2000 simulated absences v 700 true absences) drives lower overall suitability. However, distribution of true absences (and presences) are likely to be biased due to accessibility of various sampling sites. Let's visualize that.
+**ANSWER:** The first discrepancy I notice is the scale being used. Overall, the value estimates for the model fit to pseudo-absences are lower than the model fit to true absences because there are 2000 pseudo-absences, compared to the 700 true absences. Furthermore, the gradient of values seems to be smoother in the model fit to pseudo-absences than the model fit to true absences. This is likely, in part, due to the true absences carrying ~3x more weight per absence, since there is roughly 1/3 of them, compared to the 2000 pseudo-absences in the other model. My intuition leads me to believe the model fit to true absences is the more reliable. However, it is important to note that the distribution of true absences is likely to be bias as a result of accessibility (i.e. where the observers can even sample). In contrast, there is no bias in the distribution of pseudo-absences, given the true randomization of points. 
 
+To visualize this, I will plot the distributions below:
 
-
-```{r}
+```{r, warning=F, error=F, message=F}
 
 ggplot() +
-  geom_raster(data=elev, aes(x=x, y=y, fill=elev_km)) +
-  geom_point(data=backXy, aes(x=x, y=y)) +
-  geom_point(data=vathPres, aes(x=EASTING, y=NORTHING), color='red', alpha=0.3) +
-  geom_point(data=vathAbs, aes(x=EASTING, y=NORTHING), color = 'yellow', alpha=0.3)+
-  coord_fixed()
+  geom_raster(data = elev, aes(x = x, y = y, fill = elev_km)) +
+  geom_point(data = backXy, aes(x = x, y = y, color = "Pseudo-absence"), alpha = 0.6) +
+  geom_point(data = vathPres, aes(x = EASTING, y = NORTHING, color = "Presence"), alpha = 0.6) +
+  geom_point(data = vathAbs, aes(x = EASTING, y = NORTHING, color = "True Absence"), alpha = 0.3) +
+  coord_fixed() +
+  scale_color_manual(name = "Points",
+                     values = c("Pseudo-absence" = "black", "Presence" = "red", "True Absence" = "yellow"))
 
 ```
 
-**ANSWER:** Discuss distribution and overlap. Clarify which is yellow and black and red.
+**ANSWER (Continued):** While I will still go with my initial intuition (that the model fit to true absences is the more reliable model), based on the map above, it does appear that the presence and true absence points are spatially bias. Higher elevations appear much more well-represented in the sample than lower elevations. This is likely the result of rapidly changing elevation gradients that prevented observers from sampling (i.e. cliffs, slopes that are too steep, etc.).
 
 
 # Challenge 3 (4 points)
@@ -177,7 +148,7 @@ ggplot() +
 Now plot the relationship between the 4 explanatory variables and the predicted occupancy values based on the two fitted GLM models (presence-background and presence-absence). Recall that we did this in the latter part of our lab. Do you notice any differences in the covariate patterns between the two models? Does this help you interpret the discrepancies between the predicted surfaces from the two models?
 
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Step 1: Generate a sequence of values for 'elevation'
 elevation_seq <- seq(min(presBackCovs$elev, na.rm = TRUE), max(presBackCovs$elev, na.rm = TRUE), length.out = 100)
 data_seq <- data.frame(elev = elevation_seq)
@@ -215,7 +186,7 @@ data_seq_precip$predTrueAbsences <- predict(glmModelAbs, newdata = transform(dat
 
 
 
-# Adjusted plot definitions with custom legend title
+# Plots for each covariate
 plot_elevation <- ggplot(data_seq, aes(x = elev)) +
   geom_line(aes(y = predPseudoAbsences, colour = "Pseudo-Absences")) +
   geom_line(aes(y = predTrueAbsences, colour = "True Absences")) +
@@ -248,21 +219,15 @@ plot_precip <- ggplot(data_seq_precip, aes(x = precip)) +
   theme_minimal() +
   ggtitle("Precipitation")
 
-# Combine the plots with the adjusted legend title
+# Combine the plots
 combined_plot <- plot_elevation + plot_canopy + plot_mesic1km + plot_precip +
   plot_layout(ncol = 2)
-
-# Print the combined plot with the adjusted legend title
 combined_plot
-
-
-
-
 ```
 
+**ANSWER:** The GLM model fit to the presence-background points consistently demonstrates much lower values for relative predicted occupancy. Again, this finding is largely driven by the greater number of simulated absences, in comparison to the number true absences fit to the other model. However, the actual patterns appear extremely similar for each of the covariates. As a result, this does not significantly help me to interpret the discrepancies between the predicted surfaces for the two models. Though, as shown in their outputs (the maps in generated in Challenge #2), their predicted surfaces are extremely similar, so there may not really be significant discrepancies to begin with. 
 
-
-**ANSWER:**
+Of note, the relationship between predicted occupancy and precipitation COULD be different between the two models, in that the model using true absences demonstrates a logistic relationship, while the model fit to the background points/pseudo-absences appears exponential with the bounds of the figure. However, if the bounds were to be expanded for the precipitation gradient, perhaps a more gradual logistic relationship would be observed, mirroring the relationship demonstrated in the pseudo-absence model. 
 
 # Challenge 4 (4 points)
 
@@ -270,24 +235,23 @@ Varied Thrush are considered forest-dependent, and thus one might characterize m
 
 Using the SDM built from the random forest model, convert the landscape into "habitat" and "non-habitat." To do this, choose a threshold value in your SDM and convert all cells with predicted outcomes greater than this threshold to 1 and all cells with predicted values below your threshold to 0. Justify your choice of your threshold value. Now calculate the total amount of habitat and mean size of habitat patches based on this new raster (i.e., create patches of "habitat" based on aggregations of cells you deemed 1). How do the habitat amount and patch size values compare between the mesic forest approach and the SDM-based approach? In what situations might you rely on one map over the other?
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
 # Plot Mesic Forest
 mesic_binary <- ifel(mesic == 1, 1, 0)
 plot(mesic_binary, main="Binary Mesic Forest Raster", col=c("white", "green"), legend=TRUE, axes=TRUE)
 
-# Mesic Forest Patches
+# Set up Mesic Forest Patches
 mesic_patches <- patches(mesic_binary, directions=8, zeroAsNA=T)
 plot(mesic_patches, main="Mesic Patches", legend=TRUE)
 
-# Calculate total area of mesic forest
 
 # Sum mesic forest values
 mesic_forest_cells <- sum(values(mesic) == 1, na.rm = TRUE)
 non_mesic_forest_cells <- sum(values(mesic) != 1, na.rm = TRUE)
 mesic_percent_rounded <- round((mesic_forest_cells/(mesic_forest_cells+non_mesic_forest_cells)*100),2)
 
-# Calculate the area of a single cell (in square meters)
+# Calculate the area of a single cell 
 cell_area_square_meters <- res(mesic)[1] * res(mesic)[2]  # Cell resolution (width * height) = 200 m x 200 m
 cell_area_sqkm <- cell_area_square_meters/1000000 # Convert to square kilometers
 
@@ -305,9 +269,8 @@ print(paste("Furthermore, the mean patch size of mesic forest is", mesic_mean_pa
 
 
 ```
-Now calculate the total amount of habitat and mean size of habitat patches based on this new raster (i.e., create patches of "habitat" based on aggregations of cells you deemed 1). How do the habitat amount and patch size values compare between the mesic forest approach and the SDM-based approach? In what situations might you rely on one map over the other?
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
 # Plot Habitat Threshold above 0.5 & apply threshold to convert probabilities to binary habitat classification
 rf_binary <- ifel(rfMap > 0.5, 1, 0)
@@ -317,10 +280,9 @@ plot(rf_binary, main="Binary rf Habitat Raster", col=c("white", "green"), legend
 habitat_patches <- patches(rf_binary, directions=8, zeroAsNA=T)
 plot(habitat_patches, main="Habitat Patches", legend=TRUE)
 
-
 # Calculate total habitat area 
-cell_area <- res(rf_binary)[1] * res(rf_binary)[2] # Cell resolution (width * height)
-total_habitat_area_sqkm <- (sum(values(rf_binary) == 1, na.rm = TRUE) * cell_area_sqkm) # Convert square km
+cell_area <- res(rf_binary)[1] * res(rf_binary)[2] 
+total_habitat_area_sqkm <- (sum(values(rf_binary) == 1, na.rm = TRUE) * cell_area_sqkm)
 
 # Calculate mean patch size
 patch_areas <- table(values(habitat_patches))
@@ -333,19 +295,24 @@ print(paste("According to the random forest model (with a >0.5 threshold for hab
 
 ```
 
-**ANSWER:** Discuss how rf model is much smaller. How patch sizes are tiny, especially compared to mesic forest.
 
+**ANSWER:** First, deciding on a threshold value is obviously critically important if converting an SDM map to a binary habitat and non-habitat map -- and should be selected carefully. In this case, I decided to go with a threshold value of 0.5, given that the maximum value generated by the Random Forest model was ~1. If selecting a threshold somewhat arbitrarily, I think the best starting place would be the center of the range of occupancy values if pseudo-absences were used in the model. If true-absences were used, this would not be the case because mean occupancy values could be very high or very low, and for good reason. 
+
+As shown in my outputs above, mesic forest covers 40217 square kilometers and has a mean patch size of 7.49 square kilometers. In contrast, the random forest model (with a >0.5 threshold for habitat) shows that the total habitat area is limited to 298.36 square kilometers, with a mean patch size of 0.12 square kilometers. This discrepancy of what could constitute VATH habitat is massive. Of course, using mesic forest as the only habitat metric is likely leading to a vast overestimate. In contrast, the random forest model, filtered by threshold values of >0.5, may be far too selective and an under-representation of habitat that is used. 
+
+If creating a coarse species extent map or deciding on a general region to study or manage for VATH, relying on the mesic map may be more appropriate at a local/regional scale. If trying to pinpoint VATH for capture or nest monitoring, using the highly selective RF model may be more appropriate to rely on during initial targeting of efforts (again on a local or regional scale, as it would be inappropriate to use either map for other areas). 
 
 
 # Challenge 5 (4 points)
 
 When we fit the Maxent model in the lab, we used a regularization constant of 1. Fit the model two more times, using regularization (regmult) constants of 0.5 and 3. Construct figures showing the relationship between the 4 explanatory variables and the predicted outcome from these 3 fitted Maxent models. What is the regularization constant doing? Hint: you may need to Google it.
 
-```{r}
-#Place code here
+```{r, warning=F, error=F, message=F}
+# Set Up
 pbVect = presBackCovs$pres
 covs = presBackCovs %>% select(canopy:precip)
 
+# Models
 maxentModel.5 = maxnet(p = pbVect,
                      data= covs,
                      regmult = 0.5,
@@ -361,11 +328,7 @@ maxentModel3 = maxnet(p = pbVect,
                      regmult = 3,
                      classes='lqpht')
 
-plot(maxentModel.5, type='logistic')
-plot(maxentModel, type='logistic')
-plot(maxentModel3, type='logistic')
-
-
+# Set up Data Frames
 
 tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
                   canopy = mean(backCovs$canopy),
@@ -415,9 +378,11 @@ mesicData = data.frame(mesic1km = tmp$mesic1km,
   pivot_longer(-mesic1km, names_to = "model", values_to = "prediction") %>%
   mutate(variable = 'mesic1km')
 
+# Combine and format for plotting
 colnames(elevData)[1] = colnames(canopyData)[1] = colnames(precipData)[1] = colnames(mesicData)[1] = 'xValue'
 combined_data = rbind(elevData, canopyData, precipData, mesicData)
 
+# Plot
 ggplot(combined_data, aes(x=xValue, y=prediction, color=model))+
   facet_wrap(~variable, scales='free_x')+
   geom_line()+
@@ -428,5 +393,13 @@ ggplot(combined_data, aes(x=xValue, y=prediction, color=model))+
 
 ```
 
-**ANSWER:** The higher it is, the more the trend appears smoothed out.
+
+**ANSWER:** Initially, the regularization constant appears to be smoothing out the trends, making them less erratic and complex. The higher the regularization constant is, the more the trend appears smoothed or flattened out. After doing some investigation online, this seems to be confirmed. 
+
+Specifically, regularization mitigates overfitting by penalizing large coefficients, ensuring models capture the underlying pattern rather than noise. This balance between model complexity and fit is adjusted through the regularization strength in that higher values enforce simplicity and generalization, while lower values allow more detailed but potentially overfitted models.
+
+
+
+
+
 
