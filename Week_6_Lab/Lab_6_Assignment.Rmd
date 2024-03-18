@@ -50,6 +50,9 @@ ggplot(blueVanes, aes(x = x, y = y, color = meanBee)) +
 
 **Answer:** Yes, upon initial inspection, there does appear to be spatial dependence in the bee response data. Both high and low mean abundance values appear more clustered than what would be expected if the samples were spatially independent from one another.
 
+$\color{red}{\text{Nice. +2}}$
+
+
 # Challenge 2 (3 points)
 
 Empirically test for evidence of spatial dependence in bee abundance by first building a correlogram, then building a semi-variogram. Be sure to provide an envelope for assessing whether the values in each figure are statistically different from what would be expected if the bee values were randomly distributed. Describe the patterns you see, and your interpretation with regards to the spatial dependence in mean bee abundance. Be sure to identify the maximum distance at which you should interpret your figures (2/3 of the maximum distance between points).
@@ -105,6 +108,8 @@ plot(empGeor, envelope=empEnv)
 
 **Answer:** This semi-variogram demonstrates significant spatial covariance between bee abundances at blue vanes within ~25 m of one another -- determined by where the points fall outside of the envelope. Additionally, variance between points ~75-90 m away from one another are significantly greater than what would be expected for a random distribution of bee abundances. This semi-variogram is limited to 2/3 of the maximum distance, ~89.6 m.
 
+
+
 #### **Testing Model AIC Values Against CSR**
 ```{r, warning=F, error=F, message=F}
 # Create Exponential Model
@@ -125,6 +130,8 @@ lines(mlExp, col='blue')
 **Answer:** The AIC values calculated here demonstrate that mean bee abundance values are spatially dependent because the worst model is the non-spatial model. However, when plotting the spherical model (blue line) against the raw data, it still doesn't appear to be a great fit based on the eye test.
 
 *Overall, the correlogram, semi-variogram, and comparison of AIC values demonstrate that mean bee abundance is spatially dependent. However, the exact scale or pattern of dependence -- and the mechanism for this spatial dependence is still unknown.*
+
+$\color{red}{\text{Perfect. +3}}$
 
 
 # Challenge 3 (4 points)
@@ -205,6 +212,9 @@ plot(empGeorlm, envelope=empEnvlm)
 
 **Answer:** This semi-variogram, limited to the same maximum distance of ~89.6 m, looks exactly the same as the semi-variogram plotted for the raw data. Like the one built for the raw data, it demonstrates significant spatial covariance between bee abundance RESIDUALS (rather than bee abundance) at blue vanes within ~25 m of one another. Again, variance between points ~75-90 m away from one another are significantly greater than what would be expected for a random distribution.
 
+$\color{red}{\text{Excellent. +4}}$
+
+
 # Challenge 4 (4 points)
 
 Conventional wisdom indicates that the distribution of floral resources may substantially influence bee abundance. In addition, I am  completely making up the following fact: the average bee has a perceptual range of about 15 m. Below I have provided code for importing a raster that shows the number of flowers counted in 1 m grid cells across the entire study area. Use the focal() function from the previous lab to generate a new raster in which each cell value represents the mean number of flowers in cells within a 15 m radius. Plot the distribution of the blue vane traps over the 15 m focal raster. No text required here, just show me the plot.
@@ -235,6 +245,9 @@ ggplot() +
   theme_minimal()
 
 ```
+
+$\color{red}{\text{Great. +4}}$
+
 
 # Challenge 5 (4 points)
 
@@ -295,8 +308,14 @@ plot(empGeorlm2, envelope=empEnvlm2)
 
 **Answer:** Mirroring findings from the correlogram above, variance across all distances of interest appears essentially no different from what would be expected in a completely random distribution of bee abundance values, after accounting for the distribution of floral resources as an explanatory variable.
 
+$\color{red}{\text{Excellent. +4}}$
+
+
 # Challenge 6 (3 points)
 
 What is your assessment regarding the distribution of bee abundance in this study area? Does it exhibit spatial dependence, and if so, what is driving that pattern?
 
 **Answer:** Bee abundance appears driven by density of floral resources. In this way, bees are exhibiting spatial dependence on flowers, but not on each other. This is demonstrated by the fact that the autocorrelation and variance among residuals for bee abundance appear totally random after accounting for density of floral resources in the model.
+
+$\color{red}{\text{But the floral resources ARE spatially clustered, which results in the observed pattern of clustered bee abundances (at least initially). Great work, Lucas! +3}}$
+
