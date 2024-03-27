@@ -339,12 +339,9 @@ tmp = tmp[complete.cases(tmp),]
 
 valData = data.frame('ID' = 1:nrow(tmp)) %>% 
   mutate(obs = tmp$VATH,
-         bioVal = predict(bioclim, tmp %>% select(canopy:precip)),
          glmBackVal = predict(glmModelBack, tmp %>% select(canopy:precip), type='response'), # Updated line
          glmAbsVal = predict(glmModelAbs, tmp %>% select(canopy:precip), type='response'), # Updated line
-         boostVal = predict(boostModel, tmp %>% select(canopy:precip), type='response'),
-         rfVal = predict(rfModel, tmp %>% select(canopy:precip), type='prob')[,2],
-         maxentVal = predict(maxentModel, tmp %>% select(canopy:precip), type='logistic')[,1])
+         )
 
 
 
@@ -392,7 +389,7 @@ for(i in 1:nModels){
 
 summaryEval = summaryEval %>% 
   setNames(c('model', 'auc', 'corr', 'll', 'threshold', 'sens', 'spec', 'tss', 'kappa')) %>% 
-  mutate(model = colnames(valData)[3:8])
+  mutate(model = colnames(valData)[3:4])
 
 summaryEval
 
