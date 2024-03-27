@@ -106,8 +106,8 @@ colnames(absCovs)[1:2] = c('x', 'y')
 presBackCovs = rbind(presCovs, backCovs)
 presAbsCovs = rbind(presCovs, absCovs)
 
-#valCovs = valCovs %>% mutate(VATH = vathVal$VATH) # Delete?
-#valCovs = valCovs[complete.cases(valCovs),] # Delete?
+valCovs = valCovs %>% mutate(VATH = vathVal$VATH)
+valCovs = valCovs[complete.cases(valCovs),]
 
 
 # Fitting bioclim envelope model
@@ -162,89 +162,16 @@ maxentMap = predictMaxNet(maxentModel, layers, type='logistic')
 ```
 
 
+
 # Challenge 1 (4 points)
 
 In the lab, we fit 6 SDMs. We then calculated discrimination statistics for all 6 and a calibration plot for 1 of them. Create calibration plots for the remaining 5 models, and then make a decision (based on your suite of discrimination statistics and calibration plots) about which of your SDMs is "best." Defend your answer.
 
 ```{r}
-# Set-up
-
-tmp = valCovs %>% mutate(VATH = vathVal$VATH)
-tmp = tmp[complete.cases(tmp),]
-
-
-valData = data.frame('ID' = 1:nrow(tmp)) %>% 
-  mutate(obs = tmp$VATH,
-         bioVal = predict(bioclim, tmp %>% select(canopy:precip)),
-         glmVal = predict(glmModel, tmp %>% select(canopy:precip), type='response'),
-         gamVal = predict(gamModel, tmp %>% select(canopy:precip), type='response'),
-         boostVal = predict(boostModel, tmp %>% select(canopy:precip), type='response'),
-         rfVal = predict(rfModel, tmp %>% select(canopy:precip), type='prob')[,2],
-         maxentVal = predict(maxentModel, tmp %>% select(canopy:precip), type='logistic')[,1])
-
-
-summaryEval = data.frame(matrix(nrow=0, ncol=9))
-
-nModels = ncol(valData)-2
-
-
-for(i in 1:nModels){
-  
-  #AUC
-  auc = auc(valData, which.model = i)
-  
-  #Find threshold to maximize Kappa
-  kappaOpt = optimal.thresholds(valData, which.model = i, opt.methods=3)
-  
-  #Sensitivity
-  sens = sensitivity(cmx(valData, which.model=i, threshold = kappaOpt[[2]]))
-  
-  #Specificity
-  spec = specificity(cmx(valData, which.model = i, threshold = kappaOpt[[2]]))
-  
-  #True skill statistic
-  tss = sens$sensitivity + spec$specificity - 1
-  
-  #Kappa
-  kappa = Kappa(cmx(valData, which.model = i, threshold = kappaOpt[[2]]))
-  
-  #Correlation between predicted and realized values
-  corr = cor.test(valData[,2], valData[,i+2])$estimate
-  
-  #Log likelihood
-  ll = sum(log(valData[,i+2]*valData[,2] + (1-valData[,i+2]) * (1-valData[,2])))
-  ll = ifelse(ll == '-Inf', sum(log(valData[,i+2] + 0.01)*valData[,2] + log((1-valData[,i+2]))*(1-valData[,2])), ll)
-  
-  #Put them all together and save the values
-  summaryI = c(i, auc$AUC, corr, ll, kappaOpt[[2]], sens$sensitivity, spec$specificity, tss, kappa[[1]])
-  summaryEval = rbind(summaryEval, summaryI)
-}
-
-summaryEval = summaryEval %>% 
-  setNames(c('model', 'auc', 'corr', 'll', 'threshold', 'sens', 'spec', 'tss', 'kappa')) %>% 
-  mutate(model = colnames(valData)[3:8])
-
-summaryEval
+# Place your code here
 ```
 
-
-
-
-```{r}
-# Calibration
-calibration.plot(valData, which.model = 1, N.bins = 20, xlab='predicted', ylab='Observed', main='bio')
-calibration.plot(valData, which.model = 2, N.bins = 20, xlab='predicted', ylab='Observed', main='glm')
-calibration.plot(valData, which.model = 3, N.bins = 20, xlab='predicted', ylab='Observed', main='gam')
-calibration.plot(valData, which.model = 4, N.bins = 20, xlab='predicted', ylab='Observed', main='boost')
-calibration.plot(valData, which.model = 5, N.bins = 20, xlab='predicted', ylab='Observed', main='rf')
-calibration.plot(valData, which.model = 6, N.bins = 20, xlab='predicted', ylab='Observed', main='maxent')
-
-
-```
-
-**ANSWER:** In the lab, we fit 6 SDMs. We then calculated discrimination statistics for all 6 and a calibration plot for 1 of them. Create calibration plots for the remaining 5 models, and then make a decision (based on your suite of discrimination statistics and calibration plots) about which of your SDMs is "best." Defend your answer.
-
-For many of the models, the discrimination statistics are very close to one another. Thus, the calibration plots are where I derive the most confidence that the GAM is the best. The calibration plot for the GAM shows that the predicted values track very closely with the observed values, substantially more so than for the other models. 
+Answer the question here.
 
 
 
@@ -253,29 +180,18 @@ For many of the models, the discrimination statistics are very close to one anot
 Each SDM we created uses a different algorithm with different assumptions. Because of this, ecologists frequently use "ensemble" approaches that aggregate predictions from multiple models in some way. Here we are going to create an ensemble model by calculating a weighted average of the predicted occupancy values at each pixel. We will calculate weights based on model AUC values to ensure that the models with the best AUC values have the most influence on the predicted values in the ensemble model.
 
 Create a raster stack that combines the glmMap, gamMap, boostMap, and rfMap (hint use c()).
-```{r}
-modelStack <- c(glmMap, gamMap, boostMap, rfMap)
-```
 
 Next, create a vector of the AUC values for each model.
-```{r}
-aucVector <- summaryEval$auc
-```
 
 Lastly, use the weighted.mean() function in the terra package to create the new raster as a weighted average of the previous 4 rasters.
-```{r}
-weighted_raster <- weighted.mean(modelStack, aucVector)
-```
 
 Plot the result, and explain why we left out the bioclim and Maxent models for this ensemble model.
 
 ```{r}
-# Improve later
-plot(weighted_raster)
+#Place your code here
 ```
 
-**ANSWER:** The the bioclim and Maxent models were left out because....
-Bioclim and Maxent were excluded from the ensemble model because these models operate under different assumptions and produce outputs in a format that might not be directly comparable to the outputs of GLM, GAM, Boosted Regression Trees, and Random Forest models. Bioclim provides a niche-based approach primarily using presence data, and Maxent, while also niche-based, can produce probabilities that might scale differently from the predictions of regression or machine learning models. The ensemble model aims to combine models with similar output scales and interpretations, ensuring that the weighted average is meaningful and consistent across the landscape. This approach allows for a more straightforward interpretation of model predictions, leveraging the strengths of each included model while minimizing potential biases or scaling issues that could arise from combining fundamentally different modeling approaches.
+Answer the question here.
 
 
 
@@ -284,34 +200,7 @@ Bioclim and Maxent were excluded from the ensemble model because these models op
 Is this ensemble model an improvement over one of the models you built previously? Provide evidence and explain the criteria you used to come to your conclusion.
 
 ```{r}
-# Assuming `valData` and `weighted_raster` are already defined and `weighted_raster` is a RasterLayer
-# First, extract ensemble model predictions for the validation points
-ensemble_preds <- extract(weighted_raster, as.matrix(valCovs %>% select(EASTING, NORTHING)))
-
-# Add these predictions to `valData`
-valData$ensembleVal <- ensemble_preds[(1:1898),]
-
-# Recalculate AUC and other statistics to include the ensemble model
-
-#confined to 6 columns, so I ommitted bioclim
-summaryEval = summaryEval %>% 
-  setNames(c('model', 'auc', 'corr', 'll', 'threshold', 'sens', 'spec', 'tss', 'kappa')) %>% 
-  mutate(model = colnames(valData)[4:9])
-
-summaryEval
-
-```
-
-```{r}
-# I don't understand why this is not working
-# calibration.plot(valData, which.model = 1, N.bins = 20, xlab='predicted', ylab='Observed', main='bio')
-# calibration.plot(valData, which.model = 2, N.bins = 20, xlab='predicted', ylab='Observed', main='glm')
-# calibration.plot(valData, which.model = 3, N.bins = 20, xlab='predicted', ylab='Observed', main='gam')
-# calibration.plot(valData, which.model = 4, N.bins = 20, xlab='predicted', ylab='Observed', main='boost')
-# calibration.plot(valData, which.model = 5, N.bins = 20, xlab='predicted', ylab='Observed', main='rf')
-# calibration.plot(valData, which.model = 6, N.bins = 20, xlab='predicted', ylab='Observed', main='maxent')
-# calibration.plot(valData, which.model = 7, N.bins = 20, xlab='predicted', ylab='Observed', main='ensemble')
-
+#Place your code here
 ```
 
 Answer the question here.
