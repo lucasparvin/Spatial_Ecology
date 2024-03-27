@@ -315,7 +315,7 @@ summaryEval
 
 ```
 
-No, discuss statistics. Refer to lecture notes.
+**ANSWER:** No, discuss statistics. Refer to lecture notes.
 
 
 
@@ -393,10 +393,12 @@ summaryEval = summaryEval %>%
 
 summaryEval
 
+
+calibration.plot(valData, which.model=1, N.bins=20, xlab='predicted', ylab='Observed', main='glmBack')
+calibration.plot(valData, which.model=2, N.bins=20, xlab='predicted', ylab='Observed', main='glmAbs')
 ```
 
-Answer the question here.
-
+**ANSWER:** Explain..........
 
 
 # Challenge 5 (4 points)
@@ -405,6 +407,99 @@ Now calculate the same statistics (AUC, Kappa, and TSS) for each model you devel
 
 ```{r}
 #Place your code here
+
+#glmModelBack = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family='binomial', data=presBackCovs)
+#glmModelAbs = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family = 'binomial', data=presAbsCovs)
+
+#glmBackMap = predict(layers, glmModel, type='response')
+#glmAbsMap = predict(layers, glmModel, type='response')
+
+set.seed(23)
+
+nFolds = 5
+kfoldPres = kfold(presCovs, k=nFolds) # for both models
+kfoldBack = kfold(backCovs, k=nFolds) # for back model
+kfoldAbs = kfold(absCovs, k=nFolds) # for abs model
+
+# boyceVals = rep(NA, nFolds)
+
+for(i in 1:nFolds){
+  valPres = presCovs[kfoldPres==i,]
+  valBack = backCovs[kfoldBack==i,]
+  valAbs = absCovs[kfoldAbs==i,]
+  
+  valBothBack = rbind(valPres, valBack)
+  valBothAbs = rbind(valPres, valAbs)
+  
+  trainPres = presCovs[kfoldPres!=i,]
+  trainBack = backCovs[kfoldBack!=i,]
+  trainAbs = absCovs[kfoldAbs!=i,]
+  
+  trainBothBack = rbind(trainPres, trainBack)
+  trainBothAbs = rbind(trainPres, trainAbs)
+  
+  glmModelBack = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family='binomial', data=trainBothBack)
+  
+  glmModelAbs = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family='binomial', data=trainBothAbs)
+  
+  #AUC
+  aucBack = auc(valBothBack, which.model = i)
+  
+  
+  #True skill statistic
+  # tss = sens$sensitivity + spec$specificity - 1
+
+  #valData = data.frame('ID' = 1:nrow(valPres)) %>% 
+ # mutate(obs = valPres$pres,
+  #       glmVal = predict(glmModel2, valPres %>% select(canopy:precip), type='response'))
+  
+#boyceVals[i] = ecospat.boyce(fit = glmMap, obs=valData[,3], res=100, PEplot=F)$cor
+
+}
+#################################################################################
+# boyce example of k folds
+
+#set.seed(23)
+
+#nFolds = 5
+#kfoldPres = kfold(presCovs, k=nFolds)
+#kfoldBack = kfold(backCovs, k=nFolds)
+
+# boyceVals = rep(NA, nFolds)
+
+# for(i in 1:nFolds){
+ # valPres = presCovs[kfoldPres==i,]
+  
+#  trainPres = presCovs[kfoldPres!=i,]
+#  trainBack = backCovs[kfoldBack!=i,]
+#  trainBoth = rbind(trainPres, trainBack)
+  
+#  glmModel2 = glm(pres ~ canopy + elev + I(elev^2) + mesic1km + precip, family='binomial', data=trainBoth)
+
+#  valData = data.frame('ID' = 1:nrow(valPres)) %>% 
+#  mutate(obs = valPres$pres,
+  #       glmVal = predict(glmModel2, valPres %>% select(canopy:precip), type='response'))
+  
+#boyceVals[i] = ecospat.boyce(fit = glmMap, obs=valData[,3], res=100, PEplot=F)$cor
+
+#}
+
+#mean(boyceVals)
+##################################################################################
+
+# Statistics Needed
+
+  #AUC
+  #auc = auc(valData, which.model = i)
+  
+  
+  #True skill statistic
+  #tss = sens$sensitivity + spec$specificity - 1
+  
+  #Kappa
+  #kappa = Kappa(cmx(valData, which.model = i, threshold = kappaOpt[[2]]))
+
+
 ```
 
-Answer the question here.
+**ANSWER:**Answer the question here.
