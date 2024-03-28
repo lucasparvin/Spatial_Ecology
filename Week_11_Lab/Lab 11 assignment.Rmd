@@ -279,6 +279,46 @@ For each panther, calculate the frequency with which locations were recorded as 
 
 ```{r}
 
+# Calculate total span of days that passed
+cat1days_difference <- as.numeric(first_cat_data$date[length(first_cat_data$date)] - first_cat_data$date[1])
+cat2days_difference <- as.numeric(second_cat_data$date[length(second_cat_data$date)] - second_cat_data$date[1])
+cat3days_difference <- as.numeric(third_cat_data$date[length(third_cat_data$date)] - third_cat_data$date[1])
+cat4days_difference <- as.numeric(fourth_cat_data$date[length(fourth_cat_data$date)] - fourth_cat_data$date[1])
+cat5days_difference <- as.numeric(fifth_cat_data$date[length(fifth_cat_data$date)] - fifth_cat_data$date[1])
+cat6days_difference <- as.numeric(sixth_cat_data$date[length(sixth_cat_data$date)] - sixth_cat_data$date[1])
+
+# Calculate Points Per Day
+c1ppd <- (length(first_cat_data$date))/cat1days_difference
+c2ppd <- (length(second_cat_data$date))/cat2days_difference
+c3ppd <- (length(third_cat_data$date))/cat3days_difference
+c4ppd <- (length(fourth_cat_data$date))/cat4days_difference
+c5ppd <- (length(fifth_cat_data$date))/cat5days_difference
+c6ppd <- (length(sixth_cat_data$date))/cat6days_difference
+
+###########################################################################
+
+# Assuming catXstraightness values and cXppd values have been previously calculated
+data <- data.frame(
+  CatID = factor(c("Cat 1", "Cat 2", "Cat 3", "Cat 4", "Cat 5", "Cat 6")),
+  Straightness = c(cat1straightness, cat2straightness, cat3straightness, cat4straightness, cat5straightness, cat6straightness),
+  PPD = c(c1ppd, c2ppd, c3ppd, c4ppd, c5ppd, c6ppd)
+)
+
+# Plotting path straightness as a function of points per day without labels
+ggplot(data, aes(x = PPD, y = Straightness)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Path Straightness vs. Points Per Day for Each Cat",
+       x = "Points Per Day",
+       y = "Path Straightness") +
+  scale_x_continuous(name = "Points Per Day (PPD)", limits = c(0.25, 0.5)) +
+  scale_y_continuous(name = "Path Straightness", limits = c(0, 0.2))  # Adjust the limits if necessary based on your data
+
+
+
+
+
+
 ```
 
 **ANSWER:**
