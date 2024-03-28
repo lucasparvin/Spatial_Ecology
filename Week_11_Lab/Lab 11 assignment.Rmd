@@ -190,7 +190,7 @@ hist(pantherLtraj[[2]][,6], main='Second CatID') # Example of step-length from L
 # Extract the relevant data for the second CatID
 second_cat_data <- pantherLtraj[[2]]
 
-##### RUN THIS BY JONATHON TO MAKE SURE UNITS ARE CORRECT  #####
+##### RUN THIS BY JONATHON TO MAKE SURE UNITS ARE CORRECT & THAT ONLY 1 CAT IS WANTED  #####
 # if dt is difference in time, dist is in meters, and dt is in seconds
 speeds_km_hr <- (second_cat_data[, "dist"]/1000) / (second_cat_data[, "dt"]/3600) #if dt =
 
@@ -216,6 +216,56 @@ Now divide the numerator by the denominator. Which panther took the most tortuou
 
 ```{r}
 
+first_cat_data <- pantherLtraj[[1]]
+second_cat_data <- pantherLtraj[[2]]
+third_cat_data <- pantherLtraj[[3]]
+fourth_cat_data <- pantherLtraj[[4]]
+fifth_cat_data <- pantherLtraj[[5]]
+sixth_cat_data <- pantherLtraj[[6]]
+
+cat1numerator <- sqrt(((first_cat_data$x[1]) - (first_cat_data$x[length(first_cat_data$x)]))^2 +
+  ((first_cat_data$y[1]) - (first_cat_data$y[length(first_cat_data$y)]))^2)
+cat2numerator <- sqrt(((second_cat_data$x[1]) - (second_cat_data$x[length(second_cat_data$x)]))^2 +
+  ((second_cat_data$y[1]) - (second_cat_data$y[length(second_cat_data$y)]))^2)
+cat3numerator <- sqrt(((third_cat_data$x[1]) - (third_cat_data$x[length(third_cat_data$x)]))^2 +
+  ((third_cat_data$y[1]) - (third_cat_data$y[length(third_cat_data$y)]))^2)
+cat4numerator <- sqrt(((fourth_cat_data$x[1]) - (fourth_cat_data$x[length(fourth_cat_data$x)]))^2 +
+  ((fourth_cat_data$y[1]) - (fourth_cat_data$y[length(fourth_cat_data$y)]))^2)
+cat5numerator <- sqrt(((fifth_cat_data$x[1]) - (fifth_cat_data$x[length(fifth_cat_data$x)]))^2 +
+  ((fifth_cat_data$y[1]) - (fifth_cat_data$y[length(fifth_cat_data$y)]))^2)
+cat6numerator <- sqrt(((sixth_cat_data$x[1]) - (sixth_cat_data$x[length(sixth_cat_data$x)]))^2 +
+  ((sixth_cat_data$y[1]) - (sixth_cat_data$y[length(sixth_cat_data$y)]))^2)
+
+cat1denominator <- sum(first_cat_data$dist, na.rm = T)
+cat2denominator <- sum(second_cat_data$dist, na.rm = T)
+cat3denominator <- sum(third_cat_data$dist, na.rm = T)
+cat4denominator <- sum(fourth_cat_data$dist, na.rm = T)
+cat5denominator <- sum(fifth_cat_data$dist, na.rm = T)
+cat6denominator <- sum(sixth_cat_data$dist, na.rm = T)
+
+cat1straightness <- cat1numerator/cat1denominator
+cat2straightness <- cat2numerator/cat2denominator
+cat3straightness <- cat3numerator/cat3denominator
+cat4straightness <- cat4numerator/cat4denominator
+cat5straightness <- cat5numerator/cat5denominator
+cat6straightness <- cat6numerator/cat6denominator
+
+
+straightness_data <- data.frame(
+  CatID = c("Cat 1", "Cat 2", "Cat 3", "Cat 4", "Cat 5", "Cat 6"),
+  Straightness = c(cat1straightness, cat2straightness, cat3straightness,
+                   cat4straightness, cat5straightness, cat6straightness)
+)
+
+# Plotting the straightness values
+ggplot(straightness_data, aes(x = CatID, y = Straightness, label = round(Straightness, 3))) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_text(nudge_y = 0.02) + # Adjust nudge_y to position labels above bars if needed
+  theme_minimal() +
+  labs(title = "Path Straightness for Each Cat",
+       x = "Cat ID",
+       y = "Straightness Value") +
+  ylim(0, 1) # Since straightness values range from 0 to 1
 
 
 ```
