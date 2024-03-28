@@ -166,6 +166,38 @@ In the lab, we used the distribution of step lengths and turning angles to help 
 
 ```{r}
 
+# This function helps us tease out the date from the recorded DOY
+substrRight = function(x, n){
+  substr(x, nchar(x) - n+1, nchar(x))
+}
+
+#Here we're just creating a spatial object from our panthers sf object. Most of the code is dedicated to converting the DOY information to a real date.
+panthersSp = panthers %>% 
+  mutate(Juldate = as.character(Juldate)) %>% 
+  mutate(date = as.numeric(substrRight(Juldate, 3))) %>% 
+  mutate(Date = as.Date(date, origin=as.Date("2006-01-01"))) %>% 
+  mutate(Date = as.POSIXct(Date, "%Y-%m-%d", tz='')) %>% 
+  as('Spatial')
+
+#And this creates a trajectory object from the x-y coordinates and associated timestamps.
+pantherLtraj = as.ltraj(xy=coordinates(panthersSp), date=panthersSp$Date, id=panthersSp$CatID, typeII=T)
+
+plot(pantherLtraj)
+
+hist(pantherLtraj[[2]][,6], main='Second CatID') # Example of step-length from Lab
+####################################################################################
+
+# Extract the relevant data for the second CatID
+second_cat_data <- pantherLtraj[[2]]
+
+##### RUN THIS BY JONATHON TO MAKE SURE UNITS ARE CORRECT  #####
+# if dt is difference in time, dist is in meters, and dt is in seconds
+speeds_km_hr <- (second_cat_data[, "dist"]/1000) / (second_cat_data[, "dt"]/3600) #if dt =
+
+# Plot the histogram of speeds
+hist(speeds_km_hr, main = "Distribution of Step Speeds in km/hr for Second CatID", xlab = "Speed (km/hr)")
+
+
 ```
 
 
