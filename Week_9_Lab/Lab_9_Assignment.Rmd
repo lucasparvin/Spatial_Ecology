@@ -284,16 +284,12 @@ plot(weighted_raster)
 Is this ensemble model an improvement over one of the models you built previously? Provide evidence and explain the criteria you used to come to your conclusion.
 
 ```{r, warning=F, error=F, message=F}
-# Assuming `valData` and `weighted_raster` are already defined and `weighted_raster` is a RasterLayer
-# First, extract ensemble model predictions for the validation points
 ensemble_preds <- terra::extract(weighted_raster, as.matrix(valCovs %>% select(EASTING, NORTHING)))
 
 # Add these predictions to `valData`
 valData$ensembleVal <- ensemble_preds[(1:1898),]
 
-# Recalculate AUC and other statistics to include the ensemble model
-
-#confined to 6 columns, so I ommitted bioclim
+# Confined to 6 columns, so I omitted bioclim model
 summaryEval = summaryEval %>% 
   setNames(c('model', 'auc', 'corr', 'll', 'threshold', 'sens', 'spec', 'tss', 'kappa')) %>% 
   mutate(model = colnames(valData)[4:9])
@@ -302,19 +298,7 @@ summaryEval
 
 ```
 
-```{r}
-# I don't understand why this is not working
-calibration.plot(valData, which.model = 1, N.bins = 20, xlab='predicted', ylab='Observed', main='bio')
-calibration.plot(valData, which.model = 2, N.bins = 20, xlab='predicted', ylab='Observed', main='glm')
-calibration.plot(valData, which.model = 3, N.bins = 20, xlab='predicted', ylab='Observed', main='gam')
-calibration.plot(valData, which.model = 4, N.bins = 20, xlab='predicted', ylab='Observed', main='boost')
-calibration.plot(valData, which.model = 5, N.bins = 20, xlab='predicted', ylab='Observed', main='rf')
-calibration.plot(valData, which.model = 6, N.bins = 20, xlab='predicted', ylab='Observed', main='maxent')
-calibration.plot(valData, which.model = 7, N.bins = 20, xlab='predicted', ylab='Observed', main='ensemble')
-
-```
-
-**ANSWER:** No, discuss statistics. Refer to lecture notes.
+**ANSWER:** Yes, I would argue that the ensemble model is better than at least one of the other models. Its AUC value is higher than all but one of the models compared here. Only the GAM model performs better in that metric. The same pattern is observed in regards to the TSS. The ensemble model also has the highest Kappa value.
 
 
 
@@ -342,15 +326,11 @@ valData = data.frame('ID' = 1:nrow(tmp)) %>%
          glmAbsVal = predict(glmModelAbs, tmp %>% select(canopy:precip), type='response'), # Updated line
          )
 
-
-
-####################################################################################
-
 summaryEval = data.frame(matrix(nrow=0, ncol=9))
 
 nModels = ncol(valData)-2
 
-##########
+
 for(i in 1:nModels){
   
   #AUC
@@ -384,21 +364,15 @@ for(i in 1:nModels){
 }
 
 
-#########
-
 summaryEval = summaryEval %>% 
   setNames(c('model', 'auc', 'corr', 'll', 'threshold', 'sens', 'spec', 'tss', 'kappa')) %>% 
   mutate(model = colnames(valData)[3:4])
 
 summaryEval
-
-
-calibration.plot(valData, which.model=1, N.bins=20, xlab='predicted', ylab='Observed', main='glmBack')
-calibration.plot(valData, which.model=2, N.bins=20, xlab='predicted', ylab='Observed', main='glmAbs')
 ```
 
-**ANSWER:** Explain..........
 
+**ANSWER:** The AUC value indicates that the presence-absence model is better. The TSS also indicates that the presence-absence model is better. In contrast, the Kappa statistic indicates that the presence-background model has higher agreement than the presence-absence model. Ultimately, while neither model appears to be very good, the presence-absence model seems to be stronger, indicated by 2 of the 3 statistics focused on in this challenge. Furthermore, intuitively, I would guess that a model fit with true absences would make for a better model, if the absences are not severely biased. 
 
 # Challenge 5 (4 points)
 
@@ -436,6 +410,5 @@ Now calculate the same statistics (AUC, Kappa, and TSS) for each model you devel
   # tss = sens$sensitivity + spec$specificity - 1
 #}
 ```
-
 
 **ANSWER:** Told not to complete.
