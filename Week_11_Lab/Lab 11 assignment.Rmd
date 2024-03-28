@@ -1,11 +1,15 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Week 11 Assignment"
+author: "Lucas Parvin"
+date: "3-28-2024"
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Re-running code from lab as a starting point
 
-```{r, warning=F}
+```{r, warning=F, error=F, message=F}
 require(terra)
 require(tidyterra)
 require(sf)
@@ -82,7 +86,7 @@ In the lab, we estimated Manly's statistic (wi) values for a type II study desig
 
 Fit a new logistic regression model where use is a function of landcover-1 (the -1 removes the intercept from the fitted model). Make sure this is the only covariate in the model. Exponentiate the coefficients from the fitted model and compare them to the wi values calculated for each landcover type. What do you notice? Explain the similarities and/or differences in how you would interpret the wi values and exponentiated coefficients.
 
-```{r}
+```{r, warning=F, error=F, message=F}
 #Recreating the wi analysis
 selRatioII = widesII(u = use, 
                      a = as.vector(as.matrix(availII)),
@@ -99,12 +103,10 @@ backCovs = terra::extract(layers, randII) %>%
 allCovs = rbind(useCovs, backCovs) %>% 
   filter(!(is.na(landcover) | landcover=='Exotics')) %>% 
   mutate(landcover = as.factor(as.character(landcover)))
-
-
 ```
 
 
-```{r}
+```{r, warning=F, error=F, message=F}
 #New Model
 model1 = glm(use ~ landcover-1, data=allCovs)
 
@@ -120,10 +122,10 @@ coefficients_df <- data.frame(
   'coefficient' = exponentiated_coefficients
 )
 
-####################################################################################
+# Plot
 coefficients_df <- coefficients_df %>%
   arrange(desc(coefficient)) %>%
-  mutate(category = factor(category, levels = category)) # Re-order factor levels
+  mutate(category = factor(category, levels = category)) 
 
 # Plotting the exponentiated coefficients
 ggplot(coefficients_df, aes(x = category, y = coefficient)) +
@@ -137,34 +139,41 @@ ggplot(coefficients_df, aes(x = category, y = coefficient)) +
 
 
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
-#wi values
+#Observe wi values
 selRatioII$wi
 
+# Convert to a data frame for plotting
 tmp = data.frame('category' = names(selRatioII$wi),
                  'wi' = selRatioII$wi,
                  'ucl' = selRatioII$ICwiupper,
                  'lcl' = selRatioII$ICwilower) %>% 
   arrange(desc(wi)) %>% 
-  mutate(category = factor(as.character(category), levels=category)) #This line is necessary to re-order the factor levels so that they are plotted in descending order of wi
+  mutate(category = factor(as.character(category), levels=category)) 
 
+# Plot
 ggplot(tmp, aes(x=category, y=wi))+
   geom_point()+
-  geom_errorbar(aes(ymin=lcl, ymax=ucl))+
   geom_hline(yintercept=1, col='red', linetype='dashed')+
   theme_bw()+
   theme(axis.text.x = element_text(angle=90, vjust=0.3, hjust=1))
 
 ```
 
-**ANSWER:**
+**ANSWER:** 
+
+*Similarities - *  Though the values themselves differ, the order, from highest to lowest values, are the same for the wi values and the exponentiated coefficients. Thus, both sets of values indicate similar findings regarding the order of preference for each habitat type. 
+
+*Differences - *  That said, wi values greater than 1 indicate preference and values less than 1 indicate avoidance. Similarly, exponentiated coefficients greater than 1 indicate increased odds of use and, whereas values less than 1 indicate decreased odds of use. When observing the exponentiated coefficients graph, you can see that all values are greater than 1, indicating all habitat types are indicating increased odds of use. Conversely, in the wi figure, the bottom six categories (i.e. Freshwater Marsh --> Urban) are below 1, indicating avoidance of those land types. Thus these two distinct methods of analysis could yield different interpretations regarding the same habitat types.
 
 # Challenge 2 (5 points)
 
 In the lab, we used the distribution of step lengths and turning angles to help us devise potential steps each individual could have taken at each point in time. Instead of step lengths, build a histogram representing the distribution of step speeds in km/hr. When and why might you choose to sample from a distribution of step speeds to calculate potential step lengths rather than drawing from the distribution of step lengths itself?
 
-```{r}
+```{r, warning=F, error=F, message=F}
+
+# CODE FROM LAB
 
 # This function helps us tease out the date from the recorded DOY
 substrRight = function(x, n){
@@ -183,25 +192,36 @@ panthersSp = panthers %>%
 pantherLtraj = as.ltraj(xy=coordinates(panthersSp), date=panthersSp$Date, id=panthersSp$CatID, typeII=T)
 
 plot(pantherLtraj)
+```
 
-hist(pantherLtraj[[2]][,6], main='Second CatID') # Example of step-length from Lab
-####################################################################################
 
-# Extract the relevant data for the second CatID
+```{r, warning=F, error=F, message=F}
+# Extract the relevant data for each cat
+first_cat_data <- pantherLtraj[[1]]
 second_cat_data <- pantherLtraj[[2]]
+third_cat_data <- pantherLtraj[[3]]
+fourth_cat_data <- pantherLtraj[[4]]
+fifth_cat_data <- pantherLtraj[[5]]
+sixth_cat_data <- pantherLtraj[[6]]
 
-##### RUN THIS BY JONATHON TO MAKE SURE UNITS ARE CORRECT & THAT ONLY 1 CAT IS WANTED  #####
-# if dt is difference in time, dist is in meters, and dt is in seconds
-speeds_km_hr <- (second_cat_data[, "dist"]/1000) / (second_cat_data[, "dt"]/3600) #if dt =
+# Convert to speeds for each cat
+speeds_km_hr1 <- (first_cat_data[, "dist"]/1000) / (first_cat_data[, "dt"]/3600)
+speeds_km_hr2 <- (second_cat_data[, "dist"]/1000) / (second_cat_data[, "dt"]/3600)
+speeds_km_hr3 <- (third_cat_data[, "dist"]/1000) / (third_cat_data[, "dt"]/3600)
+speeds_km_hr4 <- (fourth_cat_data[, "dist"]/1000) / (fourth_cat_data[, "dt"]/3600)
+speeds_km_hr5 <- (fifth_cat_data[, "dist"]/1000) / (fifth_cat_data[, "dt"]/3600)
+speeds_km_hr6 <- (sixth_cat_data[, "dist"]/1000) / (sixth_cat_data[, "dt"]/3600)
 
-# Plot the histogram of speeds
-hist(speeds_km_hr, main = "Distribution of Step Speeds in km/hr for Second CatID", xlab = "Speed (km/hr)")
+# Combine the speed vectors
+all_speeds <- c(speeds_km_hr1, speeds_km_hr2, speeds_km_hr3, speeds_km_hr4, speeds_km_hr5, speeds_km_hr6)
 
+# Create a histogram of the aggregated speeds
+hist(all_speeds, main = "Histogram of Panther Speeds", xlab = "Speed (km/hr)", ylab = "Frequency", col = "blue")
 
 ```
 
 
-**ANSWER:**
+**ANSWER:** Choosing to sample from step speeds could help us understand how fast something moves in various situations and environments (i.e. varying terrains, habitat types, weather, etc.). This approach can better reflect real-world scenarios, like when obstacles or various habitat types affect an individual's speed by impacting its physical ability or behavior. It could also be especially useful for highlighting differences in abilities and/or behaviors among separate individuals. Furthermore, speeds could be associated with metabolic output and provide insight about the energetic needs and expenses of various animals. In all such instances, using step speeds instead of lengths may be more useful for interpretation. 
 
 
 # Challenge 3 (5 points)
@@ -214,15 +234,8 @@ Next calculate the denominator for each panther. To do this, you can simply sum 
 
 Now divide the numerator by the denominator. Which panther took the most tortuous path? Which took the least tortuous path?
 
-```{r}
-
-first_cat_data <- pantherLtraj[[1]]
-second_cat_data <- pantherLtraj[[2]]
-third_cat_data <- pantherLtraj[[3]]
-fourth_cat_data <- pantherLtraj[[4]]
-fifth_cat_data <- pantherLtraj[[5]]
-sixth_cat_data <- pantherLtraj[[6]]
-
+```{r, warning=F, error=F, message=F}
+# Calculate numerators
 cat1numerator <- sqrt(((first_cat_data$x[1]) - (first_cat_data$x[length(first_cat_data$x)]))^2 +
   ((first_cat_data$y[1]) - (first_cat_data$y[length(first_cat_data$y)]))^2)
 cat2numerator <- sqrt(((second_cat_data$x[1]) - (second_cat_data$x[length(second_cat_data$x)]))^2 +
@@ -236,6 +249,7 @@ cat5numerator <- sqrt(((fifth_cat_data$x[1]) - (fifth_cat_data$x[length(fifth_ca
 cat6numerator <- sqrt(((sixth_cat_data$x[1]) - (sixth_cat_data$x[length(sixth_cat_data$x)]))^2 +
   ((sixth_cat_data$y[1]) - (sixth_cat_data$y[length(sixth_cat_data$y)]))^2)
 
+# Calculate denominators
 cat1denominator <- sum(first_cat_data$dist, na.rm = T)
 cat2denominator <- sum(second_cat_data$dist, na.rm = T)
 cat3denominator <- sum(third_cat_data$dist, na.rm = T)
@@ -243,6 +257,7 @@ cat4denominator <- sum(fourth_cat_data$dist, na.rm = T)
 cat5denominator <- sum(fifth_cat_data$dist, na.rm = T)
 cat6denominator <- sum(sixth_cat_data$dist, na.rm = T)
 
+# Calculate straightness
 cat1straightness <- cat1numerator/cat1denominator
 cat2straightness <- cat2numerator/cat2denominator
 cat3straightness <- cat3numerator/cat3denominator
@@ -250,34 +265,34 @@ cat4straightness <- cat4numerator/cat4denominator
 cat5straightness <- cat5numerator/cat5denominator
 cat6straightness <- cat6numerator/cat6denominator
 
-
+# Create Data Frame
 straightness_data <- data.frame(
   CatID = c("Cat 1", "Cat 2", "Cat 3", "Cat 4", "Cat 5", "Cat 6"),
   Straightness = c(cat1straightness, cat2straightness, cat3straightness,
                    cat4straightness, cat5straightness, cat6straightness)
 )
 
-# Plotting the straightness values
+# Plot straightness values
 ggplot(straightness_data, aes(x = CatID, y = Straightness, label = round(Straightness, 3))) +
   geom_bar(stat = "identity", fill = "steelblue") +
-  geom_text(nudge_y = 0.02) + # Adjust nudge_y to position labels above bars if needed
+  geom_text(nudge_y = 0.02) +
   theme_minimal() +
-  labs(title = "Path Straightness for Each Cat",
+  labs(title = "Path Straightness for Each Panther",
        x = "Cat ID",
        y = "Straightness Value") +
-  ylim(0, 1) # Since straightness values range from 0 to 1
+  ylim(0, 1) 
 
 
 ```
 
 
-**ANSWER:**
+**ANSWER:** Panther 1 (Cat 1) took the most tortuous path, whereas Panther 6 (Cat 6) took the least tortuous path.
 
 # Challenge 4 (5 points)
 
 For each panther, calculate the frequency with which locations were recorded as points per day. Plot path straightness as a function of frequency (there should be 6 points on this figure, one per panther). What relationship do you notice between these two variables, and why might that pattern be occurring?
 
-```{r}
+```{r, warning=F, error=F, message=F}
 
 # Calculate total span of days that passed
 cat1days_difference <- as.numeric(first_cat_data$date[length(first_cat_data$date)] - first_cat_data$date[1])
@@ -295,31 +310,26 @@ c4ppd <- (length(fourth_cat_data$date))/cat4days_difference
 c5ppd <- (length(fifth_cat_data$date))/cat5days_difference
 c6ppd <- (length(sixth_cat_data$date))/cat6days_difference
 
-###########################################################################
-
-# Assuming catXstraightness values and cXppd values have been previously calculated
+# Set up data frame
 data <- data.frame(
   CatID = factor(c("Cat 1", "Cat 2", "Cat 3", "Cat 4", "Cat 5", "Cat 6")),
   Straightness = c(cat1straightness, cat2straightness, cat3straightness, cat4straightness, cat5straightness, cat6straightness),
   PPD = c(c1ppd, c2ppd, c3ppd, c4ppd, c5ppd, c6ppd)
 )
 
-# Plotting path straightness as a function of points per day without labels
+# Plot path straightness as a function of points per day
 ggplot(data, aes(x = PPD, y = Straightness)) +
   geom_point() +
   theme_minimal() +
   labs(title = "Path Straightness vs. Points Per Day for Each Cat",
        x = "Points Per Day",
        y = "Path Straightness") +
-  scale_x_continuous(name = "Points Per Day (PPD)", limits = c(0.25, 0.5)) +
-  scale_y_continuous(name = "Path Straightness", limits = c(0, 0.2))  # Adjust the limits if necessary based on your data
-
-
-
-
+  scale_x_continuous(name = "Points Per Day", limits = c(0.25, 0.5)) +
+  scale_y_continuous(name = "Path Straightness", limits = c(0, 0.2))  
 
 
 ```
 
-**ANSWER:**
+
+**ANSWER:** There appears to be a positive relationship between points per day and path straightness. This may be the result of  the fact that, as noted in our reading this week (Fortin et al. 2005), turning angles are biased towards zero degrees, given that animals have propensities to keep moving in a specific direction. Thus, more frequent measurements would result in a higher chance of picking up on this bias towards 0 degree turning angles, and thus a higher degree of straightness. However, with only 6 points, it's hard to glean much about this relationship, especially because were cat 6 to be removed, the slope would be near 0. 
 
