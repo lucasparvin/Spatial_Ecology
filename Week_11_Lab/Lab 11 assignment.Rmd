@@ -103,6 +103,63 @@ allCovs = rbind(useCovs, backCovs) %>%
 
 ```
 
+
+```{r}
+#New Model
+model1 = glm(use ~ landcover-1, data=allCovs)
+
+# Exponentiate the coefficients
+exponentiated_coefficients <- exp(coef(model1))
+
+# Display the exponentiated coefficients
+print(exponentiated_coefficients)
+
+# Convert to a data frame for plotting
+coefficients_df <- data.frame(
+  'category' = names(exponentiated_coefficients),
+  'coefficient' = exponentiated_coefficients
+)
+
+####################################################################################
+coefficients_df <- coefficients_df %>%
+  arrange(desc(coefficient)) %>%
+  mutate(category = factor(category, levels = category)) # Re-order factor levels
+
+# Plotting the exponentiated coefficients
+ggplot(coefficients_df, aes(x = category, y = coefficient)) +
+  geom_point() +
+  geom_hline(yintercept = 1, col = 'red', linetype = 'dashed') +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  labs(y = "Exponentiated Coefficient", x = "Landcover Category")
+```
+
+
+
+
+```{r}
+
+#wi values
+selRatioII$wi
+
+tmp = data.frame('category' = names(selRatioII$wi),
+                 'wi' = selRatioII$wi,
+                 'ucl' = selRatioII$ICwiupper,
+                 'lcl' = selRatioII$ICwilower) %>% 
+  arrange(desc(wi)) %>% 
+  mutate(category = factor(as.character(category), levels=category)) #This line is necessary to re-order the factor levels so that they are plotted in descending order of wi
+
+ggplot(tmp, aes(x=category, y=wi))+
+  geom_point()+
+  geom_errorbar(aes(ymin=lcl, ymax=ucl))+
+  geom_hline(yintercept=1, col='red', linetype='dashed')+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=90, vjust=0.3, hjust=1))
+
+```
+
+**ANSWER:**
+
 # Challenge 2 (5 points)
 
 In the lab, we used the distribution of step lengths and turning angles to help us devise potential steps each individual could have taken at each point in time. Instead of step lengths, build a histogram representing the distribution of step speeds in km/hr. When and why might you choose to sample from a distribution of step speeds to calculate potential step lengths rather than drawing from the distribution of step lengths itself?
@@ -110,6 +167,9 @@ In the lab, we used the distribution of step lengths and turning angles to help 
 ```{r}
 
 ```
+
+
+**ANSWER:**
 
 
 # Challenge 3 (5 points)
@@ -128,6 +188,9 @@ Now divide the numerator by the denominator. Which panther took the most tortuou
 
 ```
 
+
+**ANSWER:**
+
 # Challenge 4 (5 points)
 
 For each panther, calculate the frequency with which locations were recorded as points per day. Plot path straightness as a function of frequency (there should be 6 points on this figure, one per panther). What relationship do you notice between these two variables, and why might that pattern be occurring?
@@ -136,4 +199,5 @@ For each panther, calculate the frequency with which locations were recorded as 
 
 ```
 
+**ANSWER:**
 
