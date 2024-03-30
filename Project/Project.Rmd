@@ -28,20 +28,66 @@ require(sampling)
 
 # Import Needed Data
 ```{r, warning=F, error=F, message=F}
-alabama <- states() %>% 
-  filter(NAME=='Alabama')
+#alabama <- states() %>% 
+ # filter(NAME=='Alabama')
 
-nlcd2011 <- get_nlcd(alabama, label='AlLandscape', year=2011)
+# Load the shapefile into R
+perdido <- st_read("Perdido_ICP1.shp")
+
+# Plotting with ggplot2
+ggplot(data = perdido) +
+  geom_sf() +
+  theme_minimal() +
+  ggtitle("Plot of Shapefile")
+
+
+
+
+
+
+
+
+# URL of the zipped shapefile on GitHub
+url <- "https://github.com/lucasparvin/Spatial_Ecology/blob/main/Project/Perdido_ICP1.zip"
+
+# Download the file
+download.file(url, destfile = "Perdido.zip", mode = "wb")
+
+# Unzip the file
+unzip("Perdido.zip", exdir = "Perdido")
+
+# Load the shapefile
+perdido <- vect("Perdido")
+
+nlcd2011 <- get_nlcd(perdido, label='Landscape', year=2011)
 #terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
 
-elevation <- get_ned(alabama, label='AlElevation')
+elevation <- get_ned(perdido, label='Elevation')
 #terra::writeRaster(elevation, 'elevation.tif', overwrite=TRUE)
+ggplot()+
+  geom_raster(data=elevation, aes(x=x, y=y, fill=elev_km))+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  coord_equal()+
+  theme_bw()+
+  theme(panel.grid=element_blank())
 
 slope = terrain(elevation, v='slope', neighbors=8, unit='degrees')
 #terra::writeRaster(slope, 'slope.tif', overwrite=TRUE)
+ggplot(slope, aes(x=x, y=y, fill=slope))+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  geom_raster()+
+  coord_equal()+
+  theme_bw()+
+  theme(panel.grid=element_blank())
 
 aspect = terrain(elevation, v='aspect', neighbors=8, unit='degrees')
 #terra::writeRaster(aspect, 'aspect.tif', overwrite=TRUE)
+ggplot(aspect, aes(x=x, y=y, fill=aspect))+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  geom_raster()+
+  coord_equal()+
+  theme_bw()+
+  theme(panel.grid=element_blank())
 
 
 elevation_Variables = c(elevation, slope, aspect)
