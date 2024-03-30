@@ -18,19 +18,35 @@ require(adehabitatLT)
 require(adehabitatHS)
 require(tidyverse)
 require(survival)
+require(geodata)
+require(FedData)
+require(tigris)
+require(sampling)
 
 ```
 
 
 # Import Needed Data
 ```{r, warning=F, error=F, message=F}
-require(terra)
-require(tidyterra)
-require(sf)
-require(adehabitatHR)
-require(adehabitatLT)
-require(adehabitatHS)
-require(tidyverse)
-require(survival)
+alabama <- states() %>% 
+  filter(NAME=='Alabama')
+
+nlcd2011 <- get_nlcd(alabama, label='AlLandscape', year=2011)
+terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
+ned <- get_ned(alabama, label='AlElevation')
+terra::writeRaster(ned, 'ned.tif', overwrite=TRUE)
+
+# terrain <- terra::terrain(ned, v="slope") %>%
+#   project("EPSG:5070", method="bilinear")
+# terrainRs <- terra::resample(terrain, nlcd)
+# terra::writeRaster(terrainRs, 'terrain_resampled30m.tif', overwrite=TRUE)
+
+wma <- read_sf('ICPTracts_PhaseII/ICPTracts_PhaseII.shp')
+nlcd <- rast('nlcd.tif')
+ned <- rast('ned.tif')
+terrainRs <- rast('terrain_resampled30m.tif')
+
+alabama <- st_transform(alabama, "EPSG:5070")
+wma <- st_transform(wma, "EPSG:5070")
 
 ```
