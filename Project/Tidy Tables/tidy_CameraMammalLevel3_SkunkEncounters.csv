@@ -1,0 +1,8 @@
+﻿WMA,Point ID,Camera Type,Trigger,Date,Time,Moon Phase,Illum,Contrast,Brightness,Sharpness,Saturation,Sensitivity,Temp,Battery(Volts),Comments,Season
+CO,3410,Ground,T,9/8/2009,5:32:00 AM,Waning Gibbous,On,128,128,32,0,100,76,7.6,spotted skunk,2
+CO,3520,Ground,T,9/10/2009,9:24:00 PM,Last Quarter,On,128,128,32,0,100,71,7.6,spotted skunk,2
+CO,3566,Ground,T,9/15/2009,2:20:00 AM,Waning Crescent,On,128,128,32,0,100,70,7.5,spotted skunk,2
+CO,3707,Ground,T,10/5/2009,7:52:00 PM,Full Moon,On,128,128,32,0,100,63,7.6,,2
+CO,3805,Ground,M 1/3,10/6/2009,7:57:06 PM,Waning Gibbous,On,128,128,32,0,100,71,7.4,,2
+CO,3805,Ground,M 2/3,10/6/2009,7:57:08 PM,Waning Gibbous,On,128,128,32,0,100,71,7.6,,2
+CO,3805,Ground,M 1/3,10/7/2009,1:57:11 AM,Waning Gibbous,On,128,128,32,0,100,71,7.3,,2
