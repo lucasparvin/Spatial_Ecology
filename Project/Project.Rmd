@@ -59,13 +59,8 @@ print(crs_elevation)
 ```
 
 ```{r}
-
-# Assuming 'elevation' is the reprojected raster loaded and ready for clipping
-# Crop and mask the elevation to the 'perdido_vect' boundary
 elevation_clipped <- crop(elevation, perdido_vect)
 elevation_clipped <- mask(elevation_clipped, perdido_vect)
-
-
 # Convert clipped elevation raster to a data frame for plotting
 elevation_df <- as.data.frame(elevation_clipped, xy = TRUE)
 
@@ -81,74 +76,82 @@ ggplot() +
 ```
 
 ```{r}
+slope = terrain(elevation, v='slope', neighbors=8, unit='degrees')
+slope_clipped <- crop(slope, perdido_vect)
+slope_clipped <- mask(slope_clipped, perdido_vect)
+# Convert clipped elevation raster to a data frame for plotting
+slope_df <- as.data.frame(slope_clipped, xy = TRUE)
 
-
-
-
-
-
-
-
-# Optional: Clip the elevation raster to the bounds of the 'perdido' shapefile
-elevation_clipped <- crop(elevation_raster, perdido)
-elevation_clipped <- mask(elevation_clipped, perdido)
-
-# Convert the clipped raster to a dataframe for ggplot
-elevation_df <- as.data.frame(elevation_clipped, xy = TRUE, na.rm = TRUE)
-
-# Plotting with ggplot2
-ggplot() +
-  geom_raster(data = elevation_df, aes(x = x, y = y, fill = layer)) +
-  scale_fill_viridis_c(option = "magma", name = "Elevation (m)") +
-  coord_equal() +
-  theme_minimal() +
-  labs(title = "Elevation Plot within Perdido Area") +
-  geom_sf(data = perdido, inherit.aes = FALSE, fill = NA, color = "white")
-
+#terra::writeRaster(slope, 'slope.tif', overwrite=TRUE)
+ggplot(slope_df, aes(x=x, y=y, fill=slope))+
+  scale_fill_gradientn(colours = terrain.colors(7))+
+  geom_raster()+
+  coord_equal()+
+  theme_bw()+
+  theme(panel.grid=element_blank())
 
 
 
 ```
 
 ```{r}
-slope = terrain(elevation, v='slope', neighbors=8, unit='degrees')
-#terra::writeRaster(slope, 'slope.tif', overwrite=TRUE)
-ggplot(slope, aes(x=x, y=y, fill=slope))+
-  scale_fill_gradientn(colours = terrain.colors(7))+
-  geom_raster()+
-  coord_equal()+
-  theme_bw()+
-  theme(panel.grid=element_blank())
+
 
 aspect = terrain(elevation, v='aspect', neighbors=8, unit='degrees')
+
+
+aspect_clipped <- crop(aspect, perdido_vect)
+aspect_clipped <- mask(aspect_clipped, perdido_vect)
+
+
+# Convert clipped elevation raster to a data frame for plotting
+aspect_df <- as.data.frame(aspect_clipped, xy = TRUE)
 #terra::writeRaster(aspect, 'aspect.tif', overwrite=TRUE)
-ggplot(aspect, aes(x=x, y=y, fill=aspect))+
+ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
   scale_fill_gradientn(colours = terrain.colors(7))+
   geom_raster()+
   coord_equal()+
   theme_bw()+
   theme(panel.grid=element_blank())
 
+```
 
-elevation_Variables = c(elevation, slope, aspect)
+```{r}
+elevation_Variables = c(elevation_df, slope_df, aspect_df)
 
-names(elevation_Variables) = c('elev', 'slope', 'aspect')
+names(elevation_Variables) = c('elevation', 'slope', 'aspect')
+```
 
 
-# terrain <- terra::terrain(ned, v="slope") %>%
-#   project("EPSG:5070", method="bilinear")
-# terrainRs <- terra::resample(terrain, nlcd)
-# terra::writeRaster(terrainRs, 'terrain_resampled30m.tif', overwrite=TRUE)
+```{r}
 
-#wma <- read_sf('ICPTracts_PhaseII/ICPTracts_PhaseII.shp')
-#nlcd <- rast('nlcd.tif')
-#ned <- rast('ned.tif')
-#terrainRs <- rast('terrain_resampled30m.tif')
+nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
+nlcd2011 <- crop(nlcdSimple, perdido_vect)
+nlcd2011 <- mask(nlcdSimple, perdido_vect)
+terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
+nlcd <- rast('nlcd.tif')
 
-#alabama <- st_transform(alabama, "EPSG:5070")
-#wma <- st_transform(wma, "EPSG:5070")
+# Convert the NLCD raster to a dataframe
+nlcd_df <- as.data.frame(nlcd, xy = TRUE, na.rm = TRUE)
 
-nlcd2011 <- get_nlcd(perdido, label='Landscape', year=2011)
+
+# Plotting the NLCD data
+ggplot(nlcd_df, aes(x = x, y = y, fill = category)) +
+  geom_raster() +
+  scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "Land Cover", labels = c("Water", "Developed", "Forest", "Shrubland", "Grassland", "Wetland", "Cropland")) +
+  coord_fixed() +
+  theme_minimal() +
+  labs(title = "NLCD 2011 Land Cover within Perdido Area")
+
+
+
+
+```
+
+
+
+```{r}
+nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
 #terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
 
 # Simplify NLCD Categories
@@ -164,11 +167,49 @@ nlcdSimple[nlcdSimple %in% c(81,82)] = 6 #And agriculture is 6
 tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
                  'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
 nlcdSimple = categories(nlcdSimple, value=tmp)
+nlcdSimple <- crop(nlcdSimple, perdido_vect)
+nlcdSimple <- mask(nlcdSimple, perdido_vect)
+
 
 # Plot the Simplified Raster
 ggplot(nlcdSimple, aes(x=x, y=y, fill=category)) +
   geom_raster()+
   scale_fill_manual(values=c('blue', 'black', 'gray', 'darkolivegreen', 'orange', 'yellow'))
+
+
+```
+```{r}
+nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
+#terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
+
+# Simplify NLCD Categories
+nlcdSimple = nlcd2011
+nlcdSimple[nlcdSimple==11] = 1 #Wet areas are a 1 now
+nlcdSimple[nlcdSimple %in% c(21, 22, 23, 24)] = 2 #All developed areas are 2
+nlcdSimple[nlcdSimple %in% c(31, 52)] = 3 #Barren land and shrub/scrub are 3
+nlcdSimple[nlcdSimple %in% c(41,42,43)] = 4 #All forest types are 4
+nlcdSimple[nlcdSimple == 71] = 5 #Grassland is 5
+nlcdSimple[nlcdSimple %in% c(81,82)] = 6 #And agriculture is 6
+
+# Define Reclassified Values with Labels
+tmp = data.frame('ID' = c(1, 2, 3, 4, 5, 6),
+                 'category' = c('wetland', 'developed', 'open', 'forest', 'grassland', 'agriculture'))
+nlcdSimple = categories(nlcdSimple, value=tmp)
+nlcdSimple <- crop(nlcdSimple, perdido_vect)
+nlcdSimple <- mask(nlcdSimple, perdido_vect)
+
+
+# Plot the Simplified Raster
+ggplot(nlcdSimple, aes(x=x, y=y, fill=category)) +
+  geom_raster()+
+  scale_fill_manual(values=c('blue', 'black', 'gray', 'darkolivegreen', 'orange', 'yellow'))
+
+
+```
+
+
+
+```{r}
 
 
 ```
