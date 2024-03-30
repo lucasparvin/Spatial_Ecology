@@ -1,0 +1,36 @@
+---
+title: "Project: Avian SDMs"
+author: "Lucas Parvin"
+date: "3-28-2024"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Load Packages
+
+```{r, warning=F, error=F, message=F}
+require(terra)
+require(tidyterra)
+require(sf)
+require(adehabitatHR)
+require(adehabitatLT)
+require(adehabitatHS)
+require(tidyverse)
+require(survival)
+
+```
+
+
+# Import Needed Data
+```{r, warning=F, error=F, message=F}
+require(terra)
+require(tidyterra)
+require(sf)
+require(adehabitatHR)
+require(adehabitatLT)
+require(adehabitatHS)
+require(tidyverse)
+require(survival)
+
+```
