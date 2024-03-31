@@ -28,8 +28,43 @@ require(sampling)
 
 # Import Needed Data
 ```{r, warning=F, error=F, message=F}
-#alabama <- states() %>% 
- # filter(NAME=='Alabama')
+
+visits <- read.csv("Tidy Tables/tidy_BirdLevel2_PointVisits.csv", header = T)
+encounters <- read.csv("Tidy Tables/tidy_BirdLevel3_Encounters.csv", header = T)
+
+# Merging 'visits' and 'encounters' data frames on 'PointID'
+merged_data <- merge(visits, encounters, by = "PointID")
+perdido_birds <- merged_data[merged_data$WMA == "PE", ]
+
+# Count the number of each species using dplyr
+species_counts <- perdido_birds %>%
+  group_by(Species) %>%
+  summarise(count = n())
+
+# Display the counts
+print(species_counts)
+
+
+perdido_birds <- perdido_birds[, -12] # Removes interval
+perdido_birds$INBU <- ifelse(perdido_birds$Species == "INBU", 1, 0)
+
+# Remove irrelevant covariates
+INBU_pres_abs <- perdido_birds[, -c(3,4,5,7,8,11,12,13,14,15),]
+
+# Reduce to unique rows based on all columns
+INBU_pres_abs <- unique(INBU_pres_abs)
+
+# Step 1: Arrange by PointID and INBU in descending order
+# Step 2: Keep only unique rows based on PointID, keeping the first occurrence
+INBU_pres_abs <- INBU_pres_abs %>%
+  arrange(PointID, desc(INBU)) %>%
+  distinct(PointID, .keep_all = TRUE)
+
+INBU_pres_abs <- INBU_pres_abs[, -c(1:3)] #simplify to x, y, and 0/1
+
+```
+
+```{r}
 
 # Load perdido
 perdido <- st_read("Perdido_ICP1.shp")
@@ -116,29 +151,23 @@ ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
 
 ```
 
-```{r}
-elevation_Variables = c(elevation_df, slope_df, aspect_df)
-
-names(elevation_Variables) = c('elevation', 'slope', 'aspect')
-```
 
 
 ```{r}
 
 nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
-nlcd2011 <- crop(nlcdSimple, perdido_vect)
-nlcd2011 <- mask(nlcdSimple, perdido_vect)
+nlcd2011 <- crop(nlcd2011, perdido_vect)
+nlcd2011 <- mask(nlcd2011, perdido_vect)
 terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
 nlcd <- rast('nlcd.tif')
 
 # Convert the NLCD raster to a dataframe
 nlcd_df <- as.data.frame(nlcd, xy = TRUE, na.rm = TRUE)
 
-
 # Plotting the NLCD data
-ggplot(nlcd_df, aes(x = x, y = y, fill = category)) +
+ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
   geom_raster() +
-  scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "Land Cover", labels = c("Water", "Developed", "Forest", "Shrubland", "Grassland", "Wetland", "Cropland")) +
+  scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "Land Cover") +
   coord_fixed() +
   theme_minimal() +
   labs(title = "NLCD 2011 Land Cover within Perdido Area")
