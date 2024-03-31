@@ -160,7 +160,6 @@ ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
 ```
 
 
-
 ```{r}
 
 nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
@@ -203,6 +202,10 @@ ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
 #   coord_fixed() +
 #   theme_minimal() +
 #   labs(title = "soil within Perdido Area")
+```
+
+```{r}
+# SHOULD ADD TREE CANOPY
 ```
 
 
@@ -291,9 +294,9 @@ print(summary_table)
 
 # Predict across Perdido
 ```{r}
-predRaster = predict(model = glm_all, object = covariates)
-predRaster = exp(predRaster)/(1+exp(predRaster))
-plot(predRaster)
+# predRaster = predict(model = glm_all, object = covariates)
+# predRaster = exp(predRaster)/(1+exp(predRaster))
+# plot(predRaster)
 
 
 ## I think this error is occurring due to the fact that there are NLCD values of developed, open space, etc. in the "covariates" object, but these cover types are absent from the INBU_and_Covs data frame, from which the GLMs are built. Thus, I have to either remove pixels with these cover types from the get-go OR figure out a way to just NOT predict to these cover types in predRaster. If I remove these pixels from the get-go, I will need to align the elevation, slope, and aspect rasters to the NLCD raster (essentially punching holes in those rasters) in order for each raster to stack properly. What is the best way to approach this? How can I do it?
@@ -313,12 +316,6 @@ plot(predRaster)
 
 
 # GAMs
-```{r}
-
-
-```
-
-# Maxent
 ```{r}
 
 
