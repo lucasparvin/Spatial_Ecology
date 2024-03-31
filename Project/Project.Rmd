@@ -217,43 +217,15 @@ covariates = c(elevation_aligned, aspect_aligned, slope_aligned, nlcd_aligned)
 names(covariates) = c('elevation', 'aspect', 'slope', 'NLCD')
 
 coords = cbind(INBU_pres_abs$Longitude, INBU_pres_abs$Latitude)
-landCovs = terra::extract(covariates, coords)
-
-
+pres_abs_Covs = terra::extract(covariates, coords)
 
 ```
 
 
 
-
+# Bind INBU presence absence data with covariates
 ```{r}
-
-
-# Stack aligned rasters
-# Combine the rasters into a list and then create a stack
-aligned_stack <- rast(c(elevation_aligned, slope_aligned, aspect_aligned, nlcd_aligned))
-
-# Now, 'aligned_stack' is a SpatRaster that contains all the aligned layers
-
-# Convert the raster stack to a data frame
-stack_df <- as.data.frame(aligned_stack, xy = TRUE, na.rm = TRUE)
-
-
-
-ext(elevation_aligned)==ext(nlcd_aligned) & ext(slope_aligned)==ext(aspect_aligned) & ext(nlcd_aligned) == ext(slope_aligned)
-
-
-all(res(elevation_aligned)) == all(res(nlcd_aligned)) & all(res(slope_aligned)) == all(res(aspect_aligned)) & all(res(nlcd_aligned)) == all(res(slope_aligned))
-
-crs(elevation_aligned) == crs(nlcd_aligned)
-crs(elevation_aligned) == crs(slope_aligned) & crs(slope_aligned) == crs(aspect_aligned)
-
-
-plot(elevation_aligned)
-plot(slope_aligned)
-plot(aspect_aligned)
-plot(nlcd_aligned)
-
+INBU_and_Covs = cbind(pres_abs_Covs, INBU_pres_abs)
 
 
 
