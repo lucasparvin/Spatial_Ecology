@@ -200,20 +200,7 @@ ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
   coord_fixed() +
   theme_minimal() +
   labs(title = "NLCD 2011 Land Cover within Perdido Area")
-#######################
-# Define the values to be converted to NA
-values_to_na <- c("Developed, Low Intensity", "Developed, Medium Intensity", "Developed, Open Space")
 
-# Convert matching values to NA
-nlcd_df$Class[nlcd_df$Class %in% values_to_na] <- NA
-
-ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
-  geom_raster() +
-  scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "Land Cover") +
-  coord_fixed() +
-  theme_minimal() +
-  labs(title = "NLCD 2011 Land Cover within Perdido Area")
-#################
 ```
 ```{r}
 # soil <- get_ssurgo(perdido_vect, label='soil')
