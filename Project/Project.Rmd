@@ -168,9 +168,22 @@ nlcd2011 <- crop(nlcd2011, perdido_vect)
 nlcd2011 <- mask(nlcd2011, perdido_vect)
 terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
 nlcd <- rast('nlcd.tif')
+#####################
+# Example codes for "Developed, Open Space", "Developed, Low Intensity", 
+# and "Developed, Medium Intensity"
+codes_to_na <- c(21, 22, 23)
+
+# Creating a matrix for reclassification: From value, To value
+reclass_matrix <- cbind(codes_to_na, rep(NA, length(codes_to_na)))
+
+# Reclassify the raster
+nlcd <- classify(nlcd, reclass_matrix, right=FALSE)
+####################
 
 # Convert the NLCD raster to a dataframe
 nlcd_df <- as.data.frame(nlcd, xy = TRUE, na.rm = TRUE)
+# Convert 'Class' to a factor if it's not already
+nlcd_df$Class <- factor(nlcd_df$Class)
 
 # Plotting the NLCD data
 ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
@@ -179,10 +192,20 @@ ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
   coord_fixed() +
   theme_minimal() +
   labs(title = "NLCD 2011 Land Cover within Perdido Area")
+#######################
+# Define the values to be converted to NA
+values_to_na <- c("Developed, Low Intensity", "Developed, Medium Intensity", "Developed, Open Space")
 
+# Convert matching values to NA
+nlcd_df$Class[nlcd_df$Class %in% values_to_na] <- NA
 
-
-
+ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
+  geom_raster() +
+  scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "Land Cover") +
+  coord_fixed() +
+  theme_minimal() +
+  labs(title = "NLCD 2011 Land Cover within Perdido Area")
+#################
 ```
 ```{r}
 # soil <- get_ssurgo(perdido_vect, label='soil')
@@ -233,7 +256,7 @@ elevation_aligned <- mask(elevation_aligned, perdido_vect)
 
 # Assuming 'nlcd2011' is already aligned to 'perdido_vect' as per your setup,
 # If 'nlcd2011' needs to be aligned to 'elevation' in terms of resolution:
-nlcd_aligned <- resample(nlcd2011, elevation_aligned, method="near")
+nlcd_aligned <- resample(nlcd, elevation_aligned, method="near")
 nlcd_aligned <- crop(nlcd_aligned, ext_standard)
 nlcd_aligned <- mask(nlcd_aligned, perdido_vect)
 ```
@@ -263,6 +286,10 @@ glm_nlcd = glm(INBU ~ NLCD, family = 'binomial', data = INBU_and_Covs)
 glm_all = glm(INBU ~ NLCD + elevation + slope + aspect, family = 'binomial', data = INBU_and_Covs)
 glm_interaction = glm(INBU ~ NLCD*elevation, family = 'binomial', data = INBU_and_Covs)
 glm_nohab = glm(INBU ~ elevation + slope + aspect, family = 'binomial', data = INBU_and_Covs)
+```
+
+# Comparing GLMs
+```{r}
 
 aic_intercept <- AIC(glm_intecept)
 aic_nlcd <- AIC(glm_nlcd)
@@ -290,13 +317,21 @@ summary_table <- data.frame(
 print(summary_table)
 
 
+summary(glm_all)
+summary(glm_intecept)
+summary(glm_nohab)
+summary(glm_interaction)
+summary(glm_nlcd)
+
 ```
 
 # Predict across Perdido
 ```{r}
-# predRaster = predict(model = glm_all, object = covariates)
-# predRaster = exp(predRaster)/(1+exp(predRaster))
-# plot(predRaster)
+
+
+predRaster = predict(model = glm_all, object = covariates)
+predRaster = exp(predRaster)/(1+exp(predRaster))
+plot(predRaster)
 
 
 ## I think this error is occurring due to the fact that there are NLCD values of developed, open space, etc. in the "covariates" object, but these cover types are absent from the INBU_and_Covs data frame, from which the GLMs are built. Thus, I have to either remove pixels with these cover types from the get-go OR figure out a way to just NOT predict to these cover types in predRaster. If I remove these pixels from the get-go, I will need to align the elevation, slope, and aspect rasters to the NLCD raster (essentially punching holes in those rasters) in order for each raster to stack properly. What is the best way to approach this? How can I do it?
