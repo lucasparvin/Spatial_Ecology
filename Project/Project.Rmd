@@ -170,6 +170,8 @@ ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
 
 ```{r}
 
+### CONVERT NLCD NUMBERS TO NAMES ###
+
 nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
 nlcd2011 <- project(nlcd2011, crs_perdido )
 nlcd2011 <- crop(nlcd2011, perdido_vect)
