@@ -286,6 +286,20 @@ INBU_and_Covs = cbind(pres_abs_Covs, INBU_pres_abs)
 
 ```
 
+# Correlation between covariates
+```{r} 
+# MOVE THIS TO HIGHER UP
+pairs(covariates, maxpixels=1000)
+
+
+
+
+
+
+```
+
+
+
 # GLMs
 ```{r}
 
@@ -356,13 +370,28 @@ gamMap = predict(covariates, gam_all, type='response')
 plot(gamMap)
 
 ```
-# Correlation between covariates
+# Boosted Regression Trees
 ```{r}
-pairs(covariates, maxpixels=1000)
+set.seed(2024)
+boostModel = gbm(INBU ~ elevation + NLCD + slope + aspect, distribution='bernoulli', n.trees=100, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
 
+boostMap = predict(covariates, boostModel, type='response')
+#plot(boostMap)
 
+boostMap = mask(boostMap, covariates$NLCD) # to clip to perdido
+plot(boostMap)
+```
+# Random Forests
+```{r}
+set.seed(2024)
 
+tuneRF(y = as.factor(INBU_and_Covs$INBU), x=INBU_and_Covs[,1:4], stepFactor = 2, ntreeTry = 500)
 
+# mtry 1 is best
 
+rfModel = randomForest(as.factor(INBU) ~ NLCD + elevation + slope + aspect, data=INBU_and_Covs, mtry=1, ntree=500, na.action = na.omit)
+
+rfMap = predict(covariates, rfModel, type='prob', index=2)
+plot(rfMap)
 
 ```
