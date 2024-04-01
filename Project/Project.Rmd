@@ -188,17 +188,35 @@ reclass_matrix <- cbind(codes_to_na, rep(NA, length(codes_to_na)))
 
 # Reclassify the raster
 nlcd <- classify(nlcd, reclass_matrix, right=FALSE)
+
 ####################
 
-# Convert the NLCD raster to a dataframe
-nlcd_df <- as.data.frame(nlcd, xy = TRUE, na.rm = TRUE)
-# Convert 'Class' to a factor if it's not already
-nlcd_df$Class <- factor(nlcd_df$Class)
+land_cover_descriptions <- c(
+  "11" = "Open Water",
+  "12" = "Perennial Ice/Snow",
+  "31" = "Barren Land",
+  "41" = "Deciduous Forest",
+  "42" = "Evergreen Forest",
+  "43" = "Mixed Forest",
+  "52" = "Shrub/Scrub",
+  "71" = "Grassland/Herbaceous",
+  "81" = "Pasture/Hay",
+  "82" = "Cultivated Crops",
+  "90" = "Woody Wetlands",
+  "95" = "Emergent Herbaceous Wetlands"
+)
 
-# Plotting the NLCD data
+# Convert the raster to a data frame
+nlcd_df <- as.data.frame(nlcd, xy = TRUE, na.rm = TRUE)
+
+# Map numeric codes to their descriptions
+nlcd_df$Class <- factor(land_cover_descriptions[as.character(nlcd_df$Class)])
+
+# Note: 'layer' should be replaced with the actual name of the raster layer in your data frame
+
 ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
   geom_raster() +
-  scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "Land Cover") +
+  scale_fill_viridis_d() +
   coord_fixed() +
   theme_minimal() +
   labs(title = "NLCD 2011 Land Cover within Perdido Area")
