@@ -81,7 +81,7 @@ I went with INBU since they were one of the most abundant birds observed, but al
 ```{r}
 
 # Load perdido
-perdido <- st_read("Perdido_ICP1.shp")
+perdido <- st_read("Perdido_ICP1.shp") # Could put other shape files here
 # Transform perdido to WGS 84 (EPSG:4326)
 perdido <- st_transform(perdido, crs = "EPSG:4326")
 
@@ -97,7 +97,7 @@ crs_perdido <- crs(perdido_vect)
 
 elevation <- get_ned(perdido_vect, label='Elevation')
 elevation <- project(elevation, crs_perdido)
-elevation_raster <- writeRaster(elevation, 'elevation_reprojected.tif', overwrite=TRUE)
+# elevation_raster <- writeRaster(elevation, 'elevation_reprojected.tif', overwrite=TRUE)
 
 # Check CRS of both 'perdido' and 'elevation'
 crs_perdido <- crs(perdido_vect)
