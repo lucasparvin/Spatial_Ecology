@@ -349,8 +349,19 @@ plot(predRaster)
 # GAMs
 ```{r}
 gam_all = gam(INBU ~ s(NLCD, k=3) + s(elevation, k=3) + s(slope, k=3) + s(aspect, k=3), family='binomial', data = INBU_and_Covs, method='ML')
-
 summary(gam_all)
+
+gamMap = predict(covariates, gam_all, type='response')
+
+plot(gamMap)
+
+```
+# Correlation between covariates
+```{r}
+pairs(covariates, maxpixels=1000)
+
+
+
 
 
 
