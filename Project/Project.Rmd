@@ -243,11 +243,30 @@ ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
 ```
 
 ```{r}
-# SHOULD ADD TREE CANOPY
+treecover <- rast('treecover.tif')
+treecover <- project(treecover, crs_perdido )
+treecover <- crop(treecover, perdido_vect)
+treecover <- mask(treecover, perdido_vect)
+# 
+# # # Convert the NLCD raster to a dataframe
+treecover_df <- as.data.frame(treecover, xy = TRUE, na.rm = TRUE)
+# #
+# # # Plotting the NLCD data
+ggplot(treecover_df, aes(x = x, y = y, fill = treecover)) +
+   geom_raster() +
+   coord_fixed() +
+   theme_minimal() +
+   labs(title = "Tree Cover within Perdido Area")
+
+
 ```
 
 
 ```{r}
+
+#### MUST WORK TREES IN #########
+
+
 # Assuming 'elevation', 'slope', 'aspect', and 'nlcd' are already loaded
 # and 'elevation' is the standard for resolution and extent
 
