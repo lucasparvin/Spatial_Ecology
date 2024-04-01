@@ -22,11 +22,19 @@ require(geodata)
 require(FedData)
 require(tigris)
 require(sampling)
+require(dismo)
+require(predicts)
+require(ggnewscale)
+require(mgcv)
+require(randomForest)
+require(maxnet)
+require(enmSdmX)
+require(gbm)
 
 ```
 
 
-# Import Needed Data --> ## I SHOULD ADD TREE CANOPY
+# Import Needed Data --> ## I SHOULD ADD TREE CANOPY & CHANGE TO ALL WMAs
 ```{r, warning=F, error=F, message=F}
 
 visits <- read.csv("Tidy Tables/tidy_BirdLevel2_PointVisits.csv", header = T)
@@ -338,20 +346,12 @@ plot(predRaster)
 
 ```
 
-
-
-
-
-# Envelope Models
-```{r}
-
-
-
-```
-
-
 # GAMs
 ```{r}
+gam_all = gam(INBU ~ s(NLCD, k=3) + s(elevation, k=3) + s(slope, k=3) + s(aspect, k=3), family='binomial', data = INBU_and_Covs, method='ML')
+
+summary(gam_all)
+
 
 
 ```
