@@ -503,8 +503,6 @@ elevData = data.frame(bioclim = predict(bioclim, tmp),
 ```
 
 
-
-
 # SDM Validation
 
 ```{r}
