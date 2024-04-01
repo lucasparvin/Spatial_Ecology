@@ -395,3 +395,102 @@ rfMap = predict(covariates, rfModel, type='prob', index=2)
 plot(rfMap)
 
 ```
+# Maximum Entropy
+```{r}
+pbVect = INBU_and_Covs$INBU
+covs <- INBU_and_Covs %>% dplyr::select(elevation:NLCD)
+
+maxentModel = maxnet(p = pbVect,
+                     data= covs,
+                     regmult = 1,
+                     classes='lqpht')
+?maxnet
+
+plot(maxentModel, type='logistic')
+
+maxentMap = predictMaxNet(maxentModel, covariates, type='logistic')
+
+par(mfrow=c(1,1))
+plot(maxentMap)
+
+```
+# Comparing Parameter Estimates
+```{r}
+# NLCD
+tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+elevData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:elev) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'elevation')
+
+```
+
+```{r}
+# Elevation
+tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+elevData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:elev) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'elevation')
+
+```
+
+```{r}
+# Slope
+tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+elevData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:elev) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'elevation')
+
+```
+
+```{r}
+# Aspect
+tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
+                  canopy = mean(backCovs$canopy),
+                  precip = mean(backCovs$precip),
+                  mesic1km = mean(backCovs$mesic1km))
+
+elevData = data.frame(bioclim = predict(bioclim, tmp),
+                 glm = predict(glmModel, tmp, type='response'),
+                 gam = predict(gamModel, tmp, type='response'),
+                 boost = predict(boostModel, tmp, type='response'),
+                 rf = predict(rfModel, tmp, type='prob')[,2],
+                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+  cbind(tmp) %>% 
+  select(bioclim:elev) %>% 
+  pivot_longer(bioclim:maxent) %>% 
+  mutate(variable = 'elevation')
+
+```
