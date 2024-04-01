@@ -483,3 +483,12 @@ elevData = data.frame(bioclim = predict(bioclim, tmp),
   mutate(variable = 'elevation')
 
 ```
+
+
+
+
+# SDM Validation
+
+```{r}
+
+```
