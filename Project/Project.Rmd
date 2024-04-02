@@ -283,22 +283,26 @@ aspect_aligned <- resample(aspect, elevation, method="bilinear")
 aspect_aligned <- crop(aspect_aligned, ext_standard)
 aspect_aligned <- mask(aspect_aligned, perdido_vect)
 
-# Resample and align elevation
+# Resample and align elevation ### SEEMS UNNEEDED ####
 elevation_aligned <- resample(elevation, elevation, method="bilinear")
 elevation_aligned <- crop(elevation_aligned, ext_standard)
 elevation_aligned <- mask(elevation_aligned, perdido_vect)
 
-# Assuming 'nlcd2011' is already aligned to 'perdido_vect' as per your setup,
-# If 'nlcd2011' needs to be aligned to 'elevation' in terms of resolution:
+# Resample and align nlcd
 nlcd_aligned <- resample(nlcd, elevation_aligned, method="near")
 nlcd_aligned <- crop(nlcd_aligned, ext_standard)
 nlcd_aligned <- mask(nlcd_aligned, perdido_vect)
+
+# Resample and align tree cover
+tree_aligned <- resample(treecover, elevation_aligned, method="near")
+tree_aligned <- crop(tree_aligned, ext_standard)
+tree_aligned <- mask(tree_aligned, perdido_vect)
 ```
 
 ```{r}
 
-covariates = c(elevation_aligned, aspect_aligned, slope_aligned, nlcd_aligned)
-names(covariates) = c('elevation', 'aspect', 'slope', 'NLCD')
+covariates = c(elevation_aligned, aspect_aligned, slope_aligned, nlcd_aligned, tree_aligned)
+names(covariates) = c('elevation', 'aspect', 'slope', 'NLCD', 'treecover')
 
 coords = cbind(INBU_pres_abs$Longitude, INBU_pres_abs$Latitude)
 pres_abs_Covs = terra::extract(covariates, coords)
@@ -331,9 +335,11 @@ pairs(covariates, maxpixels=1000)
 
 glm_intecept = glm(INBU ~ 1, family = 'binomial', data = INBU_and_Covs)
 glm_nlcd = glm(INBU ~ NLCD, family = 'binomial', data = INBU_and_Covs)
-glm_all = glm(INBU ~ NLCD + elevation + slope + aspect, family = 'binomial', data = INBU_and_Covs)
+glm_all = glm(INBU ~ NLCD + treecover + elevation + slope + aspect, family = 'binomial', data = INBU_and_Covs)
 glm_interaction = glm(INBU ~ NLCD*elevation, family = 'binomial', data = INBU_and_Covs)
 glm_nohab = glm(INBU ~ elevation + slope + aspect, family = 'binomial', data = INBU_and_Covs)
+glm_elevtree = glm(INBU ~ treecover + elevation, family = 'binomial', data = INBU_and_Covs)
+glm_elevtreeslope = glm(INBU ~ elevation + treecover + slope, family = 'binomial', data = INBU_and_Covs)
 ```
 
 # Comparing GLMs
@@ -344,9 +350,11 @@ aic_nlcd <- AIC(glm_nlcd)
 aic_all <- AIC(glm_all)
 aic_interaction <- AIC(glm_interaction)
 aic_nohab <- AIC(glm_nohab)
+aic_elevtree <- AIC(glm_elevtree)
+aic_elevtreeslope <- AIC(glm_elevtreeslope)
 
 
-min_aic <- min(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab)
+min_aic <- min(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab, aic_elevtree, aic_elevtreeslope)
 
 
 delta_aic_intercept <- aic_intercept - min_aic
@@ -354,12 +362,13 @@ delta_aic_nlcd <- aic_nlcd - min_aic
 delta_aic_all <- aic_all - min_aic
 delta_aic_interaction <- aic_interaction - min_aic
 delta_aic_nohab <- aic_nohab - min_aic
-
+delta_aic_elevtree <- aic_elevtree - min_aic
+delta_aic_elevtreeslope <- aic_elevtreeslope - min_aic
 
 summary_table <- data.frame(
-  Model = c("glm_intecept", "glm_nlcd", "glm_all", "glm_interaction", "glm_nohab"),
-  AIC = c(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab),
-  Delta_AIC = c(delta_aic_intercept, delta_aic_nlcd, delta_aic_all, delta_aic_interaction, delta_aic_nohab)
+  Model = c("glm_intecept", "glm_nlcd", "glm_all", "glm_interaction", "glm_nohab", "glm_elevtree", "glm_elevtreeslope"),
+  AIC = c(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab, aic_elevtree, aic_elevtreeslope),
+  Delta_AIC = c(delta_aic_intercept, delta_aic_nlcd, delta_aic_all, delta_aic_interaction, delta_aic_nohab, delta_aic_elevtree, delta_aic_elevtreeslope)
 )
 
 print(summary_table)
@@ -370,14 +379,19 @@ summary(glm_intecept)
 summary(glm_nohab)
 summary(glm_interaction)
 summary(glm_nlcd)
+summary(glm_elevtree)
+summary(glm_elevtreeslope)
 
 ```
+
+Elevation, tree cover, and slope seem like the strongest predictor, consistently.
+
 
 # Predict across Perdido
 ```{r}
 
 
-predRaster = predict(model = glm_all, object = covariates)
+predRaster = predict(model = glm_elevtreeslope, object = covariates)
 predRaster = exp(predRaster)/(1+exp(predRaster))
 plot(predRaster)
 
@@ -388,10 +402,11 @@ plot(predRaster)
 
 # GAMs
 ```{r}
-gam_all = gam(INBU ~ s(NLCD, k=3) + s(elevation, k=3) + s(slope, k=3) + s(aspect, k=3), family='binomial', data = INBU_and_Covs, method='ML')
-summary(gam_all)
+# using elevation tree cover and slope
+gam_elevtreeslope = gam(INBU ~ s(treecover, k=3) + s(elevation, k=3) + s(slope, k=3), family='binomial', data = INBU_and_Covs, method='ML')
+summary(gam_elevtreeslope)
 
-gamMap = predict(covariates, gam_all, type='response')
+gamMap = predict(covariates, gam_elevtreeslope, type='response')
 
 plot(gamMap)
 
@@ -399,7 +414,7 @@ plot(gamMap)
 # Boosted Regression Trees
 ```{r}
 set.seed(2024)
-boostModel = gbm(INBU ~ elevation + NLCD + slope + aspect, distribution='bernoulli', n.trees=100, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
+boostModel = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=100, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
 
 boostMap = predict(covariates, boostModel, type='response')
 #plot(boostMap)
@@ -411,11 +426,11 @@ plot(boostMap)
 ```{r}
 set.seed(2024)
 
-tuneRF(y = as.factor(INBU_and_Covs$INBU), x=INBU_and_Covs[,1:4], stepFactor = 2, ntreeTry = 500)
+tuneRF(y = as.factor(INBU_and_Covs$INBU), x=INBU_and_Covs[, c(1,3,5)], stepFactor = 2, ntreeTry = 500)
 
 # mtry 1 is best
 
-rfModel = randomForest(as.factor(INBU) ~ NLCD + elevation + slope + aspect, data=INBU_and_Covs, mtry=1, ntree=500, na.action = na.omit)
+rfModel = randomForest(as.factor(INBU) ~ elevation + + treecover + slope, data=INBU_and_Covs, mtry=1, ntree=500, na.action = na.omit)
 
 rfMap = predict(covariates, rfModel, type='prob', index=2)
 plot(rfMap)
@@ -424,7 +439,7 @@ plot(rfMap)
 # Maximum Entropy
 ```{r}
 pbVect = INBU_and_Covs$INBU
-covs <- INBU_and_Covs %>% dplyr::select(elevation:NLCD)
+covs <- INBU_and_Covs %>% dplyr::select(c('elevation', 'treecover', 'slope'))
 
 maxentModel = maxnet(p = pbVect,
                      data= covs,
