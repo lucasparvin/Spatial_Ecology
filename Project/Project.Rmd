@@ -44,6 +44,14 @@ encounters <- read.csv("Tidy Tables/tidy_BirdLevel3_Encounters.csv", header = T)
 merged_data <- merge(visits, encounters, by = "PointID")
 perdido_birds <- merged_data[merged_data$WMA == "PE", ]
 
+# NOBO <- merged_data[merged_data$Species == "NOBO", ]
+# NOBO_Unique_Points <- unique(NOBO$PointID)
+# NOBO_Unique_WMAs <- unique(NOBO$WMA)
+# NOBO_Unique_Points <- NOBO %>%
+#   group_by(WMA) %>%
+#   summarise(Unique_Points = n_distinct(PointID))
+# print(NOBO_Unique_Points)
+
 # Count the number of each species using dplyr
 species_counts <- perdido_birds %>%
   group_by(Species) %>%
