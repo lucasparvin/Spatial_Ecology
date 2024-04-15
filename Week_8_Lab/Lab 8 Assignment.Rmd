@@ -102,6 +102,8 @@ plot(layers2)
 
 **ANSWER:** *Similarities*  1) All three models demonstrate similar spatial patterns for distributions of VATH, meaning the highest values generally fall in the same places for each figure, along with the lowest values (even if the values themselves differ map to map). This is likely the result of certain environmental variables that strongly influence the species' distribution, resulting in all models highlighting similar regions as important due to these variables' influence, even if the variables aren't attributed the exact weights model to model. 2) The Bioclim Envelope Map and the Random Forest Map use the same scale, maxing out around ~1.  *Differences*  1) The GLM and bioclim models produced smoother, more continuous SDM maps, compared to the Random forest model. As Random Forest methods use machine learning and are more nuanced, they might predict more fragmented habitats due to their ability to capture complex patterns, leading to patchier distribution maps. 2) The Bioclim Envelope model appears to exhibit higher values overall than the other models. This is likely due to the the fact that it is relatively simple and assumes niche boundaries based on the observed maximums and minimums of environmental variables. This could allow an overestimation of prediction values in some areas and make it overly sensitive to environmental outliers associated with some of the presence data. 3) While the other models appear to have maximum values of ~1, the GLM model Map appears to max out around 0.4. This is likely the result of the Random Forest model being the most complex, and being able to parse out areas with vary high likelihood of VATH presence (values near 1) and the Bicoclim Envelope model overestimating presence in many areas, also leading to high values. Given that the GLM model is not as good at parsing out areas with very high-likelihood of presence AND not as prone to overestimation, the maximum value is lower. 
 
+$\color{red}{\text{Excellent. +4}}$
+
 # Challenge 2 (4 points)
 
 When we fit our GLM in lab, we used background points, rather than true absence points, to represent pseudo-absences. Fit the exact same GLM model, only this time use presence and true absence data. That is, replace the background rows in the dataframe with rows that represent actual sites where surveys were completed but Varied Thrush were not detected. Once you've fit the GLM, build a new SDM from this fitted model and visually compare the prediction surface to that built based on the presence-background model. What discrepancies do you notice, and what is your intuition regarding which of these two models is more reliable?
@@ -142,6 +144,8 @@ ggplot() +
 ```
 
 **ANSWER (Continued):** While I will still go with my initial intuition (that the model fit to true absences is the more reliable model), based on the map above, it does appear that the presence and true absence points are spatially biased, which should at least be considered. Higher elevations appear more well-represented in the sample than lower elevations. This is likely the result of rapidly changing elevation gradients that prevented observers from sampling (i.e. cliffs, slopes that are too steep, etc.).
+
+$\color{red}{\text{Perfect. +4}}$
 
 
 # Challenge 3 (4 points)
@@ -229,6 +233,8 @@ combined_plot
 
 Of note, the relationship between predicted occupancy and precipitation *COULD* be different between the two models, in that the model using true absences demonstrates a logistic relationship, while the model fit to the background points/pseudo-absences appears exponential with the bounds of the figure. However, if the bounds were to be expanded for the precipitation gradient, perhaps a more gradual logistic relationship would be observed, mirroring the relationship demonstrated in the pseudo-absence model. 
 
+$\color{red}{\text{Great. +4}}$
+
 # Challenge 4 (4 points)
 
 Varied Thrush are considered forest-dependent, and thus one might characterize mesic forests as "habitat" for the species. Calculate the total amount of mesic forest in the study area, and the mean size of the mesic forest patches.
@@ -302,6 +308,7 @@ As shown in my outputs above, mesic forest covers 40217 square kilometers and ha
 
 If creating a coarse species extent map or deciding on a general region to study or manage for VATH, relying on the mesic map may be more appropriate at a local/regional scale. If trying to pinpoint VATH for capture or nest monitoring, using the highly selective RF model may be more appropriate to rely on during initial targeting of efforts (again on a local or regional scale, as it would be inappropriate to use either map for other areas). 
 
+$\color{red}{\text{Awesome. +4}}$
 
 # Challenge 5 (4 points)
 
@@ -398,7 +405,7 @@ ggplot(combined_data, aes(x=xValue, y=prediction, color=model))+
 Specifically, the regularization constant mitigates overfitting by penalizing large coefficients, ensuring models capture the underlying pattern rather than noise. This balance between model complexity and fit is adjusted through the regularization strength in that higher values enforce simplicity and generalization, while lower values allow more detailed but potentially overfitted models.
 
 
-
+$\color{red}{\text{Outstanding work, Lucas. +4}}$
 
 
 
