@@ -30,6 +30,7 @@ require(randomForest)
 require(maxnet)
 require(enmSdmX)
 require(gbm)
+require(dplyr)
 
 ```
 
@@ -586,7 +587,16 @@ ggplot(tmp, aes(x=xValue, y=value, color=name))+
 
 ```{r}
 
+tmp <- covs %>% 
+  mutate(INBU = INBU_and_Covs$INBU)
 
+valData = data.frame('ID' = 1:nrow(tmp)) %>% 
+  mutate(obs = tmp$INBU,
+         glmVal = predict(glm_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
+         gamVal = predict(gam_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
+         boostVal = predict(boostModel, tmp %>% dplyr::select(elevation:slope), type='response'),
+         rfVal = predict(rfModel, tmp %>% dplyr::select(elevation:slope), type='prob')[,2],
+         maxentVal = predict(maxentModel, tmp %>% dplyr::select(elevation:slope), type='logistic')[,1])
 
 
 
