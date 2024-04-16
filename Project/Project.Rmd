@@ -462,7 +462,7 @@ tuneRF(y = as.factor(INBU_and_Covs$INBU), x=INBU_and_Covs[, c(1,3,5)], stepFacto
 
 # mtry 1 is best
 
-rfModel = randomForest(as.factor(INBU) ~ elevation + + treecover + slope, data=INBU_and_Covs, mtry=1, ntree=500, na.action = na.omit)
+rfModel = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data=INBU_and_Covs, mtry=1, ntree=500, na.action = na.omit)
 
 rfMap = predict(covariates, rfModel, type='prob', index=2)
 plot(rfMap)
@@ -654,26 +654,29 @@ gamBV <- mean(boyceVals)
 ```
 
 
+# Validating our Random Forest Model
 ```{r}
-
+# set.seed(2024)
 # boyceVals = rep(NA, nFolds)
 # 
 # for(i in 1:nFolds){
 #   valPres = presCovs[kfoldPres==i,]
-#   
+# 
 #   trainPres = presCovs[kfoldPres!=i,]
 #   trainBack = backCovs[kfoldBack!=i,]
 #   trainBoth = rbind(trainPres, trainBack)
-#   
-# rfModel2 = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data = trainBoth, mtry=1, ntree=500, na.action = na.omit)
-# rfMap2 = predict(covariates, rfModel2, type='prob', index=2)
+# 
+#  tuneRF(y = as.factor(trainBoth$INBU), x=trainBoth[, c(1:3)], stepFactor = 2, ntreeTry = 500)
+# # mtry 1 is best
+# 
+# rfModel2 = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data=trainBoth, mtry=1, ntree=500, na.action = na.omit)
 # 
 # valData = data.frame('ID' = 1:nrow(valPres)) %>%
 #   mutate(obs = valPres$INBU,
 #          rfVal = predict(rfModel2, valPres %>% dplyr::select(elevation, treecover, slope), type='response'))
 # 
-#   
-# boyceVals[i] = ecospat.boyce(fit = rfMap2, obs=valData[,3], res=100, PEplot=F)$cor
+# 
+# boyceVals[i] = ecospat.boyce(fit = rfMap, obs=valData[,3], res=100, PEplot=F)$cor
 # 
 # }
 # 
@@ -681,6 +684,7 @@ gamBV <- mean(boyceVals)
 
 ```
 
+# Validating our Boosted Regression Tree
 
 ```{r}
 
@@ -706,18 +710,18 @@ boyceVals[i] = ecospat.boyce(fit = boostMap, obs=valData[,3], res=100, PEplot=F)
 boostBV <- mean(boyceVals)
 
 ```
-
+# Validating our Maxent Model
 ```{r}
 
 # boyceVals = rep(NA, nFolds)
 # 
 # for(i in 1:nFolds){
 #   valPres = presCovs[kfoldPres==i,]
-#   
+# 
 #   trainPres = presCovs[kfoldPres!=i,]
 #   trainBack = backCovs[kfoldBack!=i,]
 #   trainBoth = rbind(trainPres, trainBack)
-#   
+# 
 # pbVect2 = trainBoth$INBU
 # covs2 <- trainBoth %>% dplyr::select(c('elevation', 'treecover', 'slope'))
 # 
@@ -726,10 +730,10 @@ boostBV <- mean(boyceVals)
 #                      regmult = 1,
 #                      classes='lqpht')
 # 
-#   valData = data.frame('ID' = 1:nrow(valPres)) %>% 
+#   valData = data.frame('ID' = 1:nrow(valPres)) %>%
 #   mutate(obs = valPres$INBU,
-#          maxentVal = predict(maxentModel2, valPres %>% dplyr::select(elevation:treecover), type='response'))
-#   
+#          maxentVal = predict(maxentModel2, valPres %>% dplyr::select(elevation:treecover), type='logistic'))
+# 
 # boyceVals[i] = ecospat.boyce(fit = maxentMap, obs=valData[,3], res=100, PEplot=F)$cor
 # 
 # }
@@ -737,5 +741,18 @@ boostBV <- mean(boyceVals)
 # maxentBV <- mean(boyceVals)
 
 ```
+
+
+```{r}
+
+Boyce_Values_Table <- data.frame(
+  Model = c("glm", "gam", "rf", "boost", "maxent"),
+  bv = c(glmBV, gamBV, rfBV, boostBV, maxentBV))
+
+print(Boyce_Values_Table)
+
+```
+
+
 
 
