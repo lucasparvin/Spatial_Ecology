@@ -272,8 +272,31 @@ ggplot(treecover_df, aes(x = x, y = y, fill = treecover)) +
 
 ```{r}
 
-#### MUST WORK TREES IN #########
+############### ADD TREE COVER WITHIN 1 KM #####################
 
+# soil <- get_ssurgo(perdido_vect, label='soil')
+# soil <- project(soil, crs_perdido )
+# soil <- crop(soil, perdido_vect)
+# soil <- mask(soil, perdido_vect)
+# terra::writeRaster(soil, 'soil.tif', overwrite=TRUE)
+# soil <- rast('soil.tif')
+# 
+# # Convert the NLCD raster to a dataframe
+# soil_df <- as.data.frame(soil, xy = TRUE, na.rm = TRUE)
+# 
+# # Plotting the NLCD data
+# ggplot(soil_df, aes(x = x, y = y, fill = Class)) +
+#   geom_raster() +
+#   scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "soil") +
+#   coord_fixed() +
+#   theme_minimal() +
+#   labs(title = "soil within Perdido Area")
+```
+
+
+```{r}
+
+############### ADD TREE COVER WITHIN 1 KM #####################
 
 # Assuming 'elevation', 'slope', 'aspect', and 'nlcd' are already loaded
 # and 'elevation' is the standard for resolution and extent
@@ -465,82 +488,96 @@ plot(maxentMap)
 ```
 # Comparing Parameter Estimates
 ```{r}
-# NLCD
-tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
-                  canopy = mean(backCovs$canopy),
-                  precip = mean(backCovs$precip),
-                  mesic1km = mean(backCovs$mesic1km))
+tmp = expand.grid(
+  elevation = seq(min(INBU_and_Covs$elevation), max(INBU_and_Covs$elevation), length = 1000),
+  treecover = mean(INBU_and_Covs$treecover),
+  slope = mean(INBU_and_Covs$slope)
+)
 
-elevData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+elevData = data.frame(
+  glm = predict(glm_elevtreeslope, tmp),
+  gam = predict(gam_elevtreeslope, tmp, type = 'response'),
+  boost = predict(boostModel, tmp, type = 'response'),
+  rf = predict(rfModel, tmp, type = 'prob')[, 2],
+  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+) %>% 
   cbind(tmp) %>% 
-  select(bioclim:elev) %>% 
-  pivot_longer(bioclim:maxent) %>% 
+  dplyr::select(glm:maxent, elevation) %>% 
+  pivot_longer(cols = glm:maxent) %>% 
   mutate(variable = 'elevation')
 
 ```
 
 ```{r}
 # Elevation
-tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
-                  canopy = mean(backCovs$canopy),
-                  precip = mean(backCovs$precip),
-                  mesic1km = mean(backCovs$mesic1km))
+tmp = expand.grid(
+  elevation = seq(min(INBU_and_Covs$elevation), max(INBU_and_Covs$elevation), length = 1000),
+  treecover = mean(INBU_and_Covs$treecover),
+  slope = mean(INBU_and_Covs$slope)
+)
 
-elevData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+elevData = data.frame(
+  glm = predict(glm_elevtreeslope, tmp),
+  gam = predict(gam_elevtreeslope, tmp, type = 'response'),
+  boost = predict(boostModel, tmp, type = 'response'),
+  rf = predict(rfModel, tmp, type = 'prob')[, 2],
+  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+) %>% 
   cbind(tmp) %>% 
-  select(bioclim:elev) %>% 
-  pivot_longer(bioclim:maxent) %>% 
+  dplyr::select(glm:maxent, elevation) %>% 
+  pivot_longer(cols = glm:maxent) %>% 
   mutate(variable = 'elevation')
 
+```
+
+```{r}
+# Tree Cover
+tmp = expand.grid(elevation = mean(INBU_and_Covs$elevation),
+                  treecover = seq(min(INBU_and_Covs$treecover), max(INBU_and_Covs$treecover), length=1000),
+                  slope = mean(INBU_and_Covs$slope))
+
+TreeCoverData = data.frame(
+  glm = predict(glm_elevtreeslope, tmp),
+  gam = predict(gam_elevtreeslope, tmp, type = 'response'),
+  boost = predict(boostModel, tmp, type = 'response'),
+  rf = predict(rfModel, tmp, type = 'prob')[, 2],
+  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+) %>% 
+  cbind(tmp) %>% 
+  dplyr::select(glm:maxent, treecover) %>% 
+  pivot_longer(cols = glm:maxent) %>% 
+  mutate(variable = 'treecover')
 ```
 
 ```{r}
 # Slope
-tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
-                  canopy = mean(backCovs$canopy),
-                  precip = mean(backCovs$precip),
-                  mesic1km = mean(backCovs$mesic1km))
+tmp = expand.grid(elevation = mean(INBU_and_Covs$elevation),
+                  treecover = mean(INBU_and_Covs$treecover),
+                  slope = seq(min(INBU_and_Covs$slope), max(INBU_and_Covs$slope), length=1000))
 
-elevData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
+SlopeData = data.frame(
+  glm = predict(glm_elevtreeslope, tmp),
+  gam = predict(gam_elevtreeslope, tmp, type = 'response'),
+  boost = predict(boostModel, tmp, type = 'response'),
+  rf = predict(rfModel, tmp, type = 'prob')[, 2],
+  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+) %>% 
   cbind(tmp) %>% 
-  select(bioclim:elev) %>% 
-  pivot_longer(bioclim:maxent) %>% 
-  mutate(variable = 'elevation')
-
+  dplyr::select(glm:maxent, slope) %>% 
+  pivot_longer(cols = glm:maxent) %>% 
+  mutate(variable = 'slope')
 ```
-
 ```{r}
-# Aspect
-tmp = expand.grid(elev = seq(min(backCovs$elev), max(backCovs$elev), length=1000),
-                  canopy = mean(backCovs$canopy),
-                  precip = mean(backCovs$precip),
-                  mesic1km = mean(backCovs$mesic1km))
+colnames(elevData)[1] = colnames(TreeCoverData)[1] = colnames(SlopeData)[1] = 'xValue'
 
-elevData = data.frame(bioclim = predict(bioclim, tmp),
-                 glm = predict(glmModel, tmp, type='response'),
-                 gam = predict(gamModel, tmp, type='response'),
-                 boost = predict(boostModel, tmp, type='response'),
-                 rf = predict(rfModel, tmp, type='prob')[,2],
-                 maxent = predict(maxentModel, tmp, type='logistic')[,1]) %>% 
-  cbind(tmp) %>% 
-  select(bioclim:elev) %>% 
-  pivot_longer(bioclim:maxent) %>% 
-  mutate(variable = 'elevation')
+tmp = rbind(elevData, TreeCoverData, SlopeData)
+
+ggplot(tmp, aes(x=xValue, y=value, color=name))+
+  facet_wrap(~variable, scales='free_x')+
+  geom_line()+
+  theme_bw()+
+  theme(panel.grid=element_blank())
+
 
 ```
 
