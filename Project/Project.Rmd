@@ -603,6 +603,74 @@ kfoldBack = kfold(backCovs, k=nFolds)
 
 ```
 
+# NEED TO USE kfold to calculate validation statistics
+```{r}
+
+
+
+# tmp <- covs %>% 
+#   mutate(INBU = INBU_and_Covs$INBU)
+# valData = data.frame('ID' = 1:nrow(tmp)) %>% 
+#   mutate(obs = tmp$INBU,
+#          glmVal = predict(glm_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
+#          gamVal = predict(gam_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
+#          boostVal = predict(boostModel, tmp %>% dplyr::select(elevation:slope), type='response'),
+#          rfVal = predict(rfModel, tmp %>% dplyr::select(elevation:slope), type='prob')[,2],
+#          maxentVal = predict(maxentModel, tmp %>% dplyr::select(elevation:slope), type='logistic')[,1])
+# 
+# 
+# 
+# 
+# 
+# summaryEval = data.frame(matrix(nrow=0, ncol=9))
+# 
+# nModels = ncol(valData)-2
+
+
+# for(i in 1:nModels){
+#   
+#   #AUC
+#   auc = auc(valData, which.model = i)
+#   
+#   #Find threshold to maximize Kappa
+#   kappaOpt = optimal.thresholds(valData, which.model = i, opt.methods=3)
+#   
+#   #Sensitivity
+#   sens = sensitivity(cmx(valData, which.model=i, threshold = kappaOpt[[2]]))
+#   
+#   #Specificity
+#   spec = specificity(cmx(valData, which.model = i, threshold = kappaOpt[[2]]))
+#   
+#   #True skill statistic
+#   tss = sens$sensitivity + spec$specificity - 1
+#   
+#   #Kappa
+#   kappa = Kappa(cmx(valData, which.model = i, threshold = kappaOpt[[2]]))
+#   
+#   #Correlation between predicted and realized values
+#   corr = cor.test(valData[,2], valData[,i+2])$estimate
+#   
+#   #Log likelihood
+#   ll = sum(log(valData[,i+2]*valData[,2] + (1-valData[,i+2]) * (1-valData[,2])))
+#   ll = ifelse(ll == '-Inf', sum(log(valData[,i+2] + 0.01)*valData[,2] + log((1-valData[,i+2]))*(1-valData[,2])), ll)
+#   
+#   #Put them all together and save the values
+#   summaryI = c(i, auc$AUC, corr, ll, kappaOpt[[2]], sens$sensitivity, spec$specificity, tss, kappa[[1]])
+#   summaryEval = rbind(summaryEval, summaryI)
+# }
+# 
+# summaryEval = summaryEval %>% 
+#   setNames(c('model', 'auc', 'corr', 'll', 'threshold', 'sens', 'spec', 'tss', 'kappa')) %>% 
+#   mutate(model = colnames(valData)[3:8])
+# 
+# summaryEval
+
+
+
+
+```
+
+
 # Validating our GLM
 ```{r}
 
