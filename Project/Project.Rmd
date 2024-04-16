@@ -423,12 +423,12 @@ Elevation, tree cover, and slope seem like the strongest predictor, consistently
 ```{r}
 
 
-predRaster = predict(model = glm_elevtreeslope, object = covariates)
-predRaster = exp(predRaster)/(1+exp(predRaster))
-plot(predRaster)
+glmMap = predict(model = glm_elevtreeslope, object = covariates)
+glmMap = exp(glmMap)/(1+exp(glmMap))
+plot(glmMap)
 
 
-## I think this error is occurring due to the fact that there are NLCD values of developed, open space, etc. in the "covariates" object, but these cover types are absent from the INBU_and_Covs data frame, from which the GLMs are built. Thus, I have to either remove pixels with these cover types from the get-go OR figure out a way to just NOT predict to these cover types in predRaster. If I remove these pixels from the get-go, I will need to align the elevation, slope, and aspect rasters to the NLCD raster (essentially punching holes in those rasters) in order for each raster to stack properly. What is the best way to approach this? How can I do it?
+## I think this error is occurring due to the fact that there are NLCD values of developed, open space, etc. in the "covariates" object, but these cover types are absent from the INBU_and_Covs data frame, from which the GLMs are built. Thus, I have to either remove pixels with these cover types from the get-go OR figure out a way to just NOT predict to these cover types in glmMap. If I remove these pixels from the get-go, I will need to align the elevation, slope, and aspect rasters to the NLCD raster (essentially punching holes in those rasters) in order for each raster to stack properly. What is the best way to approach this? How can I do it?
 
 ```
 
@@ -587,19 +587,155 @@ ggplot(tmp, aes(x=xValue, y=value, color=name))+
 
 ```{r}
 
-tmp <- covs %>% 
-  mutate(INBU = INBU_and_Covs$INBU)
+tmp = INBU_and_Covs[, c(1, 3, 5, 8)]
 
-valData = data.frame('ID' = 1:nrow(tmp)) %>% 
-  mutate(obs = tmp$INBU,
-         glmVal = predict(glm_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
-         gamVal = predict(gam_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
-         boostVal = predict(boostModel, tmp %>% dplyr::select(elevation:slope), type='response'),
-         rfVal = predict(rfModel, tmp %>% dplyr::select(elevation:slope), type='prob')[,2],
-         maxentVal = predict(maxentModel, tmp %>% dplyr::select(elevation:slope), type='logistic')[,1])
+presCovs <- tmp %>% 
+  filter(INBU == 1)
+backCovs <- tmp %>% 
+  filter(INBU == 0)
 
 
+set.seed(2024)
 
-
+nFolds = 5
+kfoldPres = kfold(presCovs, k=nFolds)
+kfoldBack = kfold(backCovs, k=nFolds)
 
 ```
+
+# Validating our GLM
+```{r}
+
+boyceVals = rep(NA, nFolds)
+
+for(i in 1:nFolds){
+  valPres = presCovs[kfoldPres==i,]
+  
+  trainPres = presCovs[kfoldPres!=i,]
+  trainBack = backCovs[kfoldBack!=i,]
+  trainBoth = rbind(trainPres, trainBack)
+  
+  glm_elevtreeslope2 = glm(INBU ~ elevation + treecover + slope, family = 'binomial', data=trainBoth)
+
+  valData = data.frame('ID' = 1:nrow(valPres)) %>% 
+  mutate(obs = valPres$INBU,
+         glmVal = predict(glm_elevtreeslope2, valPres %>% dplyr::select(elevation:treecover), type='response'))
+  
+boyceVals[i] = ecospat.boyce(fit = glmMap, obs=valData[,3], res=100, PEplot=F)$cor
+
+}
+
+glmBV <- mean(boyceVals)
+```
+
+# Validating our GAM
+```{r}
+
+boyceVals = rep(NA, nFolds)
+
+for(i in 1:nFolds){
+  valPres = presCovs[kfoldPres==i,]
+  
+  trainPres = presCovs[kfoldPres!=i,]
+  trainBack = backCovs[kfoldBack!=i,]
+  trainBoth = rbind(trainPres, trainBack)
+  
+gam_elevtreeslope2 = gam(INBU ~ s(treecover, k=3) + s(elevation, k=3) + s(slope, k=3), family='binomial', data = trainBoth, method='ML')
+
+  valData = data.frame('ID' = 1:nrow(valPres)) %>% 
+  mutate(obs = valPres$INBU,
+         gamVal = predict(gam_elevtreeslope2, valPres %>% dplyr::select(elevation:treecover), type='response'))
+  
+boyceVals[i] = ecospat.boyce(fit = gamMap, obs=valData[,3], res=100, PEplot=F)$cor
+
+}
+
+gamBV <- mean(boyceVals)
+```
+
+
+```{r}
+
+# boyceVals = rep(NA, nFolds)
+# 
+# for(i in 1:nFolds){
+#   valPres = presCovs[kfoldPres==i,]
+#   
+#   trainPres = presCovs[kfoldPres!=i,]
+#   trainBack = backCovs[kfoldBack!=i,]
+#   trainBoth = rbind(trainPres, trainBack)
+#   
+# rfModel2 = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data = trainBoth, mtry=1, ntree=500, na.action = na.omit)
+# rfMap2 = predict(covariates, rfModel2, type='prob', index=2)
+# 
+# valData = data.frame('ID' = 1:nrow(valPres)) %>%
+#   mutate(obs = valPres$INBU,
+#          rfVal = predict(rfModel2, valPres %>% dplyr::select(elevation, treecover, slope), type='response'))
+# 
+#   
+# boyceVals[i] = ecospat.boyce(fit = rfMap2, obs=valData[,3], res=100, PEplot=F)$cor
+# 
+# }
+# 
+# rfBV <- mean(boyceVals)
+
+```
+
+
+```{r}
+
+boyceVals = rep(NA, nFolds)
+
+for(i in 1:nFolds){
+  valPres = presCovs[kfoldPres==i,]
+  
+  trainPres = presCovs[kfoldPres!=i,]
+  trainBack = backCovs[kfoldBack!=i,]
+  trainBoth = rbind(trainPres, trainBack)
+  
+boostModel2 = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=100, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
+
+  valData = data.frame('ID' = 1:nrow(valPres)) %>% 
+  mutate(obs = valPres$INBU,
+         gamVal = predict(boostModel2, valPres %>% dplyr::select(elevation:treecover), type='response'))
+  
+boyceVals[i] = ecospat.boyce(fit = boostMap, obs=valData[,3], res=100, PEplot=F)$cor
+
+}
+
+boostBV <- mean(boyceVals)
+
+```
+
+```{r}
+
+# boyceVals = rep(NA, nFolds)
+# 
+# for(i in 1:nFolds){
+#   valPres = presCovs[kfoldPres==i,]
+#   
+#   trainPres = presCovs[kfoldPres!=i,]
+#   trainBack = backCovs[kfoldBack!=i,]
+#   trainBoth = rbind(trainPres, trainBack)
+#   
+# pbVect2 = trainBoth$INBU
+# covs2 <- trainBoth %>% dplyr::select(c('elevation', 'treecover', 'slope'))
+# 
+# maxentModel2 = maxnet(p = pbVect2,
+#                      data= covs2,
+#                      regmult = 1,
+#                      classes='lqpht')
+# 
+#   valData = data.frame('ID' = 1:nrow(valPres)) %>% 
+#   mutate(obs = valPres$INBU,
+#          maxentVal = predict(maxentModel2, valPres %>% dplyr::select(elevation:treecover), type='response'))
+#   
+# boyceVals[i] = ecospat.boyce(fit = maxentMap, obs=valData[,3], res=100, PEplot=F)$cor
+# 
+# }
+# 
+# maxentBV <- mean(boyceVals)
+
+```
+
+
