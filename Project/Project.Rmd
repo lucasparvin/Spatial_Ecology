@@ -645,6 +645,10 @@ for(i in 1:folds){
   aucValues[i,2] = as.numeric(PresenceAbsence::auc(valDataFrame, which.model=2)[1])
   aucValues[i,3] = as.numeric(PresenceAbsence::auc(valDataFrame, which.model=3)[1])
   aucValues[i,4] = as.numeric(PresenceAbsence::auc(valDataFrame, which.model=4)[1])
+  
+  #Find threshold to maximize Kappa
+  kappaOpt = PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 1, opt.methods=3)
+  kappaValues[i,1] = as.numeric(PresenceAbsence::Kappa(PresenceAbsence::cmx(valDataFrame, which.model = 1, threshold = kappaOpt[[2]]))[1])
  
   # Kappa
   # kappaValues[i,1] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 1, opt.methods = 4))
