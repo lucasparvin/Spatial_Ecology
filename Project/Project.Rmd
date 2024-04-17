@@ -592,10 +592,8 @@ ggplot(tmp, aes(x=xValue, y=value, color=name))+
 
 tmp = INBU_and_Covs[, c(1, 3, 5, 8)] ## Isolates pres/abs data and covariates included in models
 
-## THESE ARE INCORRECT. HERE I HAVE JUST SEPARATED presence data and covariates from absence data and covariates ##
-
 folds = 5
-models = 2
+models = 4
 
 presPoints <- tmp %>%
   filter(INBU == 1)
@@ -618,28 +616,54 @@ for(i in 1:folds){
   validation = allPoints[which(allPoints$kfold == i),]
   validation$id = seq(1, nrow(validation), 1)
   
-  # valPresOnly = training[which(training$INBU==1),]
+ # Models
   
   glmMod = glm(INBU ~ elevation + treecover + slope, family = 'binomial', data = training)
-  
+  gamMod = gam(INBU ~ s(treecover, k=3) + s(elevation, k=3) + s(slope, k=3), family='binomial', data = INBU_and_Covs, method='ML')
   boostMod = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=100, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=training)
+  rfMod = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data=INBU_and_Covs, mtry=1, ntree=500, na.action = na.omit)
   
+  # Predictions
   predGlm = predict(glmMod, validation, type='response')
+  predGAM = predict(gamMod, validation, type='response')
   predBoost = predict(boostMod, validation, type='response')
+  predRf = predict(rfMod, validation, type = 'prob')[,2]
   # rfVal = predict(rfModel, tmp %>% select(canopy:precip), type='prob')[,2], #This line came from Lab 9
            # gamVal = predict(gamModel, tmp %>% select(canopy:precip), type='response'),
+  
+  # Data Frame
 
   valDataFrame = data.frame('id' = validation$id,
                             'INBU' = validation$INBU,
                             'predGlm' = predGlm,
-                            'predBoost' = predBoost)
+                            'predGAM' = predGAM,
+                            'predBoost' = predBoost,
+                            'predRF' = predRf)
   
+  # AUC
   aucValues[i,1] = as.numeric(PresenceAbsence::auc(valDataFrame, which.model=1)[1])
   aucValues[i,2] = as.numeric(PresenceAbsence::auc(valDataFrame, which.model=2)[1])
+  aucValues[i,3] = as.numeric(PresenceAbsence::auc(valDataFrame, which.model=3)[1])
+  aucValues[i,4] = as.numeric(PresenceAbsence::auc(valDataFrame, which.model=4)[1])
+ 
+  # Kappa
+  # kappaValues[i,1] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 1, opt.methods = 4))
+  # kappaValues[i,2] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 2, opt.methods = 4))
+  # kappaValues[i,3] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 3, opt.methods = 4))
+  # kappaValues[i,4] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 4, opt.methods = 4))
   
   
+  #   kappaOpt = optimal.thresholds(valDataPA, which.model = 1, opt.methods=3)
+#   kappaPA[i] = Kappa(cmx(valDataPA, which.model = 1, threshold = kappaOpt[[2]]))
   
-  #In here, you can add in the other models
+  
+  # Sensitivity
+  
+  
+  # Specificity
+  
+  
+  # TSS
   
 }
 
