@@ -586,25 +586,23 @@ ggplot(tmp, aes(x=xValue, y=value, color=name))+
 
 ```
 
-
 # SDM Validation
 
 ```{r}
 
 tmp = INBU_and_Covs[, c(1, 3, 5, 8)]
 
-presAbsCovs <- tmp %>% 
+## THESE ARE INCORRECT. HERE I HAVE JUST SEPARATED presence data and covariates from absence data and covariates ##
+
+presAbsCovs <- tmp %>%
   filter(INBU == 1)
-presBackCovs <- tmp %>% 
+presBackCovs <- tmp %>%
   filter(INBU == 0)
+```
 
-###########################################################
-# library(caret)  # for kfold
-# library(ROCR)   # for AUC calculation
-# library(pROC)   # for alternative AUC, if desired
-# library(presenceAbsence)  # for sensitivity, specificity, and kappa
 
-# Assuming presCovs and backCovs are already prepared and contain the required predictor and response columns
+
+```{r}
 set.seed(2024)
 
 nFolds = 5
@@ -618,7 +616,10 @@ tssPA = rep(NA, times = nFolds)
 aucPB = rep(NA, times = nFolds)
 kappaPB = rep(NA,times = nFolds)
 tssPB = rep(NA, times = nFolds)
+```
 
+
+```{r}
 
 for(i in 1:nFolds){
   valPresAbs = presAbsCovs[kfoldPA==i,]
@@ -665,6 +666,10 @@ for(i in 1:nFolds){
 
 }
 
+```
+
+
+```{r}
 meanAucPA = mean(unlist(aucPA))
 meanKappaPA = mean(unlist(kappaPA))
 meanTssPA = mean(unlist(tssPA))
@@ -682,13 +687,22 @@ summaryKfold = data.frame(
 
 combinedDf = rbind(summaryEval3,summaryKfold)
 
-print(combinedDf)
-
-
-
-
-
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # NEED TO USE kfold to calculate validation statistics
 ```{r}
