@@ -652,9 +652,13 @@ for(i in 1:folds){
   # kappaValues[i,3] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 3, opt.methods = 4))
   # kappaValues[i,4] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 4, opt.methods = 4))
   
+  # Kappa
+  kappaOpt = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = i, opt.methods=3))
+  kappaValues[i, 1] = as.numeric(PresenceAbsence::Kappa(cmx(valDataFrame, which.model = i, threshold = kappaOpt[[2]])))
+  
   
   #   kappaOpt = optimal.thresholds(valDataPA, which.model = 1, opt.methods=3)
-#   kappaPA[i] = Kappa(cmx(valDataPA, which.model = 1, threshold = kappaOpt[[2]]))
+#   kappaPA[i] = Kappa(cmx(valDataFrame, which.model = 1, threshold = kappaOpt[[2]]))
   
   
   # Sensitivity
