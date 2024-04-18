@@ -501,7 +501,7 @@ tmp = expand.grid(
 )
 
 elevData = data.frame(
-  glm = predict(glm_elevtreeslope, tmp),
+  glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
   rf = predict(rfModel, tmp, type = 'prob')[, 2],
@@ -523,7 +523,7 @@ tmp = expand.grid(
 )
 
 elevData = data.frame(
-  glm = predict(glm_elevtreeslope, tmp),
+  glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
   rf = predict(rfModel, tmp, type = 'prob')[, 2],
@@ -543,7 +543,7 @@ tmp = expand.grid(elevation = mean(INBU_and_Covs$elevation),
                   slope = mean(INBU_and_Covs$slope))
 
 TreeCoverData = data.frame(
-  glm = predict(glm_elevtreeslope, tmp),
+  glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
   rf = predict(rfModel, tmp, type = 'prob')[, 2],
@@ -562,7 +562,7 @@ tmp = expand.grid(elevation = mean(INBU_and_Covs$elevation),
                   slope = seq(min(INBU_and_Covs$slope), max(INBU_and_Covs$slope), length=1000))
 
 SlopeData = data.frame(
-  glm = predict(glm_elevtreeslope, tmp),
+  glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
   rf = predict(rfModel, tmp, type = 'prob')[, 2],
