@@ -35,6 +35,7 @@ require(caret)
 require(ROCR)  
 require(pROC)  
 require(presenceAbsence) 
+require(reshape2)
 
 ```
 
@@ -682,9 +683,42 @@ resultsTable <- data.frame(
 # Print the table
 print(resultsTable)
 
+# Creating the AUC plot
+aucPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_AUC, fill = Model)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_hline(yintercept = 0.5, linetype = "dotted", color = "red", size = 1) +
+  annotate("text", x = 1, y = 0.5, label = "Random Chance", vjust = 1.5, hjust = 0.5) +
+  labs(title = "Mean AUC Values by Model", x = "Model", y = "Mean AUC") +
+  scale_fill_brewer(palette = "Set1") +
+  theme_minimal() +
+  theme(legend.position = "none")
 
-library(ggplot2)
-library(reshape2)
+# Print the AUC plot
+print(aucPlot)
+
+
+
+
+# Creating the Kappa plot
+kappaPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_Kappa, fill = Model)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_hline(yintercept = 0.2, linetype = "dotted", color = "black", size = 1) +
+  geom_hline(yintercept = 0.6, linetype = "dotted", color = "black", size = 1) +
+  annotate("text", x = 1, y = 0.2, label = "Slight Agreement", vjust = -0.5, hjust = 0.5) +
+  annotate("text", x = 1, y = 0.6, label = "Substantial Agreement", vjust = 1.5, hjust = 0.5) +
+  labs(title = "Mean Kappa Values by Model", x = "Model", y = "Mean Kappa") +
+  scale_fill_brewer(palette = "Set1") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Print the Kappa plot
+print(kappaPlot)
+
+
+
+
+
+
 
 # Assuming the resultsTable is already created with the mean AUC and Kappa values
 resultsTable <- data.frame(
@@ -710,311 +744,6 @@ ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
 
 
 ```
-
-
-```{r}
-
-# for(i in 1:nFolds){
-#   valPresAbs = presAbsCovs[kfoldPA==i,]
-#   trainPresAbs = presAbsCovs[kfoldPA!=i,]
-#   
-#   valPresBack = presBackCovs[kfoldPB==i,]
-#   trainPresBack = presBackCovs[kfoldPB!=i,]
-#   
-# 
-#   glmPresAbs = glm(INBU ~ elevation + treecover + slope, family = 'binomial', data=presAbsCovs)
-#   
-#   glmPresBack = glm(INBU ~ elevation + treecover + slope, family = 'binomial', data=presBackCovs)
-#   
-#   valDataPA = data.frame('ID' = 1:nrow(valPresAbs)) %>% 
-#   mutate(obs = valPresAbs$pres, glmPAVal = predict(glmPresAbs, valPresAbs %>% 
-#                                                    dplyr::select(elevation:treecover),
-#                                                  type = 'response'))
-#   
-#   aucPA[i] = auc(valDataPA, which.model = 1)
-#   
-#   kappaOpt = optimal.thresholds(valDataPA, which.model = 1, opt.methods=3)
-#   kappaPA[i] = Kappa(cmx(valDataPA, which.model = 1, threshold = kappaOpt[[2]]))
-#   
-#   sens = sensitivity(cmx(valDataPA, which.model=1, threshold = kappaOpt[[2]]))
-#   spec = specificity(cmx(valDataPA, which.model = 1, threshold = kappaOpt[[2]]))
-#   tssPA[i] = sens$sensitivity + spec$specificity - 1
-#   
-#   
-#   
-#   
-#   valDataPB = data.frame('ID' = 1:nrow(valPresBack)) %>% 
-#   mutate(obs = valPresBack$pres, glmPBVal = predict(glmPresBack, valPresBack %>% 
-#                                                    dplyr::select(elevation:treecover),
-#                                                  type = 'response'))
-#   aucPB[i] = auc(valDataPB, which.model = 1)
-#   
-#   kappaOpt = optimal.thresholds(valDataPB, which.model = 1, opt.methods=3)
-#   kappaPB[i] = Kappa(cmx(valDataPB, which.model = 1, threshold = kappaOpt[[2]]))
-#   
-#   sens = sensitivity(cmx(valDataPB, which.model=1, threshold = kappaOpt[[2]]))
-#   spec = specificity(cmx(valDataPB, which.model = 1, threshold = kappaOpt[[2]]))
-#   tssPB[i] = sens$sensitivity + spec$specificity - 1
-#   
-# 
-# }
-
-```
-
-
-```{r}
-meanAucPA = mean(unlist(aucPA))
-meanKappaPA = mean(unlist(kappaPA))
-meanTssPA = mean(unlist(tssPA))
-
-meanAucPB = mean(unlist(aucPB))
-meanKappaPB = mean(unlist(kappaPB))
-meanTssPB = mean(unlist(tssPB))
-
-summaryKfold = data.frame(
-  model = c('Kfold Pres-Abs','kfold Pres-Back'),
-  auc = c(meanAucPA,meanAucPB),
-  tss = c(meanTssPA,meanTssPB),
-  kappa = c(meanKappaPA,meanKappaPB)
-  )
-
-combinedDf = rbind(summaryEval3,summaryKfold)
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# NEED TO USE kfold to calculate validation statistics
-```{r}
-
-
-
-# tmp <- covs %>% 
-#   mutate(INBU = INBU_and_Covs$INBU)
-# valData = data.frame('ID' = 1:nrow(tmp)) %>% 
-#   mutate(obs = tmp$INBU,
-#          glmVal = predict(glm_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
-#          gamVal = predict(gam_elevtreeslope, tmp %>% dplyr::select(elevation:slope), type='response'),
-#          boostVal = predict(boostModel, tmp %>% dplyr::select(elevation:slope), type='response'),
-#          rfVal = predict(rfModel, tmp %>% dplyr::select(elevation:slope), type='prob')[,2],
-#          maxentVal = predict(maxentModel, tmp %>% dplyr::select(elevation:slope), type='logistic')[,1])
-# 
-# 
-# 
-# 
-# 
-# summaryEval = data.frame(matrix(nrow=0, ncol=9))
-# 
-# nModels = ncol(valData)-2
-
-
-# for(i in 1:nModels){
-#   
-#   #AUC
-#   auc = auc(valData, which.model = i)
-#   
-#   #Find threshold to maximize Kappa
-#   kappaOpt = optimal.thresholds(valData, which.model = i, opt.methods=3)
-#   
-#   #Sensitivity
-#   sens = sensitivity(cmx(valData, which.model=i, threshold = kappaOpt[[2]]))
-#   
-#   #Specificity
-#   spec = specificity(cmx(valData, which.model = i, threshold = kappaOpt[[2]]))
-#   
-#   #True skill statistic
-#   tss = sens$sensitivity + spec$specificity - 1
-#   
-#   #Kappa
-#   kappa = Kappa(cmx(valData, which.model = i, threshold = kappaOpt[[2]]))
-#   
-#   #Correlation between predicted and realized values
-#   corr = cor.test(valData[,2], valData[,i+2])$estimate
-#   
-#   #Log likelihood
-#   ll = sum(log(valData[,i+2]*valData[,2] + (1-valData[,i+2]) * (1-valData[,2])))
-#   ll = ifelse(ll == '-Inf', sum(log(valData[,i+2] + 0.01)*valData[,2] + log((1-valData[,i+2]))*(1-valData[,2])), ll)
-#   
-#   #Put them all together and save the values
-#   summaryI = c(i, auc$AUC, corr, ll, kappaOpt[[2]], sens$sensitivity, spec$specificity, tss, kappa[[1]])
-#   summaryEval = rbind(summaryEval, summaryI)
-# }
-# 
-# summaryEval = summaryEval %>% 
-#   setNames(c('model', 'auc', 'corr', 'll', 'threshold', 'sens', 'spec', 'tss', 'kappa')) %>% 
-#   mutate(model = colnames(valData)[3:8])
-# 
-# summaryEval
-
-
-
-
-```
-
-
-# Validating our GLM
-```{r}
-
-# boyceVals = rep(NA, nFolds)
-# 
-# for(i in 1:nFolds){
-#   valPres = presCovs[kfoldPres==i,]
-#   
-#   trainPres = presCovs[kfoldPres!=i,]
-#   trainBack = backCovs[kfoldBack!=i,]
-#   trainBoth = rbind(trainPres, trainBack)
-#   
-#   glm_elevtreeslope2 = glm(INBU ~ elevation + treecover + slope, family = 'binomial', data=trainBoth)
-# 
-#   valData = data.frame('ID' = 1:nrow(valPres)) %>% 
-#   mutate(obs = valPres$INBU,
-#          glmVal = predict(glm_elevtreeslope2, valPres %>% dplyr::select(elevation:treecover), type='response'))
-#   
-# boyceVals[i] = ecospat.boyce(fit = glmMap, obs=valData[,3], res=100, PEplot=F)$cor
-# 
-# }
-# 
-# glmBV <- mean(boyceVals)
-```
-
-# Validating our GAM
-```{r}
-
-# boyceVals = rep(NA, nFolds)
-# 
-# for(i in 1:nFolds){
-#   valPres = presCovs[kfoldPres==i,]
-#   
-#   trainPres = presCovs[kfoldPres!=i,]
-#   trainBack = backCovs[kfoldBack!=i,]
-#   trainBoth = rbind(trainPres, trainBack)
-#   
-# gam_elevtreeslope2 = gam(INBU ~ s(treecover, k=3) + s(elevation, k=3) + s(slope, k=3), family='binomial', data = trainBoth, method='ML')
-# 
-#   valData = data.frame('ID' = 1:nrow(valPres)) %>% 
-#   mutate(obs = valPres$INBU,
-#          gamVal = predict(gam_elevtreeslope2, valPres %>% dplyr::select(elevation:treecover), type='response'))
-#   
-# boyceVals[i] = ecospat.boyce(fit = gamMap, obs=valData[,3], res=100, PEplot=F)$cor
-# 
-# }
-# 
-# gamBV <- mean(boyceVals)
-```
-
-
-# Validating our Random Forest Model
-```{r}
-# set.seed(2024)
-# boyceVals = rep(NA, nFolds)
-# 
-# for(i in 1:nFolds){
-#   valPres = presCovs[kfoldPres==i,]
-# 
-#   trainPres = presCovs[kfoldPres!=i,]
-#   trainBack = backCovs[kfoldBack!=i,]
-#   trainBoth = rbind(trainPres, trainBack)
-# 
-#  tuneRF(y = as.factor(trainBoth$INBU), x=trainBoth[, c(1:3)], stepFactor = 2, ntreeTry = 500)
-# # mtry 1 is best
-# 
-# rfModel2 = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data=trainBoth, mtry=1, ntree=500, na.action = na.omit)
-# 
-# valData = data.frame('ID' = 1:nrow(valPres)) %>%
-#   mutate(obs = valPres$INBU,
-#          rfVal = predict(rfModel2, valPres %>% dplyr::select(elevation, treecover, slope), type='response'))
-# 
-# 
-# boyceVals[i] = ecospat.boyce(fit = rfMap, obs=valData[,3], res=100, PEplot=F)$cor
-# 
-# }
-# 
-# rfBV <- mean(boyceVals)
-
-```
-
-# Validating our Boosted Regression Tree
-
-```{r}
-
-# boyceVals = rep(NA, nFolds)
-# 
-# for(i in 1:nFolds){
-#   valPres = presCovs[kfoldPres==i,]
-#   
-#   trainPres = presCovs[kfoldPres!=i,]
-#   trainBack = backCovs[kfoldBack!=i,]
-#   trainBoth = rbind(trainPres, trainBack)
-#   
-# boostModel2 = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=100, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
-# 
-#   valData = data.frame('ID' = 1:nrow(valPres)) %>% 
-#   mutate(obs = valPres$INBU,
-#          gamVal = predict(boostModel2, valPres %>% dplyr::select(elevation:treecover), type='response'))
-#   
-# boyceVals[i] = ecospat.boyce(fit = boostMap, obs=valData[,3], res=100, PEplot=F)$cor
-# 
-# }
-# 
-# boostBV <- mean(boyceVals)
-
-```
-# Validating our Maxent Model
-```{r}
-
-# boyceVals = rep(NA, nFolds)
-# 
-# for(i in 1:nFolds){
-#   valPres = presCovs[kfoldPres==i,]
-# 
-#   trainPres = presCovs[kfoldPres!=i,]
-#   trainBack = backCovs[kfoldBack!=i,]
-#   trainBoth = rbind(trainPres, trainBack)
-# 
-# pbVect2 = trainBoth$INBU
-# covs2 <- trainBoth %>% dplyr::select(c('elevation', 'treecover', 'slope'))
-# 
-# maxentModel2 = maxnet(p = pbVect2,
-#                      data= covs2,
-#                      regmult = 1,
-#                      classes='lqpht')
-# 
-#   valData = data.frame('ID' = 1:nrow(valPres)) %>%
-#   mutate(obs = valPres$INBU,
-#          maxentVal = predict(maxentModel2, valPres %>% dplyr::select(elevation:treecover), type='logistic'))
-# 
-# boyceVals[i] = ecospat.boyce(fit = maxentMap, obs=valData[,3], res=100, PEplot=F)$cor
-# 
-# }
-# 
-# maxentBV <- mean(boyceVals)
-
-```
-
-
-```{r}
-
-# Boyce_Values_Table <- data.frame(
-#   Model = c("glm", "gam", "rf", "boost", "maxent"),
-#   bv = c(glmBV, gamBV, rfBV, boostBV, maxentBV))
-# 
-# print(Boyce_Values_Table)
-
-```
-
 
 
 
