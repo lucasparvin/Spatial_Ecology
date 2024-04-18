@@ -441,6 +441,8 @@ plot(glmMap)
 ```{r}
 # using elevation tree cover and slope
 gam_elevtreeslope = gam(INBU ~ s(treecover, k=3) + s(elevation, k=3) + s(slope, k=3), family='binomial', data = INBU_and_Covs, method='ML')
+#gam_elevtreeslope = gam(INBU ~ s(treecover, bs = "cr", k = 10) + s(elevation, bs = "cr", k = 10) + s(slope, bs = "cr", k = 10), family = 'binomial', data = INBU_and_Covs, method = 'ML')
+
 summary(gam_elevtreeslope)
 
 gamMap = predict(covariates, gam_elevtreeslope, type='response')
@@ -475,21 +477,21 @@ plot(rfMap)
 ```
 # Maximum Entropy
 ```{r}
-pbVect = INBU_and_Covs$INBU
-covs <- INBU_and_Covs %>% dplyr::select(c('elevation', 'treecover', 'slope'))
-
-maxentModel = maxnet(p = pbVect,
-                     data= covs,
-                     regmult = 1,
-                     classes='lqpht')
-?maxnet
-
-plot(maxentModel, type='logistic')
-
-maxentMap = predictMaxNet(maxentModel, covariates, type='logistic')
-
-par(mfrow=c(1,1))
-plot(maxentMap)
+# pbVect = INBU_and_Covs$INBU
+# covs <- INBU_and_Covs %>% dplyr::select(c('elevation', 'treecover', 'slope'))
+# 
+# maxentModel = maxnet(p = pbVect,
+#                      data= covs,
+#                      regmult = 1,
+#                      classes='lqpht')
+# ?maxnet
+# 
+# plot(maxentModel, type='logistic')
+# 
+# maxentMap = predictMaxNet(maxentModel, covariates, type='logistic')
+# 
+# par(mfrow=c(1,1))
+# plot(maxentMap)
 
 ```
 # Comparing Parameter Estimates
@@ -504,12 +506,11 @@ elevData = data.frame(
   glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
-  rf = predict(rfModel, tmp, type = 'prob')[, 2],
-  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+  rf = predict(rfModel, tmp, type = 'prob')[, 2]
 ) %>% 
   cbind(tmp) %>% 
-  dplyr::select(glm:maxent, elevation) %>% 
-  pivot_longer(cols = glm:maxent) %>% 
+  dplyr::select(glm:rf, elevation) %>% 
+  pivot_longer(cols = glm:rf) %>% 
   mutate(variable = 'elevation')
 
 ```
@@ -526,12 +527,11 @@ elevData = data.frame(
   glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
-  rf = predict(rfModel, tmp, type = 'prob')[, 2],
-  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+  rf = predict(rfModel, tmp, type = 'prob')[, 2]
 ) %>% 
   cbind(tmp) %>% 
-  dplyr::select(glm:maxent, elevation) %>% 
-  pivot_longer(cols = glm:maxent) %>% 
+  dplyr::select(glm:rf, elevation) %>% 
+  pivot_longer(cols = glm:rf) %>% 
   mutate(variable = 'elevation')
 
 ```
@@ -546,12 +546,11 @@ TreeCoverData = data.frame(
   glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
-  rf = predict(rfModel, tmp, type = 'prob')[, 2],
-  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+  rf = predict(rfModel, tmp, type = 'prob')[, 2]
 ) %>% 
   cbind(tmp) %>% 
-  dplyr::select(glm:maxent, treecover) %>% 
-  pivot_longer(cols = glm:maxent) %>% 
+  dplyr::select(glm:rf, treecover) %>% 
+  pivot_longer(cols = glm:rf) %>% 
   mutate(variable = 'treecover')
 ```
 
@@ -565,12 +564,11 @@ SlopeData = data.frame(
   glm = predict(glm_elevtreeslope, tmp, type = 'response'),
   gam = predict(gam_elevtreeslope, tmp, type = 'response'),
   boost = predict(boostModel, tmp, type = 'response'),
-  rf = predict(rfModel, tmp, type = 'prob')[, 2],
-  maxent = predict(maxentModel, tmp, type = 'logistic')[, 1]
+  rf = predict(rfModel, tmp, type = 'prob')[, 2]
 ) %>% 
   cbind(tmp) %>% 
-  dplyr::select(glm:maxent, slope) %>% 
-  pivot_longer(cols = glm:maxent) %>% 
+  dplyr::select(glm:rf, slope) %>% 
+  pivot_longer(cols = glm:rf) %>% 
   mutate(variable = 'slope')
 ```
 ```{r}
