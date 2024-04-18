@@ -607,12 +607,14 @@ allPoints = rbind(presPoints, absPoints)
 
 aucValues = matrix(data = NA, nrow=folds, ncol=models) 
 kappaValues = matrix(data = NA, nrow=folds, ncol=models)
+sensitivityValues = matrix(data = NA, nrow = folds, ncol = models)
+specificityValues = matrix(data = NA, nrow = folds, ncol = models)
+tssValues = matrix(data = NA, nrow = folds, ncol = models)
 
 i = 1
 
 for(i in 1:folds){
   training = allPoints[which(allPoints$kfold != i),]
-  
   validation = allPoints[which(allPoints$kfold == i),]
   validation$id = seq(1, nrow(validation), 1)
   
@@ -649,51 +651,64 @@ for(i in 1:folds){
   #Find threshold to maximize Kappa
   kappaOpt = PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 1, opt.methods=3)
   kappaValues[i,1] = as.numeric(PresenceAbsence::Kappa(PresenceAbsence::cmx(valDataFrame, which.model = 1, threshold = kappaOpt[[2]]))[1])
- 
-  # Kappa
-  # kappaValues[i,1] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 1, opt.methods = 4))
-  # kappaValues[i,2] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 2, opt.methods = 4))
-  # kappaValues[i,3] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 3, opt.methods = 4))
-  # kappaValues[i,4] = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 4, opt.methods = 4))
   
-  # Kappa
-  kappaOpt = as.numeric(PresenceAbsence::optimal.thresholds(valDataFrame, which.model = i, opt.methods=3))
-  kappaValues[i, 1] = as.numeric(PresenceAbsence::Kappa(cmx(valDataFrame, which.model = i, threshold = kappaOpt[[2]])))
+    kappaOpt = PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 2, opt.methods=3)
+  kappaValues[i,2] = as.numeric(PresenceAbsence::Kappa(PresenceAbsence::cmx(valDataFrame, which.model = 2, threshold = kappaOpt[[2]]))[1])
   
+    kappaOpt = PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 3, opt.methods=3)
+  kappaValues[i,3] = as.numeric(PresenceAbsence::Kappa(PresenceAbsence::cmx(valDataFrame, which.model = 3, threshold = kappaOpt[[2]]))[1])
   
-  #   kappaOpt = optimal.thresholds(valDataPA, which.model = 1, opt.methods=3)
-#   kappaPA[i] = Kappa(cmx(valDataFrame, which.model = 1, threshold = kappaOpt[[2]]))
-  
-  
-  # Sensitivity
-  
-  
-  # Specificity
-  
-  
-  # TSS
-  
+    kappaOpt = PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 4, opt.methods=3)
+  kappaValues[i,4] = as.numeric(PresenceAbsence::Kappa(PresenceAbsence::cmx(valDataFrame, which.model = 4, threshold = kappaOpt[[2]]))[1])
 }
-
 
 ```
 
 
-
 ```{r}
-# set.seed(2024)
-# 
-# nFolds = 5
-# kfoldPA = kfold(presAbsCovs, k=nFolds)
-# kfoldPB = kfold(presBackCovs, k=nFolds)
-# 
-# aucPA = rep(NA, times = nFolds)
-# kappaPA = rep(NA,times = nFolds)
-# tssPA = rep(NA, times = nFolds)
-# 
-# aucPB = rep(NA, times = nFolds)
-# kappaPB = rep(NA,times = nFolds)
-# tssPB = rep(NA, times = nFolds)
+# Assuming aucValues and kappaValues matrices have been correctly filled as per your loops
+
+# Calculate mean AUC and Kappa for each model
+meanAucValues <- colMeans(aucValues, na.rm = TRUE)
+meanKappaValues <- colMeans(kappaValues, na.rm = TRUE)
+
+# Create a data frame to display the results in a table
+resultsTable <- data.frame(
+  Model = c("GLM", "GAM", "Boosted Regression", "Random Forest"),
+  Mean_AUC = meanAucValues,
+  Mean_Kappa = meanKappaValues
+)
+
+# Print the table
+print(resultsTable)
+
+
+library(ggplot2)
+library(reshape2)
+
+# Assuming the resultsTable is already created with the mean AUC and Kappa values
+resultsTable <- data.frame(
+  Model = c("GLM", "GAM", "Boosted Regression", "Random Forest"),
+  Mean_AUC = meanAucValues,
+  Mean_Kappa = meanKappaValues
+)
+
+# Melt the data frame for plotting with ggplot2
+meltedData <- melt(resultsTable, id.vars = "Model", variable.name = "Metric", value.name = "Value")
+
+# Plotting with reference lines for interpretation
+ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
+  geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
+  theme_minimal() +
+  labs(title = "Mean AUC and Kappa Values by Model",
+       x = "Model",
+       y = "Value",
+       fill = "Metric") +
+  scale_fill_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
 ```
 
 
