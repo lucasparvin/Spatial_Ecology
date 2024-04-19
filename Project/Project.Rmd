@@ -455,7 +455,7 @@ plot(gamMap)
 # Boosted Regression Trees
 ```{r}
 set.seed(2024)
-boostModel = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=100, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
+boostModel = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=500, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
 
 boostMap = predict(covariates, boostModel, type='response')
 #plot(boostMap)
