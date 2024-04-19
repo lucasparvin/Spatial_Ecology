@@ -686,8 +686,12 @@ print(resultsTable)
 # Creating the AUC plot
 aucPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_AUC, fill = Model)) +
   geom_bar(stat = "identity", position = "dodge") +
-  geom_hline(yintercept = 0.5, linetype = "dotted", color = "red", size = 1) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black", size = 1) +
+  geom_hline(yintercept = 0.8, linetype = "dashed", color = "black", size = 1) +
+  geom_hline(yintercept = 0.9, linetype = "dashed", color = "black", size = 1) +
   annotate("text", x = 1, y = 0.5, label = "Random Chance", vjust = 1.5, hjust = 0.5) +
+  annotate("text", x = 1, y = 0.8, label = "Good", vjust = 1.5, hjust = 0.5) +
+  annotate("text", x = 1, y = 0.9, label = "Excellent", vjust = 1.5, hjust = 0.5) +
   labs(title = "Mean AUC Values by Model", x = "Model", y = "Mean AUC") +
   scale_fill_brewer(palette = "Set1") +
   theme_minimal() +
@@ -702,9 +706,9 @@ print(aucPlot)
 # Creating the Kappa plot
 kappaPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_Kappa, fill = Model)) +
   geom_bar(stat = "identity", position = "dodge") +
-  geom_hline(yintercept = 0.2, linetype = "dotted", color = "black", size = 1) +
-  geom_hline(yintercept = 0.6, linetype = "dotted", color = "black", size = 1) +
-  annotate("text", x = 1, y = 0.2, label = "Slight Agreement", vjust = -0.5, hjust = 0.5) +
+  geom_hline(yintercept = 0.8, linetype = "dashed", color = "black", size = 1) +
+  geom_hline(yintercept = 0.6, linetype = "dashed", color = "black", size = 1) +
+  annotate("text", x = 1, y = 0.8, label = "Almost Perfect Agreement", vjust = -0.5, hjust = 0.5) +
   annotate("text", x = 1, y = 0.6, label = "Substantial Agreement", vjust = 1.5, hjust = 0.5) +
   labs(title = "Mean Kappa Values by Model", x = "Model", y = "Mean Kappa") +
   scale_fill_brewer(palette = "Set1") +
