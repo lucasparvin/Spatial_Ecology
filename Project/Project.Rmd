@@ -135,7 +135,7 @@ ggplot() +
   scale_fill_viridis_c() + # This uses a color gradient from the viridis package
   coord_fixed() + # Keep aspect ratio of the map consistent
   theme_minimal() +
-  labs(title = "Clipped Elevation within Perdido", fill = "Elevation") +
+  labs(title = "Elevation in Perdido WMA", fill = "Elevation") +
   geom_sf(data = perdido, inherit.aes = FALSE, fill = NA, color = "black") # Overlay the 'perdido' boundary
 
 ```
@@ -151,6 +151,7 @@ slope_df <- as.data.frame(slope_clipped, xy = TRUE)
 ggplot(slope_df, aes(x=x, y=y, fill=slope))+
   scale_fill_gradientn(colours = terrain.colors(7))+
   geom_raster()+
+  labs(title = "Slope in Perdido WMA") +
   coord_equal()+
   theme_bw()+
   theme(panel.grid=element_blank())
@@ -175,6 +176,7 @@ aspect_df <- as.data.frame(aspect_clipped, xy = TRUE)
 ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
   scale_fill_gradientn(colours = terrain.colors(7))+
   geom_raster()+
+  labs(title = "Aspect in Perdido WMA") +
   coord_equal()+
   theme_bw()+
   theme(panel.grid=element_blank())
@@ -270,7 +272,7 @@ ggplot(treecover_df, aes(x = x, y = y, fill = treecover)) +
    geom_raster() +
    coord_fixed() +
    theme_minimal() +
-   labs(title = "Tree Cover within Perdido Area")
+   labs(title = "Tree Canopy Cover within Perdido Area")
 
 
 ```
