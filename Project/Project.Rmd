@@ -36,20 +36,22 @@ require(ROCR)
 require(pROC)  
 require(presenceAbsence) 
 require(reshape2)
-
 ```
 
 
-# Import Needed Data --> ## I SHOULD ADD TREE CANOPY & CHANGE TO ALL WMAs
+# Import Needed Data
 ```{r, warning=F, error=F, message=F}
 
 visits <- read.csv("Tidy Tables/tidy_BirdLevel2_PointVisits.csv", header = T)
 encounters <- read.csv("Tidy Tables/tidy_BirdLevel3_Encounters.csv", header = T)
 
-# Merging 'visits' and 'encounters' data frames on 'PointID'
+# Merge 'visits' and 'encounters' data frames
 merged_data <- merge(visits, encounters, by = "PointID")
+
+# Selecting data only from Perdido WMA
 perdido_birds <- merged_data[merged_data$WMA == "PE", ]
 
+# I used this code to explore NOBO data after the committee meeting
 # NOBO <- merged_data[merged_data$Species == "NOBO", ]
 # NOBO_Unique_Points <- unique(NOBO$PointID)
 # NOBO_Unique_WMAs <- unique(NOBO$WMA)
@@ -58,7 +60,7 @@ perdido_birds <- merged_data[merged_data$WMA == "PE", ]
 #   summarise(Unique_Points = n_distinct(PointID))
 # print(NOBO_Unique_Points)
 
-# Count the number of each species using dplyr
+# Count the number of each species observed in Perdido
 species_counts <- perdido_birds %>%
   group_by(Species) %>%
   summarise(count = n())
@@ -66,23 +68,28 @@ species_counts <- perdido_birds %>%
 # Display the counts
 print(species_counts)
 
+# Remove time interval (not relevant for this study)
+perdido_birds <- perdido_birds[, -12]
 
-perdido_birds <- perdido_birds[, -12] # Removes interval
+# Assign a presence value of 1 to each row representing INBU, 0 to all others
 perdido_birds$INBU <- ifelse(perdido_birds$Species == "INBU", 1, 0)
 
-# Remove irrelevant covariates
+# Remove all irrelevant covariates
 INBU_pres_abs <- perdido_birds[, -c(3,4,5,7,8,11,12,13,14,15),]
 
 # Reduce to unique rows based on all columns
-INBU_pres_abs <- unique(INBU_pres_abs)
+INBU_pres_abs <- unique(INBU_pres_abs)  ## <-- MAY NEED TO CHANGE THIS. SOME SITES HAVE ABSENCE AND PRESENCE
+## UP ABOVE, I NEED TO REMOVE ALL ROWS with 0s, if they also have 1s anywhere.
 
+# Here, I ensure each unique point ID is represented only once with a 0 or a 1 in the INBU column. For a 0, the point ID should have previously only been represented with a 0 in the INBU column. For a 1, the previous point ID could have had a single row with an INBU value = 1 or two rows, one with INBU = 0 and on = 1. 
 # Step 1: Arrange by PointID and INBU in descending order
 # Step 2: Keep only unique rows based on PointID, keeping the first occurrence
 INBU_pres_abs <- INBU_pres_abs %>%
   arrange(PointID, desc(INBU)) %>%
   distinct(PointID, .keep_all = TRUE)
 
-INBU_pres_abs <- INBU_pres_abs[, -c(1:3)] #simplify to x, y, and 0/1
+# Reduce data set to coordinates and INBU presence-absence values
+INBU_pres_abs <- INBU_pres_abs[, -c(1:3)]
 
 ```
 
