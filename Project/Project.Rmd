@@ -182,28 +182,24 @@ ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
 
 # Bring in NLCD Land Cover Classes, Reclassify, & Plot
 ```{r}
-
-### CONVERT NLCD NUMBERS TO NAMES ###
-
+# Bring in NLCD & Ensure raster is aligned with Perdido
 nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
 nlcd2011 <- project(nlcd2011, crs_perdido )
 nlcd2011 <- crop(nlcd2011, perdido_vect)
 nlcd2011 <- mask(nlcd2011, perdido_vect)
 terra::writeRaster(nlcd2011, 'nlcd.tif', overwrite=TRUE)
 nlcd <- rast('nlcd.tif')
-#####################
-# Example codes for "Developed, Open Space", "Developed, Low Intensity", 
-# and "Developed, Medium Intensity"
+
+# Setting developed land cover class to NA
 codes_to_na <- c(21, 22, 23)
 
-# Creating a matrix for reclassification: From value, To value
+# Creating a matrix for reclassification
 reclass_matrix <- cbind(codes_to_na, rep(NA, length(codes_to_na)))
 
 # Reclassify the raster
 nlcd <- classify(nlcd, reclass_matrix, right=FALSE)
 
-####################
-
+# Assign labels to each NLCD #
 land_cover_descriptions <- c(
   "11" = "Open Water",
   "12" = "Perennial Ice/Snow",
@@ -222,11 +218,10 @@ land_cover_descriptions <- c(
 # Convert the raster to a data frame
 nlcd_df <- as.data.frame(nlcd, xy = TRUE, na.rm = TRUE)
 
-# Map numeric codes to their descriptions
+# Change NLCD #'s to land cover labels
 nlcd_df$Class <- factor(land_cover_descriptions[as.character(nlcd_df$Class)])
 
-# Note: 'layer' should be replaced with the actual name of the raster layer in your data frame
-
+# Plot
 ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
   geom_raster() +
   scale_fill_viridis_d() +
@@ -235,36 +230,18 @@ ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
   labs(title = "NLCD 2011 Land Cover within Perdido Area")
 
 ```
-```{r}
-# soil <- get_ssurgo(perdido_vect, label='soil')
-# soil <- project(soil, crs_perdido )
-# soil <- crop(soil, perdido_vect)
-# soil <- mask(soil, perdido_vect)
-# terra::writeRaster(soil, 'soil.tif', overwrite=TRUE)
-# soil <- rast('soil.tif')
-# 
-# # Convert the NLCD raster to a dataframe
-# soil_df <- as.data.frame(soil, xy = TRUE, na.rm = TRUE)
-# 
-# # Plotting the NLCD data
-# ggplot(soil_df, aes(x = x, y = y, fill = Class)) +
-#   geom_raster() +
-#   scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "soil") +
-#   coord_fixed() +
-#   theme_minimal() +
-#   labs(title = "soil within Perdido Area")
-```
 
+# Load, Format, & Plot Tree Canopy Cover
 ```{r}
 treecover <- rast('treecover.tif')
+
 treecover <- project(treecover, crs_perdido )
 treecover <- crop(treecover, perdido_vect)
 treecover <- mask(treecover, perdido_vect)
-# 
-# # # Convert the NLCD raster to a dataframe
+
 treecover_df <- as.data.frame(treecover, xy = TRUE, na.rm = TRUE)
-# #
-# # # Plotting the NLCD data
+
+# Plot
 ggplot(treecover_df, aes(x = x, y = y, fill = treecover)) +
    geom_raster() +
    coord_fixed() +
@@ -274,37 +251,8 @@ ggplot(treecover_df, aes(x = x, y = y, fill = treecover)) +
 
 ```
 
-
+# Final time ensuring that all rasters are aligned
 ```{r}
-
-############### ADD TREE COVER WITHIN 1 KM #####################
-
-# soil <- get_ssurgo(perdido_vect, label='soil')
-# soil <- project(soil, crs_perdido )
-# soil <- crop(soil, perdido_vect)
-# soil <- mask(soil, perdido_vect)
-# terra::writeRaster(soil, 'soil.tif', overwrite=TRUE)
-# soil <- rast('soil.tif')
-# 
-# # Convert the NLCD raster to a dataframe
-# soil_df <- as.data.frame(soil, xy = TRUE, na.rm = TRUE)
-# 
-# # Plotting the NLCD data
-# ggplot(soil_df, aes(x = x, y = y, fill = Class)) +
-#   geom_raster() +
-#   scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "soil") +
-#   coord_fixed() +
-#   theme_minimal() +
-#   labs(title = "soil within Perdido Area")
-```
-
-
-```{r}
-
-############### ADD TREE COVER WITHIN 1 KM #####################
-
-# Assuming 'elevation', 'slope', 'aspect', and 'nlcd' are already loaded
-# and 'elevation' is the standard for resolution and extent
 
 res_standard <- res(elevation)  # Standard resolution
 ext_standard <- ext(elevation)  # Standard extent
@@ -319,7 +267,7 @@ aspect_aligned <- resample(aspect, elevation, method="bilinear")
 aspect_aligned <- crop(aspect_aligned, ext_standard)
 aspect_aligned <- mask(aspect_aligned, perdido_vect)
 
-# Resample and align elevation ### SEEMS UNNEEDED ####
+# Resample and align elevation
 elevation_aligned <- resample(elevation, elevation, method="bilinear")
 elevation_aligned <- crop(elevation_aligned, ext_standard)
 elevation_aligned <- mask(elevation_aligned, perdido_vect)
@@ -335,6 +283,7 @@ tree_aligned <- crop(tree_aligned, ext_standard)
 tree_aligned <- mask(tree_aligned, perdido_vect)
 ```
 
+# Stack Covariates & Extract Values at Presence-Absence Locations
 ```{r}
 
 covariates = c(elevation_aligned, aspect_aligned, slope_aligned, nlcd_aligned, tree_aligned)
@@ -349,18 +298,14 @@ pres_abs_Covs = terra::extract(covariates, coords)
 # Bind INBU presence absence data with covariates
 ```{r}
 INBU_and_Covs = cbind(pres_abs_Covs, INBU_pres_abs)
-
+# structure(pres_abs_Covs) <-- NEED TO CONVERT NLCD TO factor
+INBU_and_Covs$NLCD = as.factor(INBU_and_Covs$NLCD)
 ```
 
 # Correlation between covariates
 ```{r} 
 # MOVE THIS TO HIGHER UP
 pairs(covariates, maxpixels=1000)
-
-
-
-
-
 
 ```
 
@@ -477,25 +422,7 @@ plot(rfMap, main = "Random Forest Predicted INBU Presence")
 
 summary(rfModel)
 ```
-# Maximum Entropy
-```{r}
-# pbVect = INBU_and_Covs$INBU
-# covs <- INBU_and_Covs %>% dplyr::select(c('elevation', 'treecover', 'slope'))
-# 
-# maxentModel = maxnet(p = pbVect,
-#                      data= covs,
-#                      regmult = 1,
-#                      classes='lqpht')
-# ?maxnet
-# 
-# plot(maxentModel, type='logistic')
-# 
-# maxentMap = predictMaxNet(maxentModel, covariates, type='logistic')
-# 
-# par(mfrow=c(1,1))
-# plot(maxentMap)
 
-```
 # Comparing Parameter Estimates
 ```{r}
 tmp = expand.grid(
@@ -749,5 +676,44 @@ ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
 
 ```
 
+#### Code to consider at a later time for my thesis
 
+```{r}
+# soil <- get_ssurgo(perdido_vect, label='soil')
+# soil <- project(soil, crs_perdido )
+# soil <- crop(soil, perdido_vect)
+# soil <- mask(soil, perdido_vect)
+# terra::writeRaster(soil, 'soil.tif', overwrite=TRUE)
+# soil <- rast('soil.tif')
+# 
+# # Convert the NLCD raster to a dataframe
+# soil_df <- as.data.frame(soil, xy = TRUE, na.rm = TRUE)
+# 
+# # Plotting the NLCD data
+# ggplot(soil_df, aes(x = x, y = y, fill = Class)) +
+#   geom_raster() +
+#   scale_fill_viridis_d(begin = 0.3, end = 0.9, direction = -1, name = "soil") +
+#   coord_fixed() +
+#   theme_minimal() +
+#   labs(title = "soil within Perdido Area")
+```
 
+# Maximum Entropy
+```{r}
+# pbVect = INBU_and_Covs$INBU
+# covs <- INBU_and_Covs %>% dplyr::select(c('elevation', 'treecover', 'slope'))
+# 
+# maxentModel = maxnet(p = pbVect,
+#                      data= covs,
+#                      regmult = 1,
+#                      classes='lqpht')
+# ?maxnet
+# 
+# plot(maxentModel, type='logistic')
+# 
+# maxentMap = predictMaxNet(maxentModel, covariates, type='logistic')
+# 
+# par(mfrow=c(1,1))
+# plot(maxentMap)
+
+```
