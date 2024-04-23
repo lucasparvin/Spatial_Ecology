@@ -39,7 +39,7 @@ require(reshape2)
 ```
 
 
-# Import Needed Data
+# Import & Reformat Breeding Bird Data
 ```{r, warning=F, error=F, message=F}
 
 visits <- read.csv("Tidy Tables/tidy_BirdLevel2_PointVisits.csv", header = T)
@@ -98,63 +98,63 @@ My code would not push to github when working with all WMAs because the commits 
 I went with INBU since they were one of the most abundant birds observed, but also not a bird that is overly abundant or a generalist. 
 
 
-
+# Import & Format Perdido River WMA + Elevation
 ```{r}
 
-# Load perdido
-perdido <- st_read("Perdido_ICP1.shp") # Could put other shape files here
-# Transform perdido to WGS 84 (EPSG:4326)
+# Load Perdido
+perdido <- st_read("Perdido_ICP1.shp")
+
+# Transform Perdido to WGS 84 (EPSG:4326)
 perdido <- st_transform(perdido, crs = "EPSG:4326")
 
-# Plot
+# Plot Perdido
 ggplot(data = perdido) +
   geom_sf() +
   theme_minimal() +
   ggtitle("Perdido")
 
-# Convert 'perdido' to a terra SpatVector for compatibility with terra functions
+# Convert 'Perdido' to a SpatVector
 perdido_vect <- vect(perdido)
 crs_perdido <- crs(perdido_vect)
 
+# Bring in elevation
 elevation <- get_ned(perdido_vect, label='Elevation')
-elevation <- project(elevation, crs_perdido)
-# elevation_raster <- writeRaster(elevation, 'elevation_reprojected.tif', overwrite=TRUE)
 
-# Check CRS of both 'perdido' and 'elevation'
+# Ensure elevation is projected to correct coordinate system
+elevation <- project(elevation, crs_perdido)
+
+# Check to make sure CRS of both 'perdido' and 'elevation' are the same
 crs_perdido <- crs(perdido_vect)
 crs_elevation <- crs(elevation)
-
-# Print CRS information for both
 print(crs_perdido)
 print(crs_elevation)
 
-```
-
-```{r}
+# Ensure elevation has the exact same dimensions as Perdido
 elevation_clipped <- crop(elevation, perdido_vect)
 elevation_clipped <- mask(elevation_clipped, perdido_vect)
+
 # Convert clipped elevation raster to a data frame for plotting
 elevation_df <- as.data.frame(elevation_clipped, xy = TRUE)
 
-# Plot using ggplot2
+# Plot Elevation
 ggplot() +
   geom_raster(data = elevation_df, aes(x = x, y = y, fill = Layer_1)) +
-  scale_fill_viridis_c() + # This uses a color gradient from the viridis package
-  coord_fixed() + # Keep aspect ratio of the map consistent
+  scale_fill_viridis_c() + 
+  coord_fixed() +
   theme_minimal() +
   labs(title = "Elevation in Perdido WMA", fill = "Elevation") +
-  geom_sf(data = perdido, inherit.aes = FALSE, fill = NA, color = "black") # Overlay the 'perdido' boundary
+  geom_sf(data = perdido, inherit.aes = FALSE, fill = NA, color = "black") # Overlays Perdido boundary
 
 ```
 
+# Derive Slope & Plot
 ```{r}
 slope = terrain(elevation, v='slope', neighbors=8, unit='degrees')
 slope_clipped <- crop(slope, perdido_vect)
 slope_clipped <- mask(slope_clipped, perdido_vect)
-# Convert clipped elevation raster to a data frame for plotting
+
 slope_df <- as.data.frame(slope_clipped, xy = TRUE)
 
-#terra::writeRaster(slope, 'slope.tif', overwrite=TRUE)
 ggplot(slope_df, aes(x=x, y=y, fill=slope))+
   scale_fill_gradientn(colours = terrain.colors(7))+
   geom_raster()+
@@ -162,24 +162,15 @@ ggplot(slope_df, aes(x=x, y=y, fill=slope))+
   coord_equal()+
   theme_bw()+
   theme(panel.grid=element_blank())
-
-
-
 ```
-
+# Derive Aspect & Plot
 ```{r}
-
-
 aspect = terrain(elevation, v='aspect', neighbors=8, unit='degrees')
-
-
 aspect_clipped <- crop(aspect, perdido_vect)
 aspect_clipped <- mask(aspect_clipped, perdido_vect)
 
-
-# Convert clipped elevation raster to a data frame for plotting
 aspect_df <- as.data.frame(aspect_clipped, xy = TRUE)
-#terra::writeRaster(aspect, 'aspect.tif', overwrite=TRUE)
+
 ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
   scale_fill_gradientn(colours = terrain.colors(7))+
   geom_raster()+
@@ -187,10 +178,9 @@ ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
   coord_equal()+
   theme_bw()+
   theme(panel.grid=element_blank())
-
 ```
 
-
+# Bring in NLCD Land Cover Classes, Reclassify, & Plot
 ```{r}
 
 ### CONVERT NLCD NUMBERS TO NAMES ###
