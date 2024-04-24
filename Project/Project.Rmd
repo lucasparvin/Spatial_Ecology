@@ -93,9 +93,7 @@ INBU_pres_abs <- INBU_pres_abs[, -c(1:3)]
 
 ```
 
-My code would not push to github when working with all WMAs because the commits were too large. Thus, I decide to just work with Perdido.
-
-I went with INBU since they were one of the most abundant birds observed, but also not a bird that is overly abundant or a generalist. 
+My code would not push to github when working with all WMAs because the commits were too large. Thus, I decide to just work with Perdido. I chose INBU because they were not ubiquitous, but also well-represented compared to most species.
 
 
 # **Import & Format Perdido River WMA + Elevation**
@@ -307,6 +305,8 @@ INBU_and_Covs$NLCD = as.factor(INBU_and_Covs$NLCD) # Converts NLCD values to fac
 pairs(covariates, maxpixels=1000)
 ```
 
+No covariates are significantly correlated, thus I have no need to remove any.
+
 # **Fit GLMs**
 ```{r, warning=F, error=F, message=F}
 
@@ -363,7 +363,7 @@ print(summary_table)
 
 ```
 
-Elevation, tree cover, and slope seem like the strongest predictor, consistently.
+**Elevation, tree canopy cover, and slope are consistently the important predictors.** The addition of other covariates and interaction terms worsened AIC values.
 
 
 # **Predict INBU Presence Across Perdido Using Top GLM**
@@ -377,7 +377,7 @@ plot(glmMap, main = "GLM Predicted INBU Presence")
 For a fair comparison, **all of the remaining models will be fit using the same 3 predictor variables**: elevation, tree canopy cover, and slope.
 
 
-# **Fit GAM Using The Same Covariates & Plot Predicted Presence**
+# **Fit GAM Using & Plot Predicted Presence**
 ```{r, warning=F, error=F, message=F}
 gam_elevtreeslope = gam(INBU ~ s(treecover, k=3) + s(elevation, k=3) + s(slope, k=3), family='binomial', data = INBU_and_Covs, method='ML')
 summary(gam_elevtreeslope)
@@ -385,7 +385,7 @@ gamMap = predict(covariates, gam_elevtreeslope, type='response')
 plot(gamMap, main = "GAM Predicted INBU Presence")
 ```
 
-# **Fit Boosted Regresssion Tree Using The Same Covariates & Plot Predicted Presence**
+# **Fit Boosted Regresssion Tree & Plot Predicted Presence**
 ```{r, warning=F, error=F, message=F}
 set.seed(2024)
 boostModel = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=500, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
@@ -395,7 +395,7 @@ plot(boostMap, main = "Boosted Regression Predicted INBU Presence")
 summary(boostModel)
 ```
 
-# **Fit Random Forest Model Using The Same Covariates & Plot Predicted Presence**
+# **Fit Random Forest Model & Plot Predicted Presence**
 ```{r, warning=F, error=F, message=F}
 set.seed(2024)
 tuneRF(y = as.factor(INBU_and_Covs$INBU), x=INBU_and_Covs[, c(1,3,5)], stepFactor = 2, ntreeTry = 500)
@@ -465,6 +465,7 @@ SlopeData = data.frame(
   pivot_longer(cols = glm:rf) %>% 
   mutate(variable = 'slope')
 ```
+
 ```{r, warning=F, error=F, message=F}
 colnames(elevData)[1] = colnames(TreeCoverData)[1] = colnames(SlopeData)[1] = 'xValue'
 
@@ -497,11 +498,12 @@ presPoints <- tmp %>%
 absPoints <- tmp %>%
   filter(INBU == 0)
 
+# K-fold partitioning
 presPoints$kfold = kfold(presPoints, k=folds)
 absPoints$kfold = kfold(absPoints, k=folds)
-
 allPoints = rbind(presPoints, absPoints)
 
+# Preparing empty matrices to store data
 aucValues = matrix(data = NA, nrow=folds, ncol=models) 
 kappaValues = matrix(data = NA, nrow=folds, ncol=models)
 sensitivityValues = matrix(data = NA, nrow = folds, ncol = models)
@@ -558,7 +560,6 @@ for(i in 1:folds){
     kappaOpt = PresenceAbsence::optimal.thresholds(valDataFrame, which.model = 4, opt.methods=3)
   kappaValues[i,4] = as.numeric(PresenceAbsence::Kappa(PresenceAbsence::cmx(valDataFrame, which.model = 4, threshold = kappaOpt[[2]]))[1])
 }
-
 ```
 
 
@@ -575,10 +576,10 @@ resultsTable <- data.frame(
   Mean_Kappa = meanKappaValues
 )
 
-# Print the table
+# Print results
 print(resultsTable)
 
-# Creating the AUC plot
+# AUC plot
 aucPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_AUC, fill = Model)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "black", size = 1) +
@@ -591,14 +592,12 @@ aucPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_AUC, fill = Model)) +
   scale_fill_brewer(palette = "Set1") +
   theme_minimal() +
   theme(legend.position = "none")
-
-# Print the AUC plot
 print(aucPlot)
 
 
 
 
-# Creating the Kappa plot
+# Kappa plot
 kappaPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_Kappa, fill = Model)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_hline(yintercept = 0.8, linetype = "dashed", color = "black", size = 1) +
@@ -609,21 +608,13 @@ kappaPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_Kappa, fill = Model)) 
   scale_fill_brewer(palette = "Set1") +
   theme_minimal() +
   theme(legend.position = "none")
-
-# Print the Kappa plot
 print(kappaPlot)
 
 
-resultsTable <- data.frame(
-  Model = c("GLM", "GAM", "Boosted Regression", "Random Forest"),
-  Mean_AUC = meanAucValues,
-  Mean_Kappa = meanKappaValues
-)
 
-# Melt the data frame for plotting with ggplot2
+# Plot AUC & Kappa Together
 meltedData <- melt(resultsTable, id.vars = "Model", variable.name = "Metric", value.name = "Value")
 
-# Plot
 ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
   geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
   theme_minimal() +
@@ -633,14 +624,11 @@ ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
        fill = "Metric") +
   scale_fill_brewer(palette = "Set1") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-
 ```
 
 
 
-#### *Code to consider at a later time for my thesis:*
+##### ***Code to consider at a later time for my thesis:***
 
 ```{r, warning=F, error=F, message=F}
 # soil <- get_ssurgo(perdido_vect, label='soil')
