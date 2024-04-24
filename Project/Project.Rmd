@@ -1,5 +1,5 @@
 ---
-title: "Project: Avian SDMs"
+title: "Modeling Indigo Bunting Distributions in Perdido River WMA"
 author: "Lucas Parvin"
 date: "3-28-2024"
 output:
@@ -7,7 +7,7 @@ output:
     df_print: paged
 ---
 
-# Load Packages
+# **Load Packages**
 
 ```{r, warning=F, error=F, message=F}
 require(terra)
@@ -39,7 +39,7 @@ require(reshape2)
 ```
 
 
-# Import & Reformat Breeding Bird Data
+# **Import & Reformat Breeding Bird Data**
 ```{r, warning=F, error=F, message=F}
 
 visits <- read.csv("Tidy Tables/tidy_BirdLevel2_PointVisits.csv", header = T)
@@ -98,8 +98,8 @@ My code would not push to github when working with all WMAs because the commits 
 I went with INBU since they were one of the most abundant birds observed, but also not a bird that is overly abundant or a generalist. 
 
 
-# Import & Format Perdido River WMA + Elevation
-```{r}
+# **Import & Format Perdido River WMA + Elevation**
+```{r, warning=F, error=F, message=F}
 
 # Load Perdido
 perdido <- st_read("Perdido_ICP1.shp")
@@ -147,8 +147,8 @@ ggplot() +
 
 ```
 
-# Derive Slope & Plot
-```{r}
+# **Derive Slope & Plot**
+```{r, warning=F, error=F, message=F}
 slope = terrain(elevation, v='slope', neighbors=8, unit='degrees')
 slope_clipped <- crop(slope, perdido_vect)
 slope_clipped <- mask(slope_clipped, perdido_vect)
@@ -163,8 +163,9 @@ ggplot(slope_df, aes(x=x, y=y, fill=slope))+
   theme_bw()+
   theme(panel.grid=element_blank())
 ```
-# Derive Aspect & Plot
-```{r}
+
+# **Derive Aspect & Plot**
+```{r, warning=F, error=F, message=F}
 aspect = terrain(elevation, v='aspect', neighbors=8, unit='degrees')
 aspect_clipped <- crop(aspect, perdido_vect)
 aspect_clipped <- mask(aspect_clipped, perdido_vect)
@@ -180,8 +181,8 @@ ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
   theme(panel.grid=element_blank())
 ```
 
-# Bring in NLCD Land Cover Classes, Reclassify, & Plot
-```{r}
+# **Bring in NLCD Land Cover Classes, Reclassify, & Plot**
+```{r, warning=F, error=F, message=F}
 # Bring in NLCD & Ensure raster is aligned with Perdido
 nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
 nlcd2011 <- project(nlcd2011, crs_perdido )
@@ -231,8 +232,8 @@ ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
 
 ```
 
-# Load, Format, & Plot Tree Canopy Cover
-```{r}
+# **Load, Format, & Plot Tree Canopy Cover**
+```{r, warning=F, error=F, message=F}
 treecover <- rast('treecover.tif')
 
 treecover <- project(treecover, crs_perdido )
@@ -251,8 +252,8 @@ ggplot(treecover_df, aes(x = x, y = y, fill = treecover)) +
 
 ```
 
-# Final time ensuring that all rasters are aligned
-```{r}
+# **Ensure All Rasters Are Properly Aligned Before Stacking**
+```{r, warning=F, error=F, message=F}
 
 res_standard <- res(elevation)  # Standard resolution
 ext_standard <- ext(elevation)  # Standard extent
@@ -283,8 +284,8 @@ tree_aligned <- crop(tree_aligned, ext_standard)
 tree_aligned <- mask(tree_aligned, perdido_vect)
 ```
 
-# Stack Covariates & Extract Values at Presence-Absence Locations
-```{r}
+# **Stack Covariates & Extract Values at Presence-Absence Locations**
+```{r, warning=F, error=F, message=F}
 
 covariates = c(elevation_aligned, aspect_aligned, slope_aligned, nlcd_aligned, tree_aligned)
 names(covariates) = c('elevation', 'aspect', 'slope', 'NLCD', 'treecover')
@@ -295,24 +296,19 @@ pres_abs_Covs = terra::extract(covariates, coords)
 ```
 
 
-# Bind INBU presence absence data with covariates
-```{r}
+# **Bind INBU Presence-Absence Data with Covariates**
+```{r, warning=F, error=F, message=F}
 INBU_and_Covs = cbind(pres_abs_Covs, INBU_pres_abs)
-# structure(pres_abs_Covs) <-- NEED TO CONVERT NLCD TO factor
-INBU_and_Covs$NLCD = as.factor(INBU_and_Covs$NLCD)
+INBU_and_Covs$NLCD = as.factor(INBU_and_Covs$NLCD) # Converts NLCD values to factors
 ```
 
-# Correlation between covariates
-```{r} 
-# MOVE THIS TO HIGHER UP
+# **Test for Correlation Between Covariates**
+```{r, warning=F, error=F, message=F} 
 pairs(covariates, maxpixels=1000)
-
 ```
 
-
-
-# GLMs
-```{r}
+# **Fit GLMs**
+```{r, warning=F, error=F, message=F}
 
 glm_intecept = glm(INBU ~ 1, family = 'binomial', data = INBU_and_Covs)
 glm_nlcd = glm(INBU ~ NLCD, family = 'binomial', data = INBU_and_Covs)
@@ -323,38 +319,9 @@ glm_elevtree = glm(INBU ~ treecover + elevation, family = 'binomial', data = INB
 glm_elevtreeslope = glm(INBU ~ elevation + treecover + slope, family = 'binomial', data = INBU_and_Covs)
 ```
 
-# Comparing GLMs
-```{r}
-
-aic_intercept <- AIC(glm_intecept)
-aic_nlcd <- AIC(glm_nlcd)
-aic_all <- AIC(glm_all)
-aic_interaction <- AIC(glm_interaction)
-aic_nohab <- AIC(glm_nohab)
-aic_elevtree <- AIC(glm_elevtree)
-aic_elevtreeslope <- AIC(glm_elevtreeslope)
-
-
-min_aic <- min(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab, aic_elevtree, aic_elevtreeslope)
-
-
-delta_aic_intercept <- aic_intercept - min_aic
-delta_aic_nlcd <- aic_nlcd - min_aic
-delta_aic_all <- aic_all - min_aic
-delta_aic_interaction <- aic_interaction - min_aic
-delta_aic_nohab <- aic_nohab - min_aic
-delta_aic_elevtree <- aic_elevtree - min_aic
-delta_aic_elevtreeslope <- aic_elevtreeslope - min_aic
-
-summary_table <- data.frame(
-  Model = c("glm_intecept", "glm_nlcd", "glm_all", "glm_interaction", "glm_nohab", "glm_elevtree", "glm_elevtreeslope"),
-  AIC = c(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab, aic_elevtree, aic_elevtreeslope),
-  Delta_AIC = c(delta_aic_intercept, delta_aic_nlcd, delta_aic_all, delta_aic_interaction, delta_aic_nohab, delta_aic_elevtree, delta_aic_elevtreeslope)
-)
-
-print(summary_table)
-
-
+# **Comparing GLMs**
+```{r, warning=F, error=F, message=F}
+# Observe the summary of each model
 summary(glm_all)
 summary(glm_intecept)
 summary(glm_nohab)
@@ -363,88 +330,86 @@ summary(glm_nlcd)
 summary(glm_elevtree)
 summary(glm_elevtreeslope)
 
+# Define AIC Values
+aic_intercept <- AIC(glm_intecept)
+aic_nlcd <- AIC(glm_nlcd)
+aic_all <- AIC(glm_all)
+aic_interaction <- AIC(glm_interaction)
+aic_nohab <- AIC(glm_nohab)
+aic_elevtree <- AIC(glm_elevtree)
+aic_elevtreeslope <- AIC(glm_elevtreeslope)
+
+# Establish minimum AIC (best model)
+min_aic <- min(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab, aic_elevtree, aic_elevtreeslope)
+
+# Define delta AIC values 
+delta_aic_intercept <- aic_intercept - min_aic
+delta_aic_nlcd <- aic_nlcd - min_aic
+delta_aic_all <- aic_all - min_aic
+delta_aic_interaction <- aic_interaction - min_aic
+delta_aic_nohab <- aic_nohab - min_aic
+delta_aic_elevtree <- aic_elevtree - min_aic
+delta_aic_elevtreeslope <- aic_elevtreeslope - min_aic
+
+# Create a table that demonstrates model AIC and delta AIC values
+summary_table <- data.frame(
+  Model = c("glm_intecept", "glm_nlcd", "glm_all", "glm_interaction", "glm_nohab", "glm_elevtree", "glm_elevtreeslope"),
+  AIC = c(aic_intercept, aic_nlcd, aic_all, aic_interaction, aic_nohab, aic_elevtree, aic_elevtreeslope),
+  Delta_AIC = c(delta_aic_intercept, delta_aic_nlcd, delta_aic_all, delta_aic_interaction, delta_aic_nohab, delta_aic_elevtree, delta_aic_elevtreeslope)
+)
+
+# View summary of model AIC and delta AIC values
+print(summary_table)
+
 ```
 
 Elevation, tree cover, and slope seem like the strongest predictor, consistently.
 
 
-# Predict across Perdido
-```{r}
-
-
+# **Predict INBU Presence Across Perdido Using Top GLM**
+```{r, warning=F, error=F, message=F}
 glmMap = predict(model = glm_elevtreeslope, object = covariates)
 glmMap = exp(glmMap)/(1+exp(glmMap))
 plot(glmMap, main = "GLM Predicted INBU Presence")
 
-
-## I think this error is occurring due to the fact that there are NLCD values of developed, open space, etc. in the "covariates" object, but these cover types are absent from the INBU_and_Covs data frame, from which the GLMs are built. Thus, I have to either remove pixels with these cover types from the get-go OR figure out a way to just NOT predict to these cover types in glmMap. If I remove these pixels from the get-go, I will need to align the elevation, slope, and aspect rasters to the NLCD raster (essentially punching holes in those rasters) in order for each raster to stack properly. What is the best way to approach this? How can I do it?
-
 ```
 
-# GAMs
-```{r}
-# using elevation tree cover and slope
+For a fair comparison, **all of the remaining models will be fit using the same 3 predictor variables**: elevation, tree canopy cover, and slope.
+
+
+# **Fit GAM Using The Same Covariates & Plot Predicted Presence**
+```{r, warning=F, error=F, message=F}
 gam_elevtreeslope = gam(INBU ~ s(treecover, k=3) + s(elevation, k=3) + s(slope, k=3), family='binomial', data = INBU_and_Covs, method='ML')
-#gam_elevtreeslope = gam(INBU ~ s(treecover, bs = "cr", k = 10) + s(elevation, bs = "cr", k = 10) + s(slope, bs = "cr", k = 10), family = 'binomial', data = INBU_and_Covs, method = 'ML')
-
 summary(gam_elevtreeslope)
-
 gamMap = predict(covariates, gam_elevtreeslope, type='response')
-
 plot(gamMap, main = "GAM Predicted INBU Presence")
-
 ```
-# Boosted Regression Trees
-```{r}
+
+# **Fit Boosted Regresssion Tree Using The Same Covariates & Plot Predicted Presence**
+```{r, warning=F, error=F, message=F}
 set.seed(2024)
 boostModel = gbm(INBU ~ elevation + treecover + slope, distribution='bernoulli', n.trees=500, interaction.depth=2, shrinkage=0.1, bag.fraction=0.5, data=INBU_and_Covs)
-
 boostMap = predict(covariates, boostModel, type='response')
-#plot(boostMap)
-
-boostMap = mask(boostMap, covariates$NLCD) # to clip to perdido
+boostMap = mask(boostMap, covariates$NLCD) # to clip to Perdido
 plot(boostMap, main = "Boosted Regression Predicted INBU Presence")
-
 summary(boostModel)
 ```
-# Random Forests
-```{r}
-set.seed(2024)
 
+# **Fit Random Forest Model Using The Same Covariates & Plot Predicted Presence**
+```{r, warning=F, error=F, message=F}
+set.seed(2024)
 tuneRF(y = as.factor(INBU_and_Covs$INBU), x=INBU_and_Covs[, c(1,3,5)], stepFactor = 2, ntreeTry = 500)
 
-# mtry 1 is best
-
+# OOB is lowest for mtry 1, so mtry 1 is best
 rfModel = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data=INBU_and_Covs, mtry=1, ntree=500, na.action = na.omit)
-
 rfMap = predict(covariates, rfModel, type='prob', index=2)
 plot(rfMap, main = "Random Forest Predicted INBU Presence")
-
 summary(rfModel)
 ```
 
-# Comparing Parameter Estimates
-```{r}
-tmp = expand.grid(
-  elevation = seq(min(INBU_and_Covs$elevation), max(INBU_and_Covs$elevation), length = 1000),
-  treecover = mean(INBU_and_Covs$treecover),
-  slope = mean(INBU_and_Covs$slope)
-)
+# **Comparing Parameter Effects on INBU Presence Across Models**
 
-elevData = data.frame(
-  glm = predict(glm_elevtreeslope, tmp, type = 'response'),
-  gam = predict(gam_elevtreeslope, tmp, type = 'response'),
-  boost = predict(boostModel, tmp, type = 'response'),
-  rf = predict(rfModel, tmp, type = 'prob')[, 2]
-) %>% 
-  cbind(tmp) %>% 
-  dplyr::select(glm:rf, elevation) %>% 
-  pivot_longer(cols = glm:rf) %>% 
-  mutate(variable = 'elevation')
-
-```
-
-```{r}
+```{r, warning=F, error=F, message=F}
 # Elevation
 tmp = expand.grid(
   elevation = seq(min(INBU_and_Covs$elevation), max(INBU_and_Covs$elevation), length = 1000),
@@ -465,7 +430,7 @@ elevData = data.frame(
 
 ```
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Tree Cover
 tmp = expand.grid(elevation = mean(INBU_and_Covs$elevation),
                   treecover = seq(min(INBU_and_Covs$treecover), max(INBU_and_Covs$treecover), length=1000),
@@ -483,7 +448,7 @@ TreeCoverData = data.frame(
   mutate(variable = 'treecover')
 ```
 
-```{r}
+```{r, warning=F, error=F, message=F}
 # Slope
 tmp = expand.grid(elevation = mean(INBU_and_Covs$elevation),
                   treecover = mean(INBU_and_Covs$treecover),
@@ -500,7 +465,7 @@ SlopeData = data.frame(
   pivot_longer(cols = glm:rf) %>% 
   mutate(variable = 'slope')
 ```
-```{r}
+```{r, warning=F, error=F, message=F}
 colnames(elevData)[1] = colnames(TreeCoverData)[1] = colnames(SlopeData)[1] = 'xValue'
 
 tmp = rbind(elevData, TreeCoverData, SlopeData)
@@ -514,9 +479,13 @@ ggplot(tmp, aes(x=xValue, y=value, color=name))+
 
 ```
 
-# SDM Validation
+**Note that the GAM is hidden by the GLM. Both of these models exhibited the exact same characteristics, outside of their intercept terms.**
 
-```{r}
+
+
+# **SDM Validation**
+
+```{r, warning=F, error=F, message=F}
 
 tmp = INBU_and_Covs[, c(1, 3, 5, 8)] ## Isolates pres/abs data and covariates included in models
 
@@ -593,8 +562,7 @@ for(i in 1:folds){
 ```
 
 
-```{r}
-# Assuming aucValues and kappaValues matrices have been correctly filled as per your loops
+```{r, warning=F, error=F, message=F}
 
 # Calculate mean AUC and Kappa for each model
 meanAucValues <- colMeans(aucValues, na.rm = TRUE)
@@ -646,12 +614,6 @@ kappaPlot <- ggplot(resultsTable, aes(x = Model, y = Mean_Kappa, fill = Model)) 
 print(kappaPlot)
 
 
-
-
-
-
-
-# Assuming the resultsTable is already created with the mean AUC and Kappa values
 resultsTable <- data.frame(
   Model = c("GLM", "GAM", "Boosted Regression", "Random Forest"),
   Mean_AUC = meanAucValues,
@@ -661,7 +623,7 @@ resultsTable <- data.frame(
 # Melt the data frame for plotting with ggplot2
 meltedData <- melt(resultsTable, id.vars = "Model", variable.name = "Metric", value.name = "Value")
 
-# Plotting with reference lines for interpretation
+# Plot
 ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
   geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
   theme_minimal() +
@@ -676,9 +638,11 @@ ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
 
 ```
 
-#### Code to consider at a later time for my thesis
 
-```{r}
+
+#### *Code to consider at a later time for my thesis:*
+
+```{r, warning=F, error=F, message=F}
 # soil <- get_ssurgo(perdido_vect, label='soil')
 # soil <- project(soil, crs_perdido )
 # soil <- crop(soil, perdido_vect)
@@ -696,10 +660,17 @@ ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
 #   coord_fixed() +
 #   theme_minimal() +
 #   labs(title = "soil within Perdido Area")
-```
+
+
+
+
+### Consider TWI (topographic wetness index) ###
+### Consider DTW (depth to water) ###
+
+
 
 # Maximum Entropy
-```{r}
+
 # pbVect = INBU_and_Covs$INBU
 # covs <- INBU_and_Covs %>% dplyr::select(c('elevation', 'treecover', 'slope'))
 # 
@@ -715,5 +686,4 @@ ggplot(meltedData, aes(x = Model, y = Value, fill = Metric)) +
 # 
 # par(mfrow=c(1,1))
 # plot(maxentMap)
-
 ```
