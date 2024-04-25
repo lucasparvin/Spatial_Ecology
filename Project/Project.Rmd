@@ -182,7 +182,7 @@ ggplot(aspect_df, aes(x=x, y=y, fill=aspect))+
 # **Bring in NLCD Land Cover Classes, Reclassify, & Plot**
 ```{r, warning=F, error=F, message=F}
 # Bring in NLCD & Ensure raster is aligned with Perdido
-nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2011)
+nlcd2011 <- get_nlcd(perdido_vect, label='Landscape', year=2008)
 nlcd2011 <- project(nlcd2011, crs_perdido )
 nlcd2011 <- crop(nlcd2011, perdido_vect)
 nlcd2011 <- mask(nlcd2011, perdido_vect)
