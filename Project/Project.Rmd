@@ -226,7 +226,7 @@ ggplot(nlcd_df, aes(x = x, y = y, fill = Class)) +
   scale_fill_viridis_d() +
   coord_fixed() +
   theme_minimal() +
-  labs(title = "NLCD 2011 Land Cover within Perdido Area")
+  labs(title = "NLCD 2008 Land Cover within Perdido Area")
 
 ```
 
