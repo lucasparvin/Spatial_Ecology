@@ -405,6 +405,10 @@ rfModel = randomForest(as.factor(INBU) ~ elevation + treecover + slope, data=INB
 rfMap = predict(covariates, rfModel, type='prob', index=2)
 plot(rfMap, main = "Random Forest Predicted INBU Presence")
 summary(rfModel)
+variable_importance <- importance(rfModel)
+print(variable_importance)
+
+
 ```
 
 # **Comparing Parameter Effects on INBU Presence Across Models**

@@ -2246,6 +2246,12 @@ plot(rfMap, main = &quot;Random Forest Predicted INBU Presence&quot;)</code></pr
 ## test               0   -none- NULL     
 ## inbag              0   -none- NULL     
 ## terms              3   terms  call</code></pre>
+<pre class="r"><code>variable_importance &lt;- importance(rfModel)
+print(variable_importance)</code></pre>
+<pre><code>##           MeanDecreaseGini
+## elevation        11.142861
+## treecover        10.970628
+## slope             7.519827</code></pre>
 </div>
 <div id="comparing-parameter-effects-on-inbu-presence-across-models" class="section level1">
 <h1><strong>Comparing Parameter Effects on INBU Presence Across
