@@ -167,6 +167,8 @@ ggplot(tmp, aes(x=category, y=wi))+
 
 *Differences - *  That said, wi values greater than 1 indicate preference and values less than 1 indicate avoidance. Similarly, exponentiated coefficients greater than 1 indicate increased odds of use and, whereas values less than 1 indicate decreased odds of use. When observing the exponentiated coefficients graph, you can see that all values are greater than 1, indicating all habitat types are indicating increased odds of use. Conversely, in the wi figure, the bottom six categories (i.e. Freshwater Marsh --> Urban) are below 1, indicating avoidance of those land types. Thus these two distinct methods of analysis could yield different interpretations regarding the same habitat types.
 
+$\color{red}{\text{Pretty good. Basically, the exponentiated beta coefficients represent the odds ratios for the various cover types (i.e., the odds a point in that category is used divided by the odds is is not used). This is the same way that wi is calculated. The only difference here is that we're now including a random effect to account for non-independence among points selected by the same panther. +4.5}}$
+
 # Challenge 2 (5 points)
 
 In the lab, we used the distribution of step lengths and turning angles to help us devise potential steps each individual could have taken at each point in time. Instead of step lengths, build a histogram representing the distribution of step speeds in km/hr. When and why might you choose to sample from a distribution of step speeds to calculate potential step lengths rather than drawing from the distribution of step lengths itself?
@@ -222,6 +224,8 @@ hist(all_speeds, main = "Histogram of Panther Speeds", xlab = "Speed (km/hr)", y
 
 
 **ANSWER:** Choosing to sample from step speeds could help us understand how fast something moves in various situations and environments (i.e. varying terrains, habitat types, weather, etc.). This approach can better reflect real-world scenarios, like when obstacles or various habitat types affect an individual's speed by impacting its physical ability or behavior. It could also be especially useful for highlighting differences in abilities and/or behaviors among separate individuals. Furthermore, speeds could be associated with metabolic output and provide insight about the energetic needs and expenses of various animals. In all such instances, using step speeds instead of lengths may be more useful for interpretation. 
+
+$\color{red}{\text{Pretty good, although I wanted to year you comment on the fact that step speed distributions will be better for generating potential steps in situations where fixes are not constant in time. +4}}$
 
 
 # Challenge 3 (5 points)
@@ -288,6 +292,8 @@ ggplot(straightness_data, aes(x = CatID, y = Straightness, label = round(Straigh
 
 **ANSWER:** Panther 1 (Cat 1) took the most tortuous path, whereas Panther 6 (Cat 6) took the least tortuous path.
 
+$\color{red}{\text{Nice. +5}}$
+
 # Challenge 4 (5 points)
 
 For each panther, calculate the frequency with which locations were recorded as points per day. Plot path straightness as a function of frequency (there should be 6 points on this figure, one per panther). What relationship do you notice between these two variables, and why might that pattern be occurring?
@@ -333,3 +339,5 @@ ggplot(data, aes(x = PPD, y = Straightness)) +
 
 **ANSWER:** There appears to be a positive relationship between points per day and path straightness. This may be the result of  the fact that, as noted in our reading this week (Fortin et al. 2005), turning angles are biased towards zero degrees, given that animals have propensities to keep moving in a specific direction. Thus, more frequent measurements would result in a higher chance of picking up on this bias towards 0 degree turning angles, and thus a higher degree of straightness. However, with only 6 points, it's hard to glean much about this relationship, especially because were cat 6 to be removed, the slope would be near 0. 
 
+
+$\color{red}{\text{Close enough... this question turned out to have a wonky answer, unbeknownst to me. +5}}$
